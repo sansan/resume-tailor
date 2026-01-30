@@ -16,7 +16,7 @@ function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':
-        return <DashboardPage />
+        return <DashboardPage onNavigate={(page) => setActivePage(page as PageId)} />
       case 'profile':
         return <ProfilePage />
       case 'templates':
