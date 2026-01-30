@@ -1,0 +1,261 @@
+{
+  "personalInfo": {
+    "name": "Toms Veidemanis",
+    "email": "toms@veidemanis.lv",
+    "phone": "(+371) 2 544 8089",
+    "location": "Latvia",
+    "linkedin": "https://www.linkedin.com/in/tomsveidemanis/",
+    "website": "https://veidemanis.lv",
+    "summary": "Full-stack web developer with a strong focus on delivering production-ready, user-centric applications. Experienced in designing and implementing modern front-end interfaces and scalable back-end services, with responsibility spanning architecture, development, and delivery. Proven track record building front-end applications using React and Next.js, coupled with Node.js-based REST APIs implemented with NestJS or Express. Comfortable translating product and business requirements into maintainable technical solutions, and working across the full lifecycle from concept to production."
+  },
+  "workExperience": [
+    {
+      "company": "Bright Star, SIA",
+      "title": "Senior Full Stack Developer",
+      "startDate": "2015-02",
+      "location": "Remote",
+      "highlights": [
+        "Providing IT consulting services with a focus on web development, product ownership, business analysis, and project management",
+        "Collaborated with diverse clients from startups to Fortune 500 companies, delivering tailored software solutions aligned with unique business needs",
+        "Oversaw projects from concept to deployment, ensuring technical excellence, scalability, and alignment with strategic objectives",
+        "Combined technical expertise with business insight to bridge the gap between development and stakeholder requirements"
+      ]
+    },
+    {
+      "company": "Polymesh Network",
+      "title": "Senior Full Stack Developer",
+      "startDate": "2022-01",
+      "endDate": "2025-01",
+      "location": "Remote (Global)",
+      "highlights": [
+        "Member of Middleware team contributing to abstraction layer for better access to Polymesh Blockchain",
+        "Developed REST API connecting to the Blockchain (polymesh-rest-api)",
+        "Contributed to Polymesh SDK development",
+        "Technologies: TypeScript, Node.js, Blockchain, REST APIs"
+      ]
+    },
+    {
+      "company": "Celegence",
+      "title": "Senior Full Stack Developer",
+      "startDate": "2022-01",
+      "endDate": "2025-01",
+      "location": "Remote (UK)",
+      "highlights": [
+        "Developed React components and REST APIs with focus on content versioning via diffs for medical research documentation platform",
+        "Engineered data ingestion service capable of parsing and processing large XML datasets from external sources",
+        "Extended and customized TipTap (ProseMirror) editor with bespoke extensions for specialized medical documentation workflows",
+        "Utilized React, MobX, SCSS, and Express.js to deliver responsive, efficient, and maintainable application"
+      ]
+    },
+    {
+      "company": "Big Four Consulting",
+      "title": "Front-End Developer",
+      "startDate": "2021-01",
+      "endDate": "2022-12",
+      "location": "Remote (US, CZ)",
+      "highlights": [
+        "Developed sophisticated internal report generation tool for one of the Big Four consulting firms",
+        "Designed and implemented reusable React components, enhancing maintainability and user experience",
+        "Leveraged React, Redux, and Styled Components for responsive, consistent UI design across complex workflows",
+        "Championed architectural improvements to streamline application structure, promoting cleaner code and long-term scalability"
+      ]
+    },
+    {
+      "company": "Memmo Family AB",
+      "title": "Senior Full Stack Developer",
+      "startDate": "2021-01",
+      "endDate": "2021-12",
+      "location": "Remote (Sweden)",
+      "highlights": [
+        "Contributed to development of high-traffic celebrity video greeting platform (memmo.me)",
+        "Built and enhanced core Next.js, React, and Express.js features in fast-paced startup environment",
+        "Implemented comprehensive usage tracking and third-party service integrations",
+        "Collaborated cross-functionally to ensure seamless and scalable user experience"
+      ]
+    },
+    {
+      "company": "Top-Tier UK TelCo Provider",
+      "title": "Front-End Developer",
+      "startDate": "2021-01",
+      "endDate": "2021-12",
+      "location": "Remote (UK)",
+      "highlights": [
+        "Contributed to development of new client dashboard for leading UK telecommunications provider",
+        "Implemented modular, reusable React components integrated with backend APIs within Agile team",
+        "Utilized React, MobX, Styled Components, and SASS for dynamic, user-centric interfaces",
+        "Ensured code quality through unit testing (Jest) and end-to-end testing (Cypress)"
+      ]
+    },
+    {
+      "company": "ChessX, SIA",
+      "title": "Full Stack Developer",
+      "startDate": "2020-01",
+      "endDate": "2021-08",
+      "location": "Riga, Latvia",
+      "highlights": [
+        "Developed online chess coaching marketplace connecting students with top-tier coaches",
+        "Utilized React, Next.js, Nest.js, Express.js, and Redux for seamless, scalable platform",
+        "Designed and implemented comprehensive booking system with REST API and intuitive UI components",
+        "Applied deep knowledge of frontend and backend technologies for smooth user experience"
+      ]
+    },
+    {
+      "company": "AndIT Solutions, SIA",
+      "title": "IT Project Manager",
+      "startDate": "2018-01",
+      "endDate": "2019-04",
+      "location": "Riga, Latvia",
+      "highlights": [
+        "Successful IT team management for AI & OCR solution",
+        "Development of Token Economy model for successful ICO project",
+        "Product Manager/Owner of SAAS OCR invoicing solution",
+        "Managed multiple teams and projects (10 people) while maintaining tight deadlines",
+        "Front-end development using Angular 4-8, creating demos using October CMS"
+      ]
+    },
+    {
+      "company": "Monify JSC",
+      "title": "IT Product Owner",
+      "startDate": "2019-07",
+      "endDate": "2019-09",
+      "location": "Riga, Latvia",
+      "highlights": [
+        "Made full analysis of internal loan management system within 2 weeks with evaluation and recommendations",
+        "Designed mockups, assembled and led team of developers to create MVP of self-service platform UI in 2 weeks",
+        "Helped secure deal for new IT platform with 35% better pricing"
+      ]
+    },
+    {
+      "company": "Business Network, SIA",
+      "title": "Co-Founder, CTO",
+      "startDate": "2008-02",
+      "endDate": "2012-02",
+      "location": "Riga, Latvia",
+      "highlights": [
+        "Founded and led technical development of business-oriented social networking platform from concept to deployment",
+        "Designed and implemented full technology stack using PHP, Knockout.js, jQuery, and Ubuntu",
+        "Developed additional startup projects utilizing AngularJS, Angular 2, and Node.js with REST API design",
+        "Oversaw end-to-end product development from architecture and coding to deployment and maintenance"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "BA School of Business and Finance",
+      "degree": "Bachelor of Business Administration",
+      "field": "Business Management",
+      "graduationDate": "2008",
+      "highlights": []
+    },
+    {
+      "institution": "Riga State Gymnasium No 1",
+      "degree": "International Baccalaureate Diploma",
+      "field": "Business and Economics, Math",
+      "graduationDate": "2004",
+      "highlights": []
+    }
+  ],
+  "skills": [
+    { "name": "JavaScript", "level": "expert", "category": "Languages" },
+    { "name": "TypeScript", "level": "expert", "category": "Languages" },
+    { "name": "HTML5", "level": "expert", "category": "Languages" },
+    { "name": "CSS3", "level": "expert", "category": "Languages" },
+    { "name": "React", "level": "expert", "category": "Frontend" },
+    { "name": "Next.js", "level": "expert", "category": "Frontend" },
+    { "name": "Redux", "level": "advanced", "category": "Frontend" },
+    { "name": "MobX", "level": "advanced", "category": "Frontend" },
+    { "name": "Styled Components", "level": "advanced", "category": "Frontend" },
+    { "name": "SASS/SCSS", "level": "advanced", "category": "Frontend" },
+    { "name": "Node.js", "level": "expert", "category": "Backend" },
+    { "name": "NestJS", "level": "expert", "category": "Backend" },
+    { "name": "Express.js", "level": "expert", "category": "Backend" },
+    { "name": "REST APIs", "level": "expert", "category": "Backend" },
+    { "name": "GraphQL", "level": "advanced", "category": "Backend" },
+    { "name": "MongoDB", "level": "advanced", "category": "Databases" },
+    { "name": "PostgreSQL", "level": "advanced", "category": "Databases" },
+    { "name": "MySQL", "level": "advanced", "category": "Databases" },
+    { "name": "Redis", "level": "intermediate", "category": "Databases" },
+    { "name": "Docker", "level": "advanced", "category": "DevOps" },
+    { "name": "AWS", "level": "intermediate", "category": "DevOps" },
+    { "name": "Git", "level": "expert", "category": "Tools" },
+    { "name": "Jest", "level": "advanced", "category": "Testing" },
+    { "name": "Cypress", "level": "advanced", "category": "Testing" },
+    { "name": "Figma", "level": "intermediate", "category": "Tools" },
+    { "name": "JIRA", "level": "advanced", "category": "Tools" },
+    { "name": "Web3", "level": "intermediate", "category": "Blockchain" },
+    { "name": "Contentful", "level": "intermediate", "category": "CMS" },
+    { "name": "Sanity", "level": "intermediate", "category": "CMS" }
+  ],
+  "projects": [
+    {
+      "name": "Polymesh REST API & SDK",
+      "description": "Abstraction layer providing better access to Polymesh Blockchain through REST API",
+      "technologies": ["TypeScript", "Node.js", "Blockchain", "REST API"],
+      "url": "https://github.com/PolymeshAssociation/polymesh-rest-api",
+      "highlights": [
+        "Contributed to writing abstraction layer for Polymesh Blockchain access",
+        "Developed REST API connecting to the Blockchain",
+        "Part of the Polymesh SDK development team"
+      ]
+    },
+    {
+      "name": "Celegence Medical Documentation Platform",
+      "description": "Data-driven medical research documentation platform with content versioning",
+      "technologies": ["React", "MobX", "SCSS", "Express.js", "TipTap", "ProseMirror"],
+      "url": "https://celegence.com",
+      "highlights": [
+        "Implemented content versioning via diffs for research data traceability",
+        "Built data ingestion service for processing large XML datasets",
+        "Extended TipTap editor with custom medical documentation extensions"
+      ]
+    },
+    {
+      "name": "Memmo Celebrity Video Platform",
+      "description": "High-traffic platform enabling users to order personalized video greetings from celebrities",
+      "technologies": ["Next.js", "React", "Express.js", "Node.js"],
+      "url": "https://memmo.me",
+      "highlights": [
+        "Built and enhanced core platform features",
+        "Implemented usage tracking and third-party integrations",
+        "Supported rapid product growth in startup environment"
+      ]
+    },
+    {
+      "name": "ChessX Coaching Marketplace",
+      "description": "Online chess coaching marketplace connecting students with professional coaches",
+      "technologies": ["React", "Next.js", "NestJS", "Express.js", "Redux", "MongoDB"],
+      "highlights": [
+        "Developed comprehensive booking system",
+        "Built REST API and intuitive UI components",
+        "Created seamless scheduling and session management features"
+      ]
+    },
+    {
+      "name": "Privatum ID",
+      "description": "Secure messaging platform focused on privacy and data security",
+      "technologies": ["Node.js", "React", "Encryption"],
+      "highlights": [
+        "Co-founded privacy-focused messaging startup",
+        "Delivered secure message delivery to verified recipients",
+        "Prioritized user privacy and data security"
+      ]
+    },
+    {
+      "name": "Business Network Social Platform",
+      "description": "B2B social networking platform - 'Facebook for companies'",
+      "technologies": ["PHP", "Knockout.js", "jQuery", "MySQL", "MongoDB", "Redis", "Elastic Search"],
+      "highlights": [
+        "Designed and implemented full technology stack",
+        "Built company pages with professional social network features",
+        "Managed server setup and deployment on Ubuntu"
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "name": "PRINCE2 Agile",
+      "issuer": "BDA",
+      "date": "2019-10"
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "personalInfo": {
+    "name": "Sarah Chen",
+    "email": "sarah.chen@email.com",
+    "phone": "(555) 123-4567",
+    "location": "San Francisco, CA",
+    "linkedin": "https://linkedin.com/in/sarahchen",
+    "website": "https://sarahchen.dev",
+    "summary": "Full-stack software engineer with 6+ years of experience building scalable web applications and leading cross-functional teams. Passionate about clean code, developer experience, and mentoring junior engineers. Strong background in React, Node.js, and cloud infrastructure."
+  },
+  "workExperience": [
+    {
+      "company": "TechCorp Inc.",
+      "title": "Senior Software Engineer",
+      "startDate": "2021-03",
+      "location": "San Francisco, CA",
+      "highlights": [
+        "Led development of a real-time collaboration platform serving 50,000+ daily active users",
+        "Architected microservices migration reducing system latency by 40% and improving deployment frequency by 3x",
+        "Mentored team of 4 junior engineers, conducting code reviews and establishing coding standards",
+        "Implemented comprehensive test automation increasing code coverage from 45% to 85%"
+      ]
+    },
+    {
+      "company": "StartupXYZ",
+      "title": "Software Engineer",
+      "startDate": "2018-06",
+      "endDate": "2021-02",
+      "location": "Oakland, CA",
+      "highlights": [
+        "Built React-based dashboard enabling customers to manage $10M+ in monthly transactions",
+        "Designed and implemented RESTful APIs handling 100K+ requests per day with 99.9% uptime",
+        "Collaborated with product team to define technical requirements and deliver features on schedule",
+        "Introduced CI/CD pipelines reducing deployment time from 2 hours to 15 minutes"
+      ]
+    },
+    {
+      "company": "WebAgency Co.",
+      "title": "Junior Developer",
+      "startDate": "2016-09",
+      "endDate": "2018-05",
+      "location": "Los Angeles, CA",
+      "highlights": [
+        "Developed responsive websites for 20+ clients using HTML, CSS, and JavaScript",
+        "Created WordPress themes and plugins customized to client specifications",
+        "Participated in client meetings to gather requirements and present technical solutions"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of California, Berkeley",
+      "degree": "Bachelor of Science",
+      "field": "Computer Science",
+      "graduationDate": "2016-05",
+      "gpa": "3.7",
+      "highlights": [
+        "Dean's List all semesters",
+        "Teaching Assistant for Data Structures (CS 61B)",
+        "Member of Women in Computer Science organization"
+      ]
+    }
+  ],
+  "skills": [
+    { "name": "JavaScript", "level": "expert", "category": "Languages" },
+    { "name": "TypeScript", "level": "expert", "category": "Languages" },
+    { "name": "Python", "level": "advanced", "category": "Languages" },
+    { "name": "Go", "level": "intermediate", "category": "Languages" },
+    { "name": "React", "level": "expert", "category": "Frontend" },
+    { "name": "Vue.js", "level": "advanced", "category": "Frontend" },
+    { "name": "Next.js", "level": "advanced", "category": "Frontend" },
+    { "name": "Node.js", "level": "expert", "category": "Backend" },
+    { "name": "PostgreSQL", "level": "advanced", "category": "Databases" },
+    { "name": "MongoDB", "level": "advanced", "category": "Databases" },
+    { "name": "Redis", "level": "intermediate", "category": "Databases" },
+    { "name": "AWS", "level": "advanced", "category": "Cloud/DevOps" },
+    { "name": "Docker", "level": "advanced", "category": "Cloud/DevOps" },
+    { "name": "Kubernetes", "level": "intermediate", "category": "Cloud/DevOps" },
+    { "name": "Git", "level": "expert", "category": "Tools" },
+    { "name": "Jest", "level": "advanced", "category": "Testing" }
+  ],
+  "projects": [
+    {
+      "name": "DevMetrics Dashboard",
+      "description": "Open-source developer productivity dashboard that aggregates metrics from GitHub, Jira, and CI/CD pipelines",
+      "technologies": ["React", "TypeScript", "Node.js", "PostgreSQL", "GraphQL"],
+      "url": "https://github.com/sarahchen/devmetrics",
+      "highlights": [
+        "500+ GitHub stars and used by 50+ development teams",
+        "Implemented real-time data sync with WebSocket connections",
+        "Created comprehensive documentation and contribution guidelines"
+      ]
+    },
+    {
+      "name": "TaskFlow CLI",
+      "description": "Command-line task management tool with Git-like workflow for developers",
+      "technologies": ["Go", "SQLite", "Cobra"],
+      "url": "https://github.com/sarahchen/taskflow",
+      "highlights": [
+        "Published on Homebrew with 200+ monthly active users",
+        "Featured in Golang Weekly newsletter"
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "name": "AWS Solutions Architect - Associate",
+      "issuer": "Amazon Web Services",
+      "date": "2022-08",
+      "url": "https://aws.amazon.com/certification/certified-solutions-architect-associate/"
+    },
+    {
+      "name": "Professional Scrum Master I",
+      "issuer": "Scrum.org",
+      "date": "2020-03"
+    }
+  ]
+}

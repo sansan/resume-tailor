@@ -1,0 +1,2420 @@
+/* CSS Reset and Base Styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background-color: #f5f5f5;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Layout Styles */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.header-title h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.header-nav {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nav-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: transparent;
+  color: #666666;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-tab:hover {
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+}
+
+.nav-tab--active {
+  background-color: #0066cc;
+  color: #ffffff;
+}
+
+.nav-tab--active:hover {
+  background-color: #0055aa;
+  color: #ffffff;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+/* Tab Content */
+.tab-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tab-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.tab-content p {
+  color: #666666;
+}
+
+/* Resume Editor Styles */
+.resume-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+}
+
+.resume-editor__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.resume-editor__file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.resume-editor__file-path {
+  font-size: 0.875rem;
+  color: #666666;
+  font-family: monospace;
+}
+
+.resume-editor__file-path--unsaved {
+  font-style: italic;
+  color: #999999;
+}
+
+.resume-editor__dirty-indicator {
+  color: #e67e22;
+  font-weight: bold;
+  margin-left: 0.25rem;
+}
+
+.resume-editor__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.resume-editor__btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.resume-editor__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.resume-editor__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.resume-editor__btn--primary:hover:not(:disabled) {
+  background-color: #0055aa;
+  border-color: #0055aa;
+}
+
+.resume-editor__btn--secondary {
+  background-color: #ffffff;
+  color: #333333;
+  border-color: #dddddd;
+}
+
+.resume-editor__btn--secondary:hover:not(:disabled) {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+.resume-editor__content {
+  flex: 1;
+  min-height: 300px;
+}
+
+.resume-editor__textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  padding: 1rem;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+  background-color: #fafafa;
+}
+
+.resume-editor__textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.resume-editor__textarea::placeholder {
+  color: #999999;
+}
+
+.resume-editor__errors {
+  padding: 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.resume-editor__errors-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 0.5rem;
+}
+
+.resume-editor__errors-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.resume-editor__error-item {
+  font-size: 0.875rem;
+  color: #991b1b;
+}
+
+.resume-editor__error-path {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.resume-editor__error-message {
+  color: #7f1d1d;
+}
+
+.resume-editor__success {
+  padding: 1rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #15803d;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Resume Preview Styles */
+.resume-preview {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Export PDF Button Bar */
+.resume-preview__export-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.resume-preview__export-btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  min-width: 120px;
+}
+
+.resume-preview__export-btn--idle {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.resume-preview__export-btn--idle:hover:not(:disabled) {
+  background-color: #0055aa;
+  border-color: #0055aa;
+}
+
+.resume-preview__export-btn--exporting {
+  background-color: #666666;
+  color: #ffffff;
+  border-color: #666666;
+  cursor: wait;
+}
+
+.resume-preview__export-btn--success {
+  background-color: #15803d;
+  color: #ffffff;
+  border-color: #15803d;
+}
+
+.resume-preview__export-btn--error {
+  background-color: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+.resume-preview__export-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.resume-preview__export-error {
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+
+.resume-preview__header {
+  text-align: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #1a1a1a;
+  margin-bottom: 1.5rem;
+}
+
+.resume-preview__name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.resume-preview__contact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #666666;
+}
+
+.resume-preview__contact-item {
+  display: flex;
+  align-items: center;
+}
+
+.resume-preview__contact-item:not(:last-child)::after {
+  content: '|';
+  margin-left: 1rem;
+  color: #cccccc;
+}
+
+.resume-preview__contact-item a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.resume-preview__contact-item a:hover {
+  text-decoration: underline;
+}
+
+.resume-preview__section {
+  margin-bottom: 1.5rem;
+}
+
+.resume-preview__section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #dddddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.resume-preview__summary {
+  color: #444444;
+  line-height: 1.6;
+}
+
+.resume-preview__item {
+  margin-bottom: 1rem;
+}
+
+.resume-preview__item--compact {
+  margin-bottom: 0.5rem;
+}
+
+.resume-preview__item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.resume-preview__item-title {
+  font-size: 1rem;
+  color: #1a1a1a;
+}
+
+.resume-preview__item-company {
+  font-weight: normal;
+  color: #666666;
+}
+
+.resume-preview__item-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #666666;
+}
+
+.resume-preview__item-date {
+  white-space: nowrap;
+}
+
+.resume-preview__item-location {
+  white-space: nowrap;
+}
+
+.resume-preview__item-subtitle {
+  color: #666666;
+  font-size: 0.9375rem;
+  margin-top: 0.125rem;
+}
+
+.resume-preview__item-detail {
+  color: #666666;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.resume-preview__item-description {
+  color: #444444;
+  font-size: 0.9375rem;
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+.resume-preview__item-link {
+  margin-left: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: normal;
+}
+
+.resume-preview__highlights {
+  margin-top: 0.5rem;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.resume-preview__highlights li {
+  color: #444444;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin-bottom: 0.25rem;
+}
+
+.resume-preview__technologies {
+  font-size: 0.875rem;
+  color: #666666;
+  margin-top: 0.5rem;
+}
+
+.resume-preview__skills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.resume-preview__skill-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.resume-preview__skill-category-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.resume-preview__skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.resume-preview__skill-item {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #333333;
+}
+
+.resume-preview__skill-level {
+  color: #666666;
+  font-size: 0.75rem;
+}
+
+/* Resume View Container - Split Layout */
+.resume-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  height: calc(100vh - 200px);
+  min-height: 500px;
+}
+
+.resume-view__editor-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resume-view__preview-panel {
+  overflow-y: auto;
+  background-color: #e8e8e8;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.resume-view__preview-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999999;
+  font-style: italic;
+}
+
+.resume-view__history-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 1024px) {
+  .resume-view {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+}
+
+/* ============================================
+   Job Application Styles
+   ============================================ */
+
+.job-application {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Step Indicator */
+.job-application__steps {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.job-application__step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #999999;
+  font-size: 0.875rem;
+}
+
+.job-application__step:not(:last-child)::after {
+  content: '→';
+  margin-left: 0.5rem;
+  color: #cccccc;
+}
+
+.job-application__step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #666666;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.job-application__step--active .job-application__step-number {
+  background-color: #0066cc;
+  color: #ffffff;
+}
+
+.job-application__step--active .job-application__step-label {
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.job-application__step--completed .job-application__step-number {
+  background-color: #15803d;
+  color: #ffffff;
+}
+
+.job-application__step--completed .job-application__step-label {
+  color: #15803d;
+}
+
+/* Job Application Content */
+.job-application__content {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+/* Job Posting Input Form */
+.job-posting-input {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.job-posting-input__header {
+  margin-bottom: 0.5rem;
+}
+
+.job-posting-input__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.job-posting-input__description {
+  color: #666666;
+  font-size: 0.9375rem;
+}
+
+.job-posting-input__warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.875rem;
+}
+
+.job-posting-input__warning--error {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.job-posting-input__warning-icon {
+  font-size: 1.25rem;
+}
+
+.job-posting-input__optional-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .job-posting-input__optional-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.job-posting-input__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.job-posting-input__field--main {
+  flex: 1;
+}
+
+.job-posting-input__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.job-posting-input__optional {
+  font-weight: normal;
+  color: #999999;
+}
+
+.job-posting-input__text-input {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.job-posting-input__text-input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.job-posting-input__text-input::placeholder {
+  color: #999999;
+}
+
+.job-posting-input__textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 1rem;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  resize: vertical;
+  background-color: #fafafa;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.job-posting-input__textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.job-posting-input__textarea::placeholder {
+  color: #999999;
+}
+
+.job-posting-input__char-count {
+  font-size: 0.75rem;
+  color: #999999;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.job-posting-input__char-count--warning {
+  color: #dc6803;
+}
+
+.job-posting-input__error {
+  padding: 0.75rem 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+.job-posting-input__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.job-posting-input__submit-btn {
+  padding: 0.75rem 1.5rem;
+  background-color: #0066cc;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background-color 0.15s ease;
+}
+
+.job-posting-input__submit-btn:hover:not(:disabled) {
+  background-color: #0055aa;
+}
+
+.job-posting-input__submit-btn:disabled {
+  background-color: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+/* Processing Step */
+.job-application__processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem 0;
+}
+
+.job-application__processing-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.job-application__spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #0066cc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.job-application__processing-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.job-application__processing-message {
+  color: #666666;
+  max-width: 400px;
+}
+
+.job-application__progress-bar {
+  width: 300px;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.job-application__progress-fill {
+  height: 100%;
+  background-color: #0066cc;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.job-application__progress-text {
+  font-size: 0.875rem;
+  color: #666666;
+  font-weight: 500;
+}
+
+.job-application__cancel-btn {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: #666666;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.15s ease;
+}
+
+.job-application__cancel-btn:hover {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+/* Error Display */
+.job-application__error {
+  width: 100%;
+  max-width: 500px;
+  padding: 1.5rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.job-application__error-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.job-application__error-icon {
+  font-size: 1.25rem;
+}
+
+.job-application__error-title {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.job-application__error-message {
+  color: #991b1b;
+  margin-bottom: 1rem;
+}
+
+.job-application__error-details {
+  margin-bottom: 1rem;
+}
+
+.job-application__error-details summary {
+  cursor: pointer;
+  color: #666666;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.job-application__error-details pre {
+  padding: 0.75rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  color: #333333;
+}
+
+.job-application__error-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Generic Job Application Buttons */
+.job-application__btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.job-application__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.job-application__btn--primary:hover {
+  background-color: #0055aa;
+  border-color: #0055aa;
+}
+
+.job-application__btn--secondary {
+  background-color: #ffffff;
+  color: #333333;
+  border-color: #dddddd;
+}
+
+.job-application__btn--secondary:hover {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+/* Review Step */
+.job-application__review {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.job-application__review-header {
+  margin-bottom: 0.5rem;
+}
+
+.job-application__review-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.job-application__review-header p {
+  color: #666666;
+}
+
+.job-application__review-section {
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.job-application__review-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.job-application__review-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.job-application__changes-summary {
+  padding: 0.75rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.job-application__changes-summary strong {
+  color: #15803d;
+}
+
+.job-application__changes-summary p {
+  margin-top: 0.25rem;
+  color: #166534;
+}
+
+.job-application__keywords {
+  font-size: 0.875rem;
+}
+
+.job-application__keywords strong {
+  color: #333333;
+}
+
+.job-application__keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.job-application__keyword {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+}
+
+.job-application__cover-letter-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.job-application__cover-letter-body {
+  padding: 1rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.job-application__cover-letter-body p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  color: #333333;
+}
+
+.job-application__cover-letter-body p:last-child {
+  margin-bottom: 0;
+}
+
+.job-application__signature {
+  font-style: italic;
+}
+
+.job-application__review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.job-application__review-note {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #666666;
+  font-style: italic;
+}
+
+/* Export Step */
+.job-application__export {
+  text-align: center;
+  padding: 2rem;
+}
+
+.job-application__export h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.job-application__export p {
+  color: #666666;
+  margin-bottom: 1rem;
+}
+
+.job-application__coming-soon {
+  font-style: italic;
+  color: #999999;
+  margin-bottom: 1.5rem;
+}
+
+/* ============================================
+   Processing Status Component
+   ============================================ */
+
+.processing-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.processing-status__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.processing-status__spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #0066cc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.processing-status__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.processing-status__message {
+  color: #666666;
+  max-width: 400px;
+}
+
+.processing-status__progress-bar {
+  width: 300px;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.processing-status__progress-fill {
+  height: 100%;
+  background-color: #0066cc;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.processing-status__progress-text {
+  font-size: 0.875rem;
+  color: #666666;
+  font-weight: 500;
+}
+
+.processing-status__cancel-btn {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: #666666;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.15s ease;
+}
+
+.processing-status__cancel-btn:hover {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+/* ============================================
+   Processing Error Component
+   ============================================ */
+
+.processing-error {
+  width: 100%;
+  max-width: 500px;
+  padding: 1.5rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.processing-error__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.processing-error__icon {
+  font-size: 1.25rem;
+}
+
+.processing-error__title {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.processing-error__message {
+  color: #991b1b;
+  margin-bottom: 1rem;
+}
+
+.processing-error__details {
+  margin-bottom: 1rem;
+}
+
+.processing-error__details summary {
+  cursor: pointer;
+  color: #666666;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.processing-error__details pre {
+  padding: 0.75rem;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  color: #333333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.processing-error__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.processing-error__btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.processing-error__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.processing-error__btn--primary:hover {
+  background-color: #0055aa;
+  border-color: #0055aa;
+}
+
+.processing-error__btn--secondary {
+  background-color: #ffffff;
+  color: #333333;
+  border-color: #dddddd;
+}
+
+.processing-error__btn--secondary:hover {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+/* ============================================
+   Resume Section Component
+   ============================================ */
+
+.resume-section {
+  margin-bottom: 1.5rem;
+}
+
+.resume-section__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.resume-section__content {
+  color: #333333;
+}
+
+/* ============================================
+   Refined Resume Review Component
+   ============================================ */
+
+.refined-resume-review {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.refined-resume-review__header {
+  margin-bottom: 0.5rem;
+}
+
+.refined-resume-review__header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.refined-resume-review__header p {
+  color: #666666;
+  font-size: 0.9375rem;
+}
+
+/* Metadata Section */
+.refined-resume-review__metadata {
+  padding: 1rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.refined-resume-review__changes-summary {
+  font-size: 0.875rem;
+}
+
+.refined-resume-review__changes-summary strong {
+  color: #15803d;
+}
+
+.refined-resume-review__changes-summary p {
+  margin-top: 0.25rem;
+  color: #166534;
+}
+
+.refined-resume-review__keywords {
+  font-size: 0.875rem;
+}
+
+.refined-resume-review__keywords strong {
+  color: #15803d;
+}
+
+.refined-resume-review__keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.refined-resume-review__keyword {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+}
+
+.refined-resume-review__confidence {
+  font-size: 0.875rem;
+}
+
+.refined-resume-review__confidence strong {
+  color: #15803d;
+}
+
+.refined-resume-review__confidence-value {
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+.refined-resume-review__confidence-value--high {
+  color: #15803d;
+}
+
+.refined-resume-review__confidence-value--medium {
+  color: #ca8a04;
+}
+
+.refined-resume-review__confidence-value--low {
+  color: #dc2626;
+}
+
+/* View Toggle */
+.refined-resume-review__view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.refined-resume-review__toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: transparent;
+  color: #666666;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.refined-resume-review__toggle-btn:hover {
+  background-color: #e5e7eb;
+  color: #1a1a1a;
+}
+
+.refined-resume-review__toggle-btn--active {
+  background-color: #ffffff;
+  color: #0066cc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Content Area */
+.refined-resume-review__content {
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.refined-resume-review__personal-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.9375rem;
+}
+
+.refined-resume-review__personal-info strong {
+  width: 100%;
+  font-size: 1.125rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Comparison Sections */
+.refined-resume-review__comparison {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.refined-resume-review__comparison-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+}
+
+.refined-resume-review__comparison-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .refined-resume-review__comparison-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+.refined-resume-review__column {
+  padding: 1rem;
+  border-radius: 6px;
+}
+
+.refined-resume-review__column--original {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.refined-resume-review__column--refined {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.refined-resume-review__column-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  color: #666666;
+}
+
+.refined-resume-review__column--refined .refined-resume-review__column-label {
+  color: #15803d;
+}
+
+/* Text and Editable Fields */
+.refined-resume-review__text {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #333333;
+}
+
+.refined-resume-review__text--editable {
+  cursor: pointer;
+  padding: 0.125rem 0.25rem;
+  margin: -0.125rem -0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.refined-resume-review__text--editable:hover {
+  background-color: rgba(0, 102, 204, 0.1);
+}
+
+.refined-resume-review__edit-textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #0066cc;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.refined-resume-review__edit-textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.refined-resume-review__edit-input {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #0066cc;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+}
+
+.refined-resume-review__edit-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+/* Items and Highlights */
+.refined-resume-review__item {
+  margin-bottom: 1.25rem;
+}
+
+.refined-resume-review__item:last-child {
+  margin-bottom: 0;
+}
+
+.refined-resume-review__item-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.refined-resume-review__item-dates {
+  font-size: 0.875rem;
+  color: #666666;
+  margin-left: auto;
+}
+
+.refined-resume-review__item-tech {
+  font-size: 0.875rem;
+  color: #666666;
+  font-weight: normal;
+}
+
+.refined-resume-review__description {
+  font-size: 0.9375rem;
+  color: #444444;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.refined-resume-review__highlights {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.refined-resume-review__highlights li {
+  margin-bottom: 0.25rem;
+  color: #444444;
+}
+
+.refined-resume-review__skill-group {
+  margin-bottom: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* Action Buttons */
+.refined-resume-review__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.refined-resume-review__btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.refined-resume-review__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.refined-resume-review__btn--primary:hover {
+  background-color: #0055aa;
+  border-color: #0055aa;
+}
+
+.refined-resume-review__btn--secondary {
+  background-color: #ffffff;
+  color: #333333;
+  border-color: #dddddd;
+}
+
+.refined-resume-review__btn--secondary:hover {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+/* ============================================
+   Cover Letter Preview Component
+   ============================================ */
+
+.cover-letter-preview {
+  padding: 2rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  line-height: 1.8;
+  color: #1a1a1a;
+}
+
+.cover-letter-preview__date {
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+}
+
+.cover-letter-preview__recipient {
+  margin-bottom: 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.cover-letter-preview__recipient-name {
+  font-weight: 600;
+}
+
+.cover-letter-preview__recipient-title {
+  color: #444444;
+}
+
+.cover-letter-preview__company-name {
+  font-weight: 500;
+}
+
+.cover-letter-preview__company-address {
+  color: #666666;
+  white-space: pre-line;
+}
+
+.cover-letter-preview__body {
+  margin-bottom: 1.5rem;
+}
+
+.cover-letter-preview__paragraph {
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+  text-align: justify;
+}
+
+.cover-letter-preview__paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.cover-letter-preview__paragraph--opening {
+  margin-bottom: 1rem;
+}
+
+.cover-letter-preview__paragraph--closing {
+  margin-top: 1rem;
+}
+
+.cover-letter-preview__signature {
+  margin-top: 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ============================================
+   Cover Letter Review Component
+   ============================================ */
+
+.cover-letter-review {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cover-letter-review__header {
+  margin-bottom: 0.5rem;
+}
+
+.cover-letter-review__header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.cover-letter-review__header p {
+  color: #666666;
+  font-size: 0.9375rem;
+}
+
+/* Metadata Section */
+.cover-letter-review__metadata {
+  padding: 1rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cover-letter-review__tone {
+  font-size: 0.875rem;
+}
+
+.cover-letter-review__tone strong {
+  color: #15803d;
+}
+
+.cover-letter-review__tone-value {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.cover-letter-review__highlights {
+  font-size: 0.875rem;
+}
+
+.cover-letter-review__highlights strong {
+  color: #15803d;
+}
+
+.cover-letter-review__highlights-list {
+  margin-top: 0.5rem;
+  padding-left: 1.25rem;
+  list-style-type: disc;
+}
+
+.cover-letter-review__highlights-list li {
+  color: #166534;
+  margin-bottom: 0.25rem;
+  font-size: 0.8125rem;
+}
+
+/* View Toggle */
+.cover-letter-review__view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.cover-letter-review__toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background-color: transparent;
+  color: #666666;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cover-letter-review__toggle-btn:hover {
+  background-color: #e5e7eb;
+  color: #1a1a1a;
+}
+
+.cover-letter-review__toggle-btn--active {
+  background-color: #ffffff;
+  color: #0066cc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Content Area */
+.cover-letter-review__content {
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+/* Edit Mode */
+.cover-letter-review__edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.cover-letter-review__recipient-info {
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  color: #333333;
+}
+
+.cover-letter-review__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cover-letter-review__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.cover-letter-review__textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cover-letter-review__textarea:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.cover-letter-review__textarea::placeholder {
+  color: #999999;
+}
+
+.cover-letter-review__input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cover-letter-review__input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.cover-letter-review__input::placeholder {
+  color: #999999;
+}
+
+.cover-letter-review__paragraph-field {
+  position: relative;
+}
+
+.cover-letter-review__add-btn {
+  padding: 0.25rem 0.625rem;
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cover-letter-review__add-btn:hover {
+  background-color: #dcfce7;
+  border-color: #86efac;
+}
+
+.cover-letter-review__remove-btn {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cover-letter-review__remove-btn:hover {
+  background-color: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Preview Mode */
+.cover-letter-review__preview-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Action Buttons */
+.cover-letter-review__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cover-letter-review__btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cover-letter-review__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.cover-letter-review__btn--primary:hover {
+  background-color: #0055aa;
+  border-color: #0055aa;
+}
+
+.cover-letter-review__btn--secondary {
+  background-color: #ffffff;
+  color: #333333;
+  border-color: #dddddd;
+}
+
+.cover-letter-review__btn--secondary:hover {
+  background-color: #f5f5f5;
+  border-color: #cccccc;
+}
+
+/* ============================================
+   Export Panel Styles
+   ============================================ */
+
+.export-panel {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.export-panel__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
+}
+
+.export-panel__description {
+  color: #666666;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.export-panel__folder-selection {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.export-panel__folder-row {
+  margin-bottom: 1rem;
+}
+
+.export-panel__folder-row:last-child {
+  margin-bottom: 0;
+}
+
+.export-panel__label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.export-panel__folder-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.export-panel__path-display {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #374151;
+  font-size: 0.875rem;
+  font-family: monospace;
+}
+
+.export-panel__path-display::placeholder {
+  color: #9ca3af;
+  font-family: inherit;
+}
+
+.export-panel__subfolder-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.export-panel__subfolder-input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.export-panel__hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.export-panel__section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.export-panel__pdf-list {
+  margin-bottom: 1.5rem;
+}
+
+.export-panel__pdf-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.export-panel__pdf-item:last-child {
+  margin-bottom: 0;
+}
+
+.export-panel__pdf-icon {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.export-panel__icon {
+  color: #0066cc;
+}
+
+.export-panel__pdf-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.export-panel__pdf-name {
+  display: block;
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 0.875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-panel__pdf-type {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.125rem;
+}
+
+.export-panel__btn {
+  padding: 0.625rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.export-panel__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-panel__btn--primary {
+  background-color: #0066cc;
+  color: #ffffff;
+  border-color: #0066cc;
+}
+
+.export-panel__btn--primary:hover:not(:disabled) {
+  background-color: #0055aa;
+  border-color: #0055aa;
+}
+
+.export-panel__btn--secondary {
+  background-color: #ffffff;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.export-panel__btn--secondary:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.export-panel__btn--small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.export-panel__btn--large {
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+}
+
+.export-panel__actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.export-panel__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Export Panel Success State */
+.export-panel__success {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.export-panel__success-icon {
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 1rem;
+  background-color: #dcfce7;
+  color: #15803d;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.export-panel__success-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #15803d;
+  margin-bottom: 0.5rem;
+}
+
+.export-panel__success-message {
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.export-panel__success-path {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #374151;
+  background-color: #f3f4f6;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  word-break: break-all;
+}
+
+.export-panel__success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* Export Panel Error State */
+.export-panel__error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.export-panel__error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .export-panel__folder-input {
+    flex-direction: column;
+  }
+
+  .export-panel__pdf-item {
+    flex-wrap: wrap;
+  }
+
+  .export-panel__pdf-info {
+    flex: 1 1 100%;
+    order: 2;
+    margin-top: 0.5rem;
+  }
+
+  .export-panel__pdf-icon {
+    order: 1;
+  }
+
+  .export-panel__btn--small {
+    order: 3;
+    margin-left: auto;
+  }
+
+  .export-panel__success-actions {
+    flex-direction: column;
+  }
+}
+
+/* Overwrite Confirmation Dialog */
+.export-panel__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.export-panel__confirmation-dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.export-panel__confirmation-title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.export-panel__confirmation-message {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.export-panel__confirmation-files {
+  margin: 0 0 20px 0;
+  padding: 12px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  list-style: none;
+}
+
+.export-panel__confirmation-files li {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  padding: 4px 0;
+}
+
+.export-panel__confirmation-files li::before {
+  content: "- ";
+  color: var(--text-muted);
+}
+
+.export-panel__confirmation-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.export-panel__btn--danger {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.export-panel__btn--danger:hover:not(:disabled) {
+  background: #c82333;
+  border-color: #bd2130;
+}
