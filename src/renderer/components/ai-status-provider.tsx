@@ -36,12 +36,12 @@ export function AIStatusProvider({ children }: { children: React.ReactNode }) {
   const checkAvailability = useCallback(async () => {
     try {
       addLog('Checking AI availability...')
-      const result = await window.electronAPI.checkAIAvailability()
-      setIsAvailable(result.available)
-      setVersion(result.version || null)
-      setStatus(result.available ? 'idle' : 'unavailable')
-      addLog(result.available
-        ? `AI available: Claude CLI ${result.version}`
+      const available = await window.electronAPI.checkAIAvailability()
+      setIsAvailable(available)
+      setVersion(null) // API only returns boolean
+      setStatus(available ? 'idle' : 'unavailable')
+      addLog(available
+        ? 'AI available: Claude CLI detected'
         : 'AI unavailable: Claude CLI not found')
     } catch (err) {
       setIsAvailable(false)
