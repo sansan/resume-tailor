@@ -1,15 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './styles/global.css';
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import { ThemeProvider } from './components/theme-provider'
+import '../styles/globals.css'
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error('Failed to find root element');
-}
-
-ReactDOM.createRoot(rootElement).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+    <ThemeProvider defaultTheme="dark" storageKey="resume-tailor-theme">
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>,
+)
