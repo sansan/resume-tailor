@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 function Slider({
   className,
-  defaultValue,
+  defaultValue = [0],
   value,
   min = 0,
   max = 100,
@@ -27,7 +27,7 @@ function Slider({
     <SliderPrimitive.Root
       data-slot="slider"
       defaultValue={defaultValue}
-      value={value}
+      {...(value !== undefined && { value })}
       min={min}
       max={max}
       className={cn(
