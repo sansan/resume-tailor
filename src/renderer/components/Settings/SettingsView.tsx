@@ -9,7 +9,6 @@ import {
 import OutputFolderSettings from './OutputFolderSettings';
 import PromptSettings from './PromptSettings';
 import PDFThemeSettingsComponent from './PDFThemeSettings';
-import './settings-view.css';
 
 /**
  * Main Settings View component.

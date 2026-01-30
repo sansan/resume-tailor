@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useExportHistory } from '../../hooks/useExportHistory';
 import type { HistoryEntry } from '../../../shared/schemas/history.schema';
-import './recent-exports.css';
 
 /**
  * Format a date string for display.
