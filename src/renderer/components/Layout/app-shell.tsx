@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { AppSidebar, type PageId } from './app-sidebar'
 import { useAIStatus } from '@renderer/components/ai-status-provider'
+import { AIStatusSheet } from '@renderer/components/ai-status-sheet'
 
 interface AppShellProps {
   activePage: PageId
@@ -13,19 +14,29 @@ interface AppShellProps {
 function AIStatusBadge() {
   const { status, isAvailable } = useAIStatus()
 
-  if (!isAvailable) {
-    return <Badge variant="destructive">AI Unavailable</Badge>
-  }
+  const badge = (() => {
+    if (!isAvailable) {
+      return <Badge variant="destructive">AI Unavailable</Badge>
+    }
 
-  if (status === 'processing') {
-    return <Badge variant="secondary">AI Processing</Badge>
-  }
+    if (status === 'processing') {
+      return <Badge variant="secondary">AI Processing</Badge>
+    }
 
-  if (status === 'error') {
-    return <Badge variant="destructive">AI Error</Badge>
-  }
+    if (status === 'error') {
+      return <Badge variant="destructive">AI Error</Badge>
+    }
 
-  return <Badge variant="outline">AI Ready</Badge>
+    return <Badge variant="outline">AI Ready</Badge>
+  })()
+
+  return (
+    <AIStatusSheet>
+      <button className="cursor-pointer">
+        {badge}
+      </button>
+    </AIStatusSheet>
+  )
 }
 
 export function AppShell({ activePage, onNavigate, children }: AppShellProps) {
