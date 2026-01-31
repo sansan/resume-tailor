@@ -446,7 +446,15 @@ export function registerIPCHandlers(): void {
           profile,
         };
       } catch (error) {
+        // Log full error details to console for debugging
+        console.error('[profile:import-text] Error:', error);
         if (error instanceof AIProcessorError) {
+          console.error('[profile:import-text] AI Error Details:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+          });
+
           // Provide more user-friendly error messages
           let userMessage = error.message;
           if (error.code === AIProcessorErrorCode.CLI_NOT_AVAILABLE) {

@@ -56,6 +56,9 @@ export class ClaudeProvider extends BaseAIProvider {
   async execute(request: AIProviderRequest): Promise<AIProviderResponse> {
     const { prompt, outputFormat = 'text' } = request;
 
+    // Log prompt size for debugging
+    console.log(`[ClaudeProvider] Executing with prompt length: ${prompt.length} chars`);
+
     return new Promise((resolve) => {
       let stdout = '';
       let stderr = '';
@@ -181,6 +184,9 @@ export class ClaudeProvider extends BaseAIProvider {
           // Combine stderr and stdout for better error diagnostics
           // Some CLIs write errors to stdout
           const errorOutput = stderr || stdout || 'Unknown error';
+          console.error(`[ClaudeProvider] CLI exited with code ${code}`);
+          console.error(`[ClaudeProvider] stderr: ${stderr}`);
+          console.error(`[ClaudeProvider] stdout: ${stdout.substring(0, 1000)}`);
           resolve({
             success: false,
             error: new AIProviderError(
