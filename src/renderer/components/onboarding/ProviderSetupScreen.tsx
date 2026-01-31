@@ -48,8 +48,9 @@ export interface ProviderSetupScreenProps {
  * API provider configuration.
  */
 interface APIProviderConfig {
-  id: AIProvider
-  providerId: string // The ID used in settings (maps to AIProviderType)
+  id: AIProvider // Key for API key storage
+  selectionId: string // Unique ID for selection state (prefixed with 'api:')
+  providerId: string // The provider type used by AI processor
   name: string
   description: string
 }
@@ -59,31 +60,23 @@ interface APIProviderConfig {
  */
 interface CLIToolConfig {
   id: CLITool
+  selectionId: string // Unique ID for selection state (prefixed with 'cli:')
   name: string
   description: string
 }
 
 /**
  * Available API providers.
+ * Note: Currently only OpenAI has a dedicated API provider.
+ * Claude and Google APIs would need provider implementations.
  */
 const API_PROVIDERS: APIProviderConfig[] = [
   {
-    id: 'claude',
-    providerId: 'claude',
-    name: 'Claude API',
-    description: "Use Anthropic's Claude via API",
-  },
-  {
     id: 'openai',
+    selectionId: 'api:openai',
     providerId: 'openai',
     name: 'OpenAI API',
     description: 'Use GPT models via API',
-  },
-  {
-    id: 'google',
-    providerId: 'gemini',
-    name: 'Google AI API',
-    description: 'Use Gemini models via API',
   },
 ]
 
@@ -93,16 +86,19 @@ const API_PROVIDERS: APIProviderConfig[] = [
 const CLI_TOOLS: CLIToolConfig[] = [
   {
     id: 'claude',
+    selectionId: 'cli:claude',
     name: 'Claude CLI',
     description: 'Local CLI tool',
   },
   {
     id: 'codex',
+    selectionId: 'cli:codex',
     name: 'Codex CLI',
     description: 'Local CLI tool',
   },
   {
     id: 'gemini',
+    selectionId: 'cli:gemini',
     name: 'Gemini CLI',
     description: 'Local CLI tool',
   },
@@ -138,27 +134,11 @@ export function ProviderSetupScreen({
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [isSavingSelection, setIsSavingSelection] = useState(false)
 
-  // Track state for each API provider card
+  // Track state for each API provider card (only OpenAI for now)
   const [providerStates, setProviderStates] = useState<
-    Record<AIProvider, ProviderCardState>
+    Record<'openai', ProviderCardState>
   >({
-    claude: {
-      isOpen: false,
-      apiKey: '',
-      showKey: false,
-      isSaving: false,
-      hasSavedKey: false,
-      error: null,
-    },
     openai: {
-      isOpen: false,
-      apiKey: '',
-      showKey: false,
-      isSaving: false,
-      hasSavedKey: false,
-      error: null,
-    },
-    google: {
       isOpen: false,
       apiKey: '',
       showKey: false,
@@ -172,22 +152,29 @@ export function ProviderSetupScreen({
   useEffect(() => {
     const checkExistingState = async () => {
       try {
-        const [hasClaude, hasOpenAI, hasGoogle, currentProvider] = await Promise.all([
-          window.electronAPI.hasAPIKey('claude'),
+        const [hasOpenAI, currentProvider] = await Promise.all([
           window.electronAPI.hasAPIKey('openai'),
-          window.electronAPI.hasAPIKey('google'),
           window.electronAPI.getSelectedProvider(),
         ])
 
         setProviderStates((prev) => ({
           ...prev,
-          claude: { ...prev.claude, hasSavedKey: hasClaude },
           openai: { ...prev.openai, hasSavedKey: hasOpenAI },
-          google: { ...prev.google, hasSavedKey: hasGoogle },
         }))
 
+        // Convert stored provider to selection ID format
         if (currentProvider) {
-          setSelectedProvider(currentProvider)
+          // Check if it's a CLI provider
+          const cliTool = CLI_TOOLS.find(cli => cli.id === currentProvider)
+          if (cliTool) {
+            setSelectedProvider(cliTool.selectionId)
+          } else {
+            // Check if it's an API provider
+            const apiProvider = API_PROVIDERS.find(api => api.providerId === currentProvider)
+            if (apiProvider) {
+              setSelectedProvider(apiProvider.selectionId)
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to check existing state:', error)
@@ -204,17 +191,19 @@ export function ProviderSetupScreen({
     // Check CLIs first
     const firstCLI = detectedCLIs[0]
     if (firstCLI) {
-      setSelectedProvider(firstCLI)
-      return
+      const cliConfig = CLI_TOOLS.find(cli => cli.id === firstCLI)
+      if (cliConfig) {
+        setSelectedProvider(cliConfig.selectionId)
+        return
+      }
     }
 
     // Then check API keys
-    if (providerStates.claude.hasSavedKey) {
-      setSelectedProvider('claude')
-    } else if (providerStates.openai.hasSavedKey) {
-      setSelectedProvider('openai')
-    } else if (providerStates.google.hasSavedKey) {
-      setSelectedProvider('gemini')
+    if (providerStates.openai.hasSavedKey) {
+      const apiConfig = API_PROVIDERS.find(api => api.id === 'openai')
+      if (apiConfig) {
+        setSelectedProvider(apiConfig.selectionId)
+      }
     }
   }, [detectedCLIs, providerStates, selectedProvider])
 
@@ -222,7 +211,7 @@ export function ProviderSetupScreen({
    * Update a specific provider's state.
    */
   const updateProviderState = useCallback(
-    (provider: AIProvider, updates: Partial<ProviderCardState>) => {
+    (provider: 'openai', updates: Partial<ProviderCardState>) => {
       setProviderStates((prev) => ({
         ...prev,
         [provider]: { ...prev[provider], ...updates },
@@ -235,7 +224,7 @@ export function ProviderSetupScreen({
    * Handle saving an API key.
    */
   const handleSaveKey = useCallback(
-    async (provider: AIProvider) => {
+    async (provider: 'openai') => {
       const state = providerStates[provider]
       if (!state.apiKey.trim()) {
         updateProviderState(provider, { error: 'Please enter an API key' })
@@ -256,7 +245,7 @@ export function ProviderSetupScreen({
         // Auto-select this provider if none selected
         const apiConfig = API_PROVIDERS.find(p => p.id === provider)
         if (apiConfig && !selectedProvider) {
-          setSelectedProvider(apiConfig.providerId)
+          setSelectedProvider(apiConfig.selectionId)
         }
       } catch (error) {
         console.error(`Failed to save ${provider} API key:`, error)
@@ -277,20 +266,39 @@ export function ProviderSetupScreen({
   }, [])
 
   /**
+   * Convert selection ID to provider ID for storage.
+   */
+  const getProviderIdFromSelection = useCallback((selectionId: string): string | null => {
+    // Check if it's a CLI selection
+    if (selectionId.startsWith('cli:')) {
+      return selectionId.replace('cli:', '')
+    }
+    // Check if it's an API selection
+    if (selectionId.startsWith('api:')) {
+      const apiProvider = API_PROVIDERS.find(p => p.selectionId === selectionId)
+      return apiProvider?.providerId ?? null
+    }
+    return null
+  }, [])
+
+  /**
    * Handle continue button click.
    */
   const handleContinue = useCallback(async () => {
     if (!selectedProvider) return
 
+    const providerId = getProviderIdFromSelection(selectedProvider)
+    if (!providerId) return
+
     setIsSavingSelection(true)
     try {
-      await window.electronAPI.setSelectedProvider(selectedProvider)
+      await window.electronAPI.setSelectedProvider(providerId)
       onComplete()
     } catch (error) {
       console.error('Failed to save provider selection:', error)
       setIsSavingSelection(false)
     }
-  }, [selectedProvider, onComplete])
+  }, [selectedProvider, getProviderIdFromSelection, onComplete])
 
   /**
    * Check if user can continue.
@@ -298,9 +306,7 @@ export function ProviderSetupScreen({
    */
   const hasAnyProvider =
     detectedCLIs.length > 0 ||
-    providerStates.claude.hasSavedKey ||
-    providerStates.openai.hasSavedKey ||
-    providerStates.google.hasSavedKey
+    providerStates.openai.hasSavedKey
 
   const canContinue = hasAnyProvider && selectedProvider !== null
 
@@ -312,7 +318,7 @@ export function ProviderSetupScreen({
   /**
    * Check if an API provider is available (has saved key).
    */
-  const isAPIAvailable = (apiId: AIProvider) => providerStates[apiId].hasSavedKey
+  const isAPIAvailable = (apiId: 'openai') => providerStates[apiId].hasSavedKey
 
   return (
     <div className="flex min-h-full flex-col">
@@ -357,12 +363,12 @@ export function ProviderSetupScreen({
             <div className="space-y-2">
               {CLI_TOOLS.map((cli) => {
                 const isAvailable = isCLIAvailable(cli.id)
-                const isSelected = selectedProvider === cli.id
+                const isSelected = selectedProvider === cli.selectionId
                 return (
                   <button
                     key={cli.id}
                     type="button"
-                    onClick={() => isAvailable && handleSelectProvider(cli.id)}
+                    onClick={() => isAvailable && handleSelectProvider(cli.selectionId)}
                     disabled={!isAvailable}
                     className={cn(
                       'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
@@ -416,16 +422,18 @@ export function ProviderSetupScreen({
           <div className="rounded-lg border bg-card">
             <Accordion type="single" collapsible>
               {API_PROVIDERS.map((provider) => {
-                const state = providerStates[provider.id]
-                const isAvailable = isAPIAvailable(provider.id)
-                const isSelected = selectedProvider === provider.providerId
+                // Only 'openai' is currently supported
+                if (provider.id !== 'openai') return null
+                const state = providerStates.openai
+                const isAvailable = isAPIAvailable('openai')
+                const isSelected = selectedProvider === provider.selectionId
                 return (
                   <AccordionItem key={provider.id} value={provider.id}>
                     <div className="flex items-center">
                       {/* Selection button */}
                       <button
                         type="button"
-                        onClick={() => isAvailable && handleSelectProvider(provider.providerId)}
+                        onClick={() => isAvailable && handleSelectProvider(provider.selectionId)}
                         disabled={!isAvailable}
                         className={cn(
                           'flex items-center pl-3',
@@ -469,7 +477,7 @@ export function ProviderSetupScreen({
                             }
                             value={state.apiKey}
                             onChange={(e) =>
-                              updateProviderState(provider.id, {
+                              updateProviderState('openai', {
                                 apiKey: e.target.value,
                                 error: null,
                               })
@@ -483,7 +491,7 @@ export function ProviderSetupScreen({
                             size="icon-sm"
                             className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
                             onClick={() =>
-                              updateProviderState(provider.id, {
+                              updateProviderState('openai', {
                                 showKey: !state.showKey,
                               })
                             }
@@ -501,7 +509,7 @@ export function ProviderSetupScreen({
                         </div>
                         <Button
                           size="sm"
-                          onClick={() => handleSaveKey(provider.id)}
+                          onClick={() => handleSaveKey('openai')}
                           disabled={state.isSaving || !state.apiKey.trim()}
                         >
                           {state.isSaving ? (
