@@ -67,16 +67,28 @@ interface CLIToolConfig {
 
 /**
  * Available API providers.
- * Note: Currently only OpenAI has a dedicated API provider.
- * Claude and Google APIs would need provider implementations.
  */
 const API_PROVIDERS: APIProviderConfig[] = [
+  {
+    id: 'claude',
+    selectionId: 'api:claude',
+    providerId: 'claude',
+    name: 'Claude API',
+    description: "Use Anthropic's Claude via API",
+  },
   {
     id: 'openai',
     selectionId: 'api:openai',
     providerId: 'openai',
     name: 'OpenAI API',
     description: 'Use GPT models via API',
+  },
+  {
+    id: 'google',
+    selectionId: 'api:gemini',
+    providerId: 'gemini',
+    name: 'Google AI API',
+    description: 'Use Gemini models via API',
   },
 ]
 
@@ -134,11 +146,27 @@ export function ProviderSetupScreen({
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
   const [isSavingSelection, setIsSavingSelection] = useState(false)
 
-  // Track state for each API provider card (only OpenAI for now)
+  // Track state for each API provider card
   const [providerStates, setProviderStates] = useState<
-    Record<'openai', ProviderCardState>
+    Record<AIProvider, ProviderCardState>
   >({
+    claude: {
+      isOpen: false,
+      apiKey: '',
+      showKey: false,
+      isSaving: false,
+      hasSavedKey: false,
+      error: null,
+    },
     openai: {
+      isOpen: false,
+      apiKey: '',
+      showKey: false,
+      isSaving: false,
+      hasSavedKey: false,
+      error: null,
+    },
+    google: {
       isOpen: false,
       apiKey: '',
       showKey: false,
@@ -152,14 +180,18 @@ export function ProviderSetupScreen({
   useEffect(() => {
     const checkExistingState = async () => {
       try {
-        const [hasOpenAI, currentProvider] = await Promise.all([
+        const [hasClaude, hasOpenAI, hasGoogle, currentProvider] = await Promise.all([
+          window.electronAPI.hasAPIKey('claude'),
           window.electronAPI.hasAPIKey('openai'),
+          window.electronAPI.hasAPIKey('google'),
           window.electronAPI.getSelectedProvider(),
         ])
 
         setProviderStates((prev) => ({
           ...prev,
+          claude: { ...prev.claude, hasSavedKey: hasClaude },
           openai: { ...prev.openai, hasSavedKey: hasOpenAI },
+          google: { ...prev.google, hasSavedKey: hasGoogle },
         }))
 
         // Convert stored provider to selection ID format
@@ -199,10 +231,10 @@ export function ProviderSetupScreen({
     }
 
     // Then check API keys
-    if (providerStates.openai.hasSavedKey) {
-      const apiConfig = API_PROVIDERS.find(api => api.id === 'openai')
-      if (apiConfig) {
-        setSelectedProvider(apiConfig.selectionId)
+    for (const apiProvider of API_PROVIDERS) {
+      if (providerStates[apiProvider.id].hasSavedKey) {
+        setSelectedProvider(apiProvider.selectionId)
+        return
       }
     }
   }, [detectedCLIs, providerStates, selectedProvider])
@@ -211,7 +243,7 @@ export function ProviderSetupScreen({
    * Update a specific provider's state.
    */
   const updateProviderState = useCallback(
-    (provider: 'openai', updates: Partial<ProviderCardState>) => {
+    (provider: AIProvider, updates: Partial<ProviderCardState>) => {
       setProviderStates((prev) => ({
         ...prev,
         [provider]: { ...prev[provider], ...updates },
@@ -224,7 +256,7 @@ export function ProviderSetupScreen({
    * Handle saving an API key.
    */
   const handleSaveKey = useCallback(
-    async (provider: 'openai') => {
+    async (provider: AIProvider) => {
       const state = providerStates[provider]
       if (!state.apiKey.trim()) {
         updateProviderState(provider, { error: 'Please enter an API key' })
@@ -306,7 +338,9 @@ export function ProviderSetupScreen({
    */
   const hasAnyProvider =
     detectedCLIs.length > 0 ||
-    providerStates.openai.hasSavedKey
+    providerStates.claude.hasSavedKey ||
+    providerStates.openai.hasSavedKey ||
+    providerStates.google.hasSavedKey
 
   const canContinue = hasAnyProvider && selectedProvider !== null
 
@@ -318,7 +352,7 @@ export function ProviderSetupScreen({
   /**
    * Check if an API provider is available (has saved key).
    */
-  const isAPIAvailable = (apiId: 'openai') => providerStates[apiId].hasSavedKey
+  const isAPIAvailable = (apiId: AIProvider) => providerStates[apiId].hasSavedKey
 
   return (
     <div className="flex min-h-full flex-col">
@@ -422,10 +456,8 @@ export function ProviderSetupScreen({
           <div className="rounded-lg border bg-card">
             <Accordion type="single" collapsible>
               {API_PROVIDERS.map((provider) => {
-                // Only 'openai' is currently supported
-                if (provider.id !== 'openai') return null
-                const state = providerStates.openai
-                const isAvailable = isAPIAvailable('openai')
+                const state = providerStates[provider.id]
+                const isAvailable = isAPIAvailable(provider.id)
                 const isSelected = selectedProvider === provider.selectionId
                 return (
                   <AccordionItem key={provider.id} value={provider.id}>
@@ -477,7 +509,7 @@ export function ProviderSetupScreen({
                             }
                             value={state.apiKey}
                             onChange={(e) =>
-                              updateProviderState('openai', {
+                              updateProviderState(provider.id, {
                                 apiKey: e.target.value,
                                 error: null,
                               })
@@ -491,7 +523,7 @@ export function ProviderSetupScreen({
                             size="icon-sm"
                             className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
                             onClick={() =>
-                              updateProviderState('openai', {
+                              updateProviderState(provider.id, {
                                 showKey: !state.showKey,
                               })
                             }
@@ -509,7 +541,7 @@ export function ProviderSetupScreen({
                         </div>
                         <Button
                           size="sm"
-                          onClick={() => handleSaveKey('openai')}
+                          onClick={() => handleSaveKey(provider.id)}
                           disabled={state.isSaving || !state.apiKey.trim()}
                         >
                           {state.isSaving ? (
