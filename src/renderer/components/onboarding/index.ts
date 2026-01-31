@@ -1,3 +1,6 @@
+export { OnboardingFlow } from './OnboardingFlow'
+export type { OnboardingFlowProps } from './OnboardingFlow'
+
 export { ProviderSetupScreen } from './ProviderSetupScreen'
 export type { ProviderSetupScreenProps } from './ProviderSetupScreen'
 
