@@ -14,18 +14,20 @@ import type {
   HistoryEntry,
 } from '../schemas/history.schema';
 
-/**
- * Settings validation result type.
- */
+// ============================================
+// Settings Types
+// ============================================
+
 export interface SettingsValidationResult {
   isValid: boolean;
   errors?: string[];
   warnings?: string[];
 }
 
-/**
- * Result types for AI operations
- */
+// ============================================
+// AI Operation Types
+// ============================================
+
 export interface AIOperationResult<T> {
   success: true;
   data: T;
@@ -43,9 +45,17 @@ export interface AIOperationError {
 
 export type AIResult<T> = AIOperationResult<T> | AIOperationError;
 
-/**
- * Parameters for refining a resume
- */
+export interface AIProgressUpdate {
+  operationId: string;
+  status: 'started' | 'processing' | 'validating' | 'completed' | 'cancelled' | 'error';
+  message?: string;
+  progress?: number;
+}
+
+// ============================================
+// AI Request Parameters
+// ============================================
+
 export interface RefineResumeParams {
   resume: Resume;
   jobPosting: string;
@@ -55,9 +65,6 @@ export interface RefineResumeParams {
   };
 }
 
-/**
- * Parameters for generating a cover letter
- */
 export interface GenerateCoverLetterParams {
   resume: Resume;
   jobPosting: string;
@@ -74,19 +81,10 @@ export interface GenerateCoverLetterParams {
   };
 }
 
-/**
- * Progress update for AI operations
- */
-export interface AIProgressUpdate {
-  operationId: string;
-  status: 'started' | 'processing' | 'validating' | 'completed' | 'cancelled' | 'error';
-  message?: string;
-  progress?: number;
-}
+// ============================================
+// PDF Export Types (Renderer side - uses Blob)
+// ============================================
 
-/**
- * Parameters for exporting both resume and cover letter PDFs
- */
 export interface ExportApplicationPDFsParams {
   baseFolderPath: string;
   subfolderName: string;
@@ -96,9 +94,6 @@ export interface ExportApplicationPDFsParams {
   coverLetterFileName: string;
 }
 
-/**
- * Parameters for exporting a single PDF
- */
 export interface ExportSinglePDFParams {
   baseFolderPath: string;
   subfolderName: string;
@@ -106,36 +101,65 @@ export interface ExportSinglePDFParams {
   fileName: string;
 }
 
-/**
- * Result of PDF export operation
- */
 export interface ExportPDFResult {
   success: boolean;
   folderPath?: string;
   error?: string;
 }
 
-/**
- * Parameters for checking if export files exist
- */
 export interface CheckExportFilesParams {
   baseFolderPath: string;
   subfolderName: string;
   fileNames: string[];
 }
 
-/**
- * Result of checking if export files exist
- */
 export interface CheckExportFilesResult {
   exists: boolean;
   existingFiles: string[];
 }
 
+// ============================================
+// PDF Export Types (IPC side - uses Uint8Array)
+// ============================================
+
+export interface ExportApplicationPDFsIPCParams {
+  baseFolderPath: string;
+  subfolderName: string;
+  resumeData: Uint8Array;
+  coverLetterData: Uint8Array;
+  resumeFileName: string;
+  coverLetterFileName: string;
+}
+
+export interface ExportSinglePDFIPCParams {
+  baseFolderPath: string;
+  subfolderName: string;
+  pdfData: Uint8Array;
+  fileName: string;
+}
+
+// ============================================
+// File Operation Types
+// ============================================
+
+export interface LoadResumeResult {
+  content: string;
+  filePath: string;
+}
+
+export interface SaveResumeData {
+  content: string;
+  filePath?: string;
+}
+
+// ============================================
+// Electron API Interface
+// ============================================
+
 export interface ElectronAPI {
   // File operations
-  loadResume: () => Promise<{ content: string; filePath: string } | null>;
-  saveResume: (data: { content: string; filePath?: string }) => Promise<string | null>;
+  loadResume: () => Promise<LoadResumeResult | null>;
+  saveResume: (data: SaveResumeData) => Promise<string | null>;
   generatePDF: (pdfData: Uint8Array) => Promise<string | null>;
   openFolder: (folderPath: string) => Promise<void>;
   selectFolder: () => Promise<string | null>;

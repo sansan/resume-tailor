@@ -3,19 +3,43 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { aiProcessorService } from './services/ai-processor.service';
 import { AIProcessorError, AIProcessorErrorCode } from '@app-types/ai-processor.types';
-import { settingsService, SettingsError, SettingsErrorCode, type SettingsValidationResult } from './services/settings.service';
+import { settingsService, SettingsError, SettingsErrorCode } from './services/settings.service';
 import { historyService } from './services/history.service';
-import type { Resume } from '@schemas/resume.schema';
 import type { RefineResumeOptions, GenerateCoverLetterOptions } from '@app-types/ai-processor.types';
-import type { CompanyInfo } from '@prompts/cover-letter.prompt';
-import type { ResumeRefinementOptions } from '@prompts/resume-refinement.prompt';
-import type { CoverLetterGenerationOptions } from '@prompts/cover-letter.prompt';
-import type {
-  RefinedResume,
-  GeneratedCoverLetter,
-} from '@schemas/ai-output.schema';
+import type { ResumeRefinementOptions, } from '@prompts/resume-refinement.prompt';
+import type { CoverLetterGenerationOptions, CompanyInfo } from '@prompts/cover-letter.prompt';
+import type { RefinedResume, GeneratedCoverLetter } from '@schemas/ai-output.schema';
 import type { AppSettings, PartialAppSettings, ResumePromptTemplateSettings, CoverLetterPromptTemplateSettings } from '@schemas/settings.schema';
 import type { ExportHistory, HistoryEntry } from '@schemas/history.schema';
+
+// Import shared types from the single source of truth
+import type {
+  LoadResumeResult,
+  SaveResumeData,
+  AIOperationError,
+  AIResult,
+  AIProgressUpdate,
+  ExportApplicationPDFsIPCParams,
+  ExportSinglePDFIPCParams,
+  ExportPDFResult,
+  CheckExportFilesParams,
+  CheckExportFilesResult,
+} from '@app-types/electron';
+import type { Resume } from '@schemas/resume.schema';
+
+// IPC-specific param types (may differ slightly from renderer types)
+interface RefineResumeIPCParams {
+  resume: Resume;
+  jobPosting: string;
+  options?: RefineResumeOptions;
+}
+
+interface GenerateCoverLetterIPCParams {
+  resume: Resume;
+  jobPosting: string;
+  companyInfo?: CompanyInfo;
+  options?: GenerateCoverLetterOptions;
+}
 
 /**
  * Converts resume prompt settings to ResumeRefinementOptions for the AI processor.
@@ -47,120 +71,6 @@ function convertCoverLetterSettingsToOptions(settings: CoverLetterPromptTemplate
 }
 
 /**
- * IPC Handlers for file system operations, dialogs, and AI operations.
- * These handlers provide the bridge between the renderer process
- * and system-level operations.
- */
-
-export interface LoadResumeResult {
-  content: string;
-  filePath: string;
-}
-
-export interface SaveResumeData {
-  content: string;
-  filePath?: string;
-}
-
-/**
- * Parameters for refining a resume via IPC
- */
-export interface RefineResumeParams {
-  resume: Resume;
-  jobPosting: string;
-  options?: RefineResumeOptions;
-}
-
-/**
- * Parameters for generating a cover letter via IPC
- */
-export interface GenerateCoverLetterParams {
-  resume: Resume;
-  jobPosting: string;
-  companyInfo?: CompanyInfo;
-  options?: GenerateCoverLetterOptions;
-}
-
-/**
- * Result types for AI operations
- */
-export interface AIOperationResult<T> {
-  success: true;
-  data: T;
-  processingTimeMs?: number;
-}
-
-export interface AIOperationError {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-}
-
-export type AIResult<T> = AIOperationResult<T> | AIOperationError;
-
-/**
- * Parameters for exporting both resume and cover letter PDFs
- * Uses Uint8Array since Blob doesn't serialize through IPC
- */
-export interface ExportApplicationPDFsParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  resumeData: Uint8Array;
-  coverLetterData: Uint8Array;
-  resumeFileName: string;
-  coverLetterFileName: string;
-}
-
-/**
- * Parameters for exporting a single PDF
- * Uses Uint8Array since Blob doesn't serialize through IPC
- */
-export interface ExportSinglePDFParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  pdfData: Uint8Array;
-  fileName: string;
-}
-
-/**
- * Result of PDF export operation
- */
-export interface ExportPDFResult {
-  success: boolean;
-  folderPath?: string;
-  error?: string;
-}
-
-/**
- * Parameters for checking if export files exist
- */
-export interface CheckExportFilesParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  fileNames: string[];
-}
-
-/**
- * Result of checking if export files exist
- */
-export interface CheckExportFilesResult {
-  exists: boolean;
-  existingFiles: string[];
-}
-
-/**
- * Progress update for AI operations
- */
-export interface AIProgressUpdate {
-  status: 'started' | 'processing' | 'validating' | 'completed' | 'cancelled' | 'error';
-  message?: string;
-  progress?: number;
-}
-
-/**
  * Map to track active AI operations for cancellation support
  */
 const activeOperations = new Map<string, AbortController>();
@@ -175,7 +85,7 @@ function generateOperationId(): string {
 /**
  * Sends progress update to all renderer windows
  */
-function sendProgressUpdate(operationId: string, update: AIProgressUpdate): void {
+function sendProgressUpdate(operationId: string, update: Omit<AIProgressUpdate, 'operationId'>): void {
   const windows = BrowserWindow.getAllWindows();
   for (const win of windows) {
     win.webContents.send('ai:progress', { operationId, ...update });
@@ -214,7 +124,10 @@ function convertErrorToResult(error: unknown): AIOperationError {
  * Call this once during app initialization.
  */
 export function registerIPCHandlers(): void {
-  // Load resume from file using open dialog
+  // ============================================
+  // File Operations
+  // ============================================
+
   ipcMain.handle('load-resume', async (): Promise<LoadResumeResult | null> => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
@@ -234,7 +147,6 @@ export function registerIPCHandlers(): void {
     return { content, filePath };
   });
 
-  // Save resume to file (with optional existing path or save dialog)
   ipcMain.handle('save-resume', async (_event, data: SaveResumeData): Promise<string | null> => {
     let targetPath = data.filePath;
 
@@ -254,7 +166,6 @@ export function registerIPCHandlers(): void {
     return targetPath;
   });
 
-  // Generate PDF - save PDF buffer to file
   ipcMain.handle('generate-pdf', async (_event, pdfData: Buffer): Promise<string | null> => {
     const result = await dialog.showSaveDialog({
       filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
@@ -269,12 +180,10 @@ export function registerIPCHandlers(): void {
     return result.filePath;
   });
 
-  // Open folder in system file explorer
   ipcMain.handle('open-folder', async (_event, folderPath: string): Promise<void> => {
     await shell.openPath(folderPath);
   });
 
-  // Select folder using directory picker dialog
   ipcMain.handle('select-folder', async (): Promise<string | null> => {
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory', 'createDirectory'],
@@ -291,7 +200,6 @@ export function registerIPCHandlers(): void {
   // PDF Export Handlers
   // ============================================
 
-  // Check if export files already exist (for overwrite confirmation)
   ipcMain.handle(
     'check-export-files',
     async (_event, params: CheckExportFilesParams): Promise<CheckExportFilesResult> => {
@@ -312,32 +220,23 @@ export function registerIPCHandlers(): void {
     }
   );
 
-  // Export both resume and cover letter PDFs to a company subfolder
   ipcMain.handle(
     'export-application-pdfs',
-    async (_event, params: ExportApplicationPDFsParams): Promise<ExportPDFResult> => {
+    async (_event, params: ExportApplicationPDFsIPCParams): Promise<ExportPDFResult> => {
       try {
-        // Create the full folder path
         const folderPath = path.join(params.baseFolderPath, params.subfolderName);
 
-        // Create the directory if it doesn't exist
         if (!fs.existsSync(folderPath)) {
           fs.mkdirSync(folderPath, { recursive: true });
         }
 
-        // Convert Uint8Array to Buffer and save
         const resumeBuffer = Buffer.from(params.resumeData);
-        const resumePath = path.join(folderPath, params.resumeFileName);
-        fs.writeFileSync(resumePath, resumeBuffer);
+        fs.writeFileSync(path.join(folderPath, params.resumeFileName), resumeBuffer);
 
         const coverLetterBuffer = Buffer.from(params.coverLetterData);
-        const coverLetterPath = path.join(folderPath, params.coverLetterFileName);
-        fs.writeFileSync(coverLetterPath, coverLetterBuffer);
+        fs.writeFileSync(path.join(folderPath, params.coverLetterFileName), coverLetterBuffer);
 
-        return {
-          success: true,
-          folderPath,
-        };
+        return { success: true, folderPath };
       } catch (error) {
         return {
           success: false,
@@ -347,28 +246,20 @@ export function registerIPCHandlers(): void {
     }
   );
 
-  // Export a single PDF to a company subfolder
   ipcMain.handle(
     'export-single-pdf',
-    async (_event, params: ExportSinglePDFParams): Promise<ExportPDFResult> => {
+    async (_event, params: ExportSinglePDFIPCParams): Promise<ExportPDFResult> => {
       try {
-        // Create the full folder path
         const folderPath = path.join(params.baseFolderPath, params.subfolderName);
 
-        // Create the directory if it doesn't exist
         if (!fs.existsSync(folderPath)) {
           fs.mkdirSync(folderPath, { recursive: true });
         }
 
-        // Convert Uint8Array to Buffer and save
         const buffer = Buffer.from(params.pdfData);
-        const filePath = path.join(folderPath, params.fileName);
-        fs.writeFileSync(filePath, buffer);
+        fs.writeFileSync(path.join(folderPath, params.fileName), buffer);
 
-        return {
-          success: true,
-          folderPath,
-        };
+        return { success: true, folderPath };
       } catch (error) {
         return {
           success: false,
@@ -382,12 +273,10 @@ export function registerIPCHandlers(): void {
   // Settings Handlers
   // ============================================
 
-  // Get current application settings
   ipcMain.handle('settings:get', async (): Promise<AppSettings> => {
     return settingsService.loadSettings();
   });
 
-  // Save application settings (partial update)
   ipcMain.handle(
     'settings:save',
     async (_event, settings: PartialAppSettings): Promise<AppSettings> => {
@@ -395,7 +284,6 @@ export function registerIPCHandlers(): void {
     }
   );
 
-  // Select output folder using directory picker dialog
   ipcMain.handle('settings:select-folder', async (): Promise<string | null> => {
     const result = await dialog.showOpenDialog({
       title: 'Select Output Folder',
@@ -412,7 +300,6 @@ export function registerIPCHandlers(): void {
       return null;
     }
 
-    // Validate that the selected folder is writable
     if (!settingsService.isValidOutputFolder(selectedPath)) {
       throw new SettingsError(
         SettingsErrorCode.FOLDER_VALIDATION_ERROR,
@@ -424,20 +311,14 @@ export function registerIPCHandlers(): void {
     return selectedPath;
   });
 
-  // Reset settings to defaults
   ipcMain.handle('settings:reset', async (): Promise<AppSettings> => {
     return settingsService.resetSettings();
   });
 
-  // Validate settings without saving
-  ipcMain.handle(
-    'settings:validate',
-    async (_event, settings: PartialAppSettings): Promise<SettingsValidationResult> => {
-      return settingsService.validateSettings(settings);
-    }
-  );
+  ipcMain.handle('settings:validate', async (_event, settings: PartialAppSettings) => {
+    return settingsService.validateSettings(settings);
+  });
 
-  // Get default output folder path
   ipcMain.handle('settings:get-default-folder', async (): Promise<string> => {
     return settingsService.getDefaultExportFolderPath();
   });
@@ -446,32 +327,26 @@ export function registerIPCHandlers(): void {
   // History Handlers
   // ============================================
 
-  // Get export history
   ipcMain.handle('history:get', async (): Promise<ExportHistory> => {
     return historyService.loadHistory();
   });
 
-  // Get recent history entries
   ipcMain.handle('history:get-recent', async (_event, limit?: number): Promise<HistoryEntry[]> => {
     return historyService.getRecentEntries(limit);
   });
 
-  // Add entry to history
   ipcMain.handle('history:add', async (_event, entry: HistoryEntry): Promise<void> => {
     return historyService.addEntry(entry);
   });
 
-  // Delete entry from history
   ipcMain.handle('history:delete', async (_event, entryId: string): Promise<void> => {
     return historyService.deleteEntry(entryId);
   });
 
-  // Clear all history
   ipcMain.handle('history:clear', async (): Promise<void> => {
     return historyService.clearHistory();
   });
 
-  // Open file in system default application
   ipcMain.handle('history:open-file', async (_event, filePath: string): Promise<boolean> => {
     try {
       if (!fs.existsSync(filePath)) {
@@ -488,15 +363,13 @@ export function registerIPCHandlers(): void {
   // AI Operation Handlers
   // ============================================
 
-  // Check if Claude Code CLI is available
   ipcMain.handle('ai:check-availability', async (): Promise<boolean> => {
     return aiProcessorService.isAvailable();
   });
 
-  // Refine resume with AI
   ipcMain.handle(
     'ai:refine-resume',
-    async (_event, params: RefineResumeParams): Promise<AIResult<RefinedResume>> => {
+    async (_event, params: RefineResumeIPCParams): Promise<AIResult<RefinedResume>> => {
       const operationId = generateOperationId();
       const abortController = new AbortController();
       activeOperations.set(operationId, abortController);
@@ -504,41 +377,29 @@ export function registerIPCHandlers(): void {
       const startTime = Date.now();
 
       try {
-        // Send progress: started
         sendProgressUpdate(operationId, {
           status: 'started',
           message: 'Starting resume refinement...',
           progress: 0,
         });
 
-        // Check if operation was cancelled before starting
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, {
-            status: 'cancelled',
-            message: 'Operation was cancelled',
-          });
+          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
           return {
             success: false,
-            error: {
-              code: AIProcessorErrorCode.CANCELLED,
-              message: 'Operation was cancelled by user',
-            },
+            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
           };
         }
 
-        // Load settings to get prompt configuration
         const settings = await settingsService.loadSettings();
         const promptOptionsFromSettings = convertResumeSettingsToOptions(settings.resumePromptTemplate);
 
-        // Send progress: processing
         sendProgressUpdate(operationId, {
           status: 'processing',
           message: 'Analyzing job posting and refining resume...',
           progress: 25,
         });
 
-        // Merge settings-based options with any options passed from the renderer
-        // Options from params take precedence over settings
         const mergedOptions: RefineResumeOptions = {
           ...params.options,
           promptOptions: {
@@ -547,29 +408,20 @@ export function registerIPCHandlers(): void {
           },
         };
 
-        // Execute the refinement
         const result = await aiProcessorService.refineResume(
           params.resume,
           params.jobPosting,
           mergedOptions
         );
 
-        // Check if cancelled during processing
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, {
-            status: 'cancelled',
-            message: 'Operation was cancelled',
-          });
+          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
           return {
             success: false,
-            error: {
-              code: AIProcessorErrorCode.CANCELLED,
-              message: 'Operation was cancelled by user',
-            },
+            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
           };
         }
 
-        // Send progress: completed
         const processingTimeMs = Date.now() - startTime;
         sendProgressUpdate(operationId, {
           status: 'completed',
@@ -577,17 +429,10 @@ export function registerIPCHandlers(): void {
           progress: 100,
         });
 
-        return {
-          success: true,
-          data: result,
-          processingTimeMs,
-        };
+        return { success: true, data: result, processingTimeMs };
       } catch (error) {
         const errorResult = convertErrorToResult(error);
-        sendProgressUpdate(operationId, {
-          status: 'error',
-          message: errorResult.error.message,
-        });
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
         return errorResult;
       } finally {
         activeOperations.delete(operationId);
@@ -595,10 +440,9 @@ export function registerIPCHandlers(): void {
     }
   );
 
-  // Generate cover letter with AI
   ipcMain.handle(
     'ai:generate-cover-letter',
-    async (_event, params: GenerateCoverLetterParams): Promise<AIResult<GeneratedCoverLetter>> => {
+    async (_event, params: GenerateCoverLetterIPCParams): Promise<AIResult<GeneratedCoverLetter>> => {
       const operationId = generateOperationId();
       const abortController = new AbortController();
       activeOperations.set(operationId, abortController);
@@ -606,42 +450,29 @@ export function registerIPCHandlers(): void {
       const startTime = Date.now();
 
       try {
-        // Send progress: started
         sendProgressUpdate(operationId, {
           status: 'started',
           message: 'Starting cover letter generation...',
           progress: 0,
         });
 
-        // Check if operation was cancelled before starting
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, {
-            status: 'cancelled',
-            message: 'Operation was cancelled',
-          });
+          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
           return {
             success: false,
-            error: {
-              code: AIProcessorErrorCode.CANCELLED,
-              message: 'Operation was cancelled by user',
-            },
+            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
           };
         }
 
-        // Load settings to get prompt configuration
         const settings = await settingsService.loadSettings();
         const promptOptionsFromSettings = convertCoverLetterSettingsToOptions(settings.coverLetterPromptTemplate);
 
-        // Send progress: processing
         sendProgressUpdate(operationId, {
           status: 'processing',
           message: 'Analyzing resume and job posting, generating cover letter...',
           progress: 25,
         });
 
-        // Build options for cover letter generation
-        // Merge settings-based options with any options passed from the renderer
-        // Options from params take precedence over settings
         const coverLetterOptions: GenerateCoverLetterOptions = {
           ...params.options,
           promptOptions: {
@@ -653,29 +484,20 @@ export function registerIPCHandlers(): void {
           coverLetterOptions.companyInfo = params.companyInfo;
         }
 
-        // Execute the generation
         const result = await aiProcessorService.generateCoverLetter(
           params.resume,
           params.jobPosting,
           coverLetterOptions
         );
 
-        // Check if cancelled during processing
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, {
-            status: 'cancelled',
-            message: 'Operation was cancelled',
-          });
+          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
           return {
             success: false,
-            error: {
-              code: AIProcessorErrorCode.CANCELLED,
-              message: 'Operation was cancelled by user',
-            },
+            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
           };
         }
 
-        // Send progress: completed
         const processingTimeMs = Date.now() - startTime;
         sendProgressUpdate(operationId, {
           status: 'completed',
@@ -683,17 +505,10 @@ export function registerIPCHandlers(): void {
           progress: 100,
         });
 
-        return {
-          success: true,
-          data: result,
-          processingTimeMs,
-        };
+        return { success: true, data: result, processingTimeMs };
       } catch (error) {
         const errorResult = convertErrorToResult(error);
-        sendProgressUpdate(operationId, {
-          status: 'error',
-          message: errorResult.error.message,
-        });
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
         return errorResult;
       } finally {
         activeOperations.delete(operationId);
@@ -701,7 +516,6 @@ export function registerIPCHandlers(): void {
     }
   );
 
-  // Cancel an active AI operation
   ipcMain.handle('ai:cancel-operation', async (_event, operationId: string): Promise<boolean> => {
     const controller = activeOperations.get(operationId);
     if (controller) {
@@ -718,34 +532,17 @@ export function registerIPCHandlers(): void {
  * Useful for testing or cleanup.
  */
 export function removeIPCHandlers(): void {
-  ipcMain.removeHandler('load-resume');
-  ipcMain.removeHandler('save-resume');
-  ipcMain.removeHandler('generate-pdf');
-  ipcMain.removeHandler('open-folder');
-  ipcMain.removeHandler('select-folder');
-  // Export handlers
-  ipcMain.removeHandler('check-export-files');
-  ipcMain.removeHandler('export-application-pdfs');
-  ipcMain.removeHandler('export-single-pdf');
-  // Settings handlers
-  ipcMain.removeHandler('settings:get');
-  ipcMain.removeHandler('settings:save');
-  ipcMain.removeHandler('settings:select-folder');
-  ipcMain.removeHandler('settings:reset');
-  ipcMain.removeHandler('settings:validate');
-  ipcMain.removeHandler('settings:get-default-folder');
-  // History handlers
-  ipcMain.removeHandler('history:get');
-  ipcMain.removeHandler('history:get-recent');
-  ipcMain.removeHandler('history:add');
-  ipcMain.removeHandler('history:delete');
-  ipcMain.removeHandler('history:clear');
-  ipcMain.removeHandler('history:open-file');
-  // AI handlers
-  ipcMain.removeHandler('ai:check-availability');
-  ipcMain.removeHandler('ai:refine-resume');
-  ipcMain.removeHandler('ai:generate-cover-letter');
-  ipcMain.removeHandler('ai:cancel-operation');
-  // Clear any active operations
+  const handlers = [
+    'load-resume', 'save-resume', 'generate-pdf', 'open-folder', 'select-folder',
+    'check-export-files', 'export-application-pdfs', 'export-single-pdf',
+    'settings:get', 'settings:save', 'settings:select-folder', 'settings:reset', 'settings:validate', 'settings:get-default-folder',
+    'history:get', 'history:get-recent', 'history:add', 'history:delete', 'history:clear', 'history:open-file',
+    'ai:check-availability', 'ai:refine-resume', 'ai:generate-cover-letter', 'ai:cancel-operation',
+  ];
+
+  for (const handler of handlers) {
+    ipcMain.removeHandler(handler);
+  }
+
   activeOperations.clear();
 }

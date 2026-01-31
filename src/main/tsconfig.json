@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.electron.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "baseUrl": "../.."
+  },
+  "include": ["**/*", "../schemas/**/*", "../types/**/*", "../shared/**/*", "../config/**/*", "../prompts/**/*"]
+}

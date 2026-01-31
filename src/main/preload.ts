@@ -1,177 +1,19 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-// Import types for AI operations
-import type { Resume } from '@schemas/resume.schema';
+// Import shared types from the single source of truth
 import type {
-  RefinedResume,
-  GeneratedCoverLetter,
-} from '@schemas/ai-output.schema';
-import type { RefineResumeOptions, GenerateCoverLetterOptions } from '@app-types/ai-processor.types';
-import type { CompanyInfo } from '@prompts/cover-letter.prompt';
-import type {
-  AppSettings,
-  PartialAppSettings,
-} from '@schemas/settings.schema';
-import type { ExportHistory, HistoryEntry } from '@schemas/history.schema';
-import type { SettingsValidationResult } from './services/settings.service';
-
-/**
- * Result types for AI operations
- */
-export interface AIOperationResult<T> {
-  success: true;
-  data: T;
-  processingTimeMs?: number;
-}
-
-export interface AIOperationError {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-}
-
-export type AIResult<T> = AIOperationResult<T> | AIOperationError;
-
-/**
- * Parameters for refining a resume
- */
-export interface RefineResumeParams {
-  resume: Resume;
-  jobPosting: string;
-  options?: RefineResumeOptions;
-}
-
-/**
- * Parameters for generating a cover letter
- */
-export interface GenerateCoverLetterParams {
-  resume: Resume;
-  jobPosting: string;
-  companyInfo?: CompanyInfo;
-  options?: GenerateCoverLetterOptions;
-}
-
-/**
- * Progress update for AI operations
- */
-export interface AIProgressUpdate {
-  status: 'started' | 'processing' | 'validating' | 'completed' | 'cancelled' | 'error';
-  message?: string;
-  progress?: number;
-}
-
-/**
- * Parameters for exporting both resume and cover letter PDFs (renderer side - uses Blob)
- */
-export interface ExportApplicationPDFsParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  resumeBlob: Blob;
-  coverLetterBlob: Blob;
-  resumeFileName: string;
-  coverLetterFileName: string;
-}
-
-/**
- * Parameters for exporting a single PDF (renderer side - uses Blob)
- */
-export interface ExportSinglePDFParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  pdfBlob: Blob;
-  fileName: string;
-}
-
-/**
- * Internal IPC params (uses Uint8Array since Blob doesn't serialize)
- */
-interface ExportApplicationPDFsIPCParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  resumeData: Uint8Array;
-  coverLetterData: Uint8Array;
-  resumeFileName: string;
-  coverLetterFileName: string;
-}
-
-interface ExportSinglePDFIPCParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  pdfData: Uint8Array;
-  fileName: string;
-}
-
-/**
- * Result of PDF export operation
- */
-export interface ExportPDFResult {
-  success: boolean;
-  folderPath?: string;
-  error?: string;
-}
-
-/**
- * Parameters for checking if export files exist
- */
-export interface CheckExportFilesParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  fileNames: string[];
-}
-
-/**
- * Result of checking if export files exist
- */
-export interface CheckExportFilesResult {
-  exists: boolean;
-  existingFiles: string[];
-}
-
-// Define the API that will be exposed to the renderer process
-export interface ElectronAPI {
-  loadResume: () => Promise<{ content: string; filePath: string } | null>;
-  saveResume: (data: { content: string; filePath?: string }) => Promise<string | null>;
-  generatePDF: (pdfData: Uint8Array) => Promise<string | null>;
-  openFolder: (folderPath: string) => Promise<void>;
-  selectFolder: () => Promise<string | null>;
-
-  // Export Operations
-  checkExportFiles: (params: CheckExportFilesParams) => Promise<CheckExportFilesResult>;
-  exportApplicationPDFs: (params: ExportApplicationPDFsParams) => Promise<ExportPDFResult>;
-  exportSinglePDF: (params: ExportSinglePDFParams) => Promise<ExportPDFResult>;
-
-  // AI Operations
-  refineResume: (params: RefineResumeParams) => Promise<AIResult<RefinedResume>>;
-  generateCoverLetter: (params: GenerateCoverLetterParams) => Promise<AIResult<GeneratedCoverLetter>>;
-  cancelAIOperation: (operationId: string) => Promise<boolean>;
-  checkAIAvailability: () => Promise<boolean>;
-
-  // AI Progress events
-  onAIProgress: (callback: (update: AIProgressUpdate & { operationId: string }) => void) => () => void;
-
-  // Settings Operations
-  getSettings: () => Promise<AppSettings>;
-  saveSettings: (settings: PartialAppSettings) => Promise<AppSettings>;
-  selectOutputFolder: () => Promise<string | null>;
-  resetSettings: () => Promise<AppSettings>;
-  validateSettings: (settings: PartialAppSettings) => Promise<SettingsValidationResult>;
-  getDefaultOutputFolder: () => Promise<string>;
-
-  // History Operations
-  getExportHistory: () => Promise<ExportHistory>;
-  getRecentExports: (limit?: number) => Promise<HistoryEntry[]>;
-  addToHistory: (entry: HistoryEntry) => Promise<void>;
-  deleteHistoryEntry: (entryId: string) => Promise<void>;
-  clearHistory: () => Promise<void>;
-  openHistoryFile: (filePath: string) => Promise<boolean>;
-}
+  ElectronAPI,
+  AIProgressUpdate,
+  ExportApplicationPDFsParams,
+  ExportSinglePDFParams,
+  ExportApplicationPDFsIPCParams,
+  ExportSinglePDFIPCParams,
+} from '@app-types/electron';
 
 // Expose protected methods that allow the renderer process to use
 // ipcRenderer without exposing the entire object
 const electronAPI: ElectronAPI = {
+  // File operations
   loadResume: () => ipcRenderer.invoke('load-resume'),
   saveResume: (data) => ipcRenderer.invoke('save-resume', data),
   generatePDF: (pdfData) => ipcRenderer.invoke('generate-pdf', Buffer.from(pdfData)),
@@ -180,7 +22,7 @@ const electronAPI: ElectronAPI = {
 
   // Export Operations
   checkExportFiles: (params) => ipcRenderer.invoke('check-export-files', params),
-  exportApplicationPDFs: async (params) => {
+  exportApplicationPDFs: async (params: ExportApplicationPDFsParams) => {
     // Convert Blobs to Uint8Array since Blobs don't serialize through IPC
     const resumeArrayBuffer = await params.resumeBlob.arrayBuffer();
     const coverLetterArrayBuffer = await params.coverLetterBlob.arrayBuffer();
@@ -194,7 +36,7 @@ const electronAPI: ElectronAPI = {
     };
     return ipcRenderer.invoke('export-application-pdfs', ipcParams);
   },
-  exportSinglePDF: async (params) => {
+  exportSinglePDF: async (params: ExportSinglePDFParams) => {
     // Convert Blob to Uint8Array since Blobs don't serialize through IPC
     const arrayBuffer = await params.pdfBlob.arrayBuffer();
     const ipcParams: ExportSinglePDFIPCParams = {
@@ -214,7 +56,7 @@ const electronAPI: ElectronAPI = {
 
   // AI Progress events
   onAIProgress: (callback) => {
-    const handler = (_event: Electron.IpcRendererEvent, update: AIProgressUpdate & { operationId: string }) => {
+    const handler = (_event: Electron.IpcRendererEvent, update: AIProgressUpdate) => {
       callback(update);
     };
     ipcRenderer.on('ai:progress', handler);
@@ -242,10 +84,3 @@ const electronAPI: ElectronAPI = {
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
-
-// Type declaration for the window object
-declare global {
-  interface Window {
-    electronAPI: ElectronAPI;
-  }
-}
