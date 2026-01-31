@@ -253,8 +253,8 @@ export function TemplateSelectScreen({
       {/* Spacer to ensure content doesn't hide behind sticky footer */}
       <div className="h-24" />
 
-      {/* Footer Actions - sticky at bottom */}
-      <div className="sticky bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      {/* Footer Actions - fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Button
             variant="ghost"

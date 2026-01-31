@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   CheckCircle2,
-  ChevronDown,
   ChevronRight,
   Key,
   Eye,
@@ -15,17 +14,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 import type { AIProvider, CLITool } from '@app-types/electron.d'
 
 /**
@@ -319,140 +312,107 @@ export function ProviderSetupScreen({
         </div>
 
         {/* API Key Options Section */}
+        {/* API Key Options Section */}
         <div>
           <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             <Key className="size-4" />
             API Key Options
           </h2>
           <p className="mb-3 text-xs text-muted-foreground">
-            Keys are stored locally in your system's secure storage (Keychain on macOS, Credential Manager on Windows)
+            Keys are stored locally in your system's secure storage
           </p>
 
-          <div className="space-y-2">
-            {API_PROVIDERS.map((provider) => {
-              const state = providerStates[provider.id]
-              return (
-                <Collapsible
-                  key={provider.id}
-                  open={state.isOpen}
-                  onOpenChange={(open) =>
-                    updateProviderState(provider.id, { isOpen: open })
-                  }
-                >
-                  <Card
-                    className={cn(
-                      'transition-colors',
-                      state.hasSavedKey && 'border-green-500/50 bg-green-500/5'
-                    )}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <CardHeader className="cursor-pointer select-none px-4 py-3 hover:bg-accent/50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Key className="size-4 text-muted-foreground" />
-                            <div>
-                              <CardTitle className="text-sm font-medium">
-                                {provider.name}
-                              </CardTitle>
-                              <CardDescription className="text-xs">
-                                {provider.description}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {state.hasSavedKey && (
-                              <Badge
-                                variant="secondary"
-                                className="h-5 bg-green-500/10 px-1.5 text-xs text-green-600 dark:text-green-400"
-                              >
-                                <CheckCircle2 className="mr-1 size-3" />
-                                Saved
-                              </Badge>
-                            )}
-                            {state.isOpen ? (
-                              <ChevronDown className="size-4 text-muted-foreground" />
+          <div className="rounded-lg border bg-card">
+            <Accordion type="single" collapsible>
+              {API_PROVIDERS.map((provider) => {
+                const state = providerStates[provider.id]
+                return (
+                  <AccordionItem key={provider.id} value={provider.id}>
+                    <AccordionTrigger className="px-3 py-2.5 hover:no-underline">
+                      <div className="flex flex-1 items-center gap-3">
+                        <Key className="size-4 text-muted-foreground" />
+                        <span className="font-medium">{provider.name}</span>
+                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">
+                          {provider.description}
+                        </span>
+                        {state.hasSavedKey && (
+                          <Badge
+                            variant="secondary"
+                            className="ml-auto mr-2 bg-green-500/10 text-green-600 dark:text-green-400"
+                          >
+                            Saved
+                          </Badge>
+                        )}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-3 pb-3">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Input
+                            type={state.showKey ? 'text' : 'password'}
+                            placeholder={
+                              state.hasSavedKey
+                                ? 'Enter new key to replace...'
+                                : 'Enter API key...'
+                            }
+                            value={state.apiKey}
+                            onChange={(e) =>
+                              updateProviderState(provider.id, {
+                                apiKey: e.target.value,
+                                error: null,
+                              })
+                            }
+                            disabled={state.isSaving}
+                            className="h-9 pr-9 text-sm"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
+                            onClick={() =>
+                              updateProviderState(provider.id, {
+                                showKey: !state.showKey,
+                              })
+                            }
+                            disabled={state.isSaving}
+                          >
+                            {state.showKey ? (
+                              <EyeOff className="size-3.5" />
                             ) : (
-                              <ChevronRight className="size-4 text-muted-foreground" />
+                              <Eye className="size-3.5" />
                             )}
-                          </div>
+                            <span className="sr-only">
+                              {state.showKey ? 'Hide' : 'Show'} API key
+                            </span>
+                          </Button>
                         </div>
-                      </CardHeader>
-                    </CollapsibleTrigger>
-
-                    <CollapsibleContent>
-                      <CardContent className="px-4 pt-0 pb-3">
-                        <div className="space-y-2">
-                          <div className="flex gap-2">
-                            <div className="relative flex-1">
-                              <Input
-                                type={state.showKey ? 'text' : 'password'}
-                                placeholder={
-                                  state.hasSavedKey
-                                    ? 'Enter new key to replace...'
-                                    : 'Enter API key...'
-                                }
-                                value={state.apiKey}
-                                onChange={(e) =>
-                                  updateProviderState(provider.id, {
-                                    apiKey: e.target.value,
-                                    error: null,
-                                  })
-                                }
-                                disabled={state.isSaving}
-                                className="h-9 pr-9 text-sm"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
-                                onClick={() =>
-                                  updateProviderState(provider.id, {
-                                    showKey: !state.showKey,
-                                  })
-                                }
-                                disabled={state.isSaving}
-                              >
-                                {state.showKey ? (
-                                  <EyeOff className="size-3.5" />
-                                ) : (
-                                  <Eye className="size-3.5" />
-                                )}
-                                <span className="sr-only">
-                                  {state.showKey ? 'Hide' : 'Show'} API key
-                                </span>
-                              </Button>
-                            </div>
-                            <Button
-                              size="sm"
-                              onClick={() => handleSaveKey(provider.id)}
-                              disabled={
-                                state.isSaving || !state.apiKey.trim()
-                              }
-                            >
-                              {state.isSaving ? (
-                                <>
-                                  <Loader2 className="size-3.5 animate-spin" />
-                                  Saving...
-                                </>
-                              ) : (
-                                'Save'
-                              )}
-                            </Button>
-                          </div>
-
-                          {state.error && (
-                            <p className="text-xs text-destructive">
-                              {state.error}
-                            </p>
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveKey(provider.id)}
+                          disabled={state.isSaving || !state.apiKey.trim()}
+                        >
+                          {state.isSaving ? (
+                            <>
+                              <Loader2 className="size-3.5 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            'Save'
                           )}
-                        </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>
-              )
-            })}
+                        </Button>
+                      </div>
+                      {state.error && (
+                        <p className="mt-2 text-xs text-destructive">
+                          {state.error}
+                        </p>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                )
+              })}
+            </Accordion>
           </div>
         </div>
       </div>
@@ -460,8 +420,8 @@ export function ProviderSetupScreen({
       {/* Spacer to ensure content doesn't hide behind sticky footer */}
       <div className="h-24" />
 
-      {/* Footer Actions - sticky at bottom */}
-      <div className="sticky bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      {/* Footer Actions - fixed at bottom with full-width border */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-4">
           <Button
             variant="link"
