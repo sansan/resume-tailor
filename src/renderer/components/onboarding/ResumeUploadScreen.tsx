@@ -361,33 +361,38 @@ export function ResumeUploadScreen({
         )}
       </div>
 
-      {/* Footer Actions */}
-      <div className="mt-8 flex items-center justify-between border-t pt-6">
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          disabled={isProcessing}
-          className="gap-1"
-        >
-          <ChevronLeft className="size-4" />
-          Back
-        </Button>
+      {/* Spacer to ensure content doesn't hide behind sticky footer */}
+      <div className="h-24" />
 
-        {processingPhase === 'complete' ? (
-          <Button size="lg" onClick={onComplete} className="min-w-[140px]">
-            Continue
-            <ChevronRight className="ml-1 size-4" />
-          </Button>
-        ) : (
+      {/* Footer Actions - sticky at bottom */}
+      <div className="sticky bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex max-w-lg items-center justify-between px-6 py-4">
           <Button
-            variant="link"
-            onClick={onComplete}
+            variant="ghost"
+            onClick={onBack}
             disabled={isProcessing}
-            className="text-muted-foreground"
+            className="gap-1"
           >
-            Skip for now
+            <ChevronLeft className="size-4" />
+            Back
           </Button>
-        )}
+
+          {processingPhase === 'complete' ? (
+            <Button size="lg" onClick={onComplete} className="min-w-[140px]">
+              Continue
+              <ChevronRight className="ml-1 size-4" />
+            </Button>
+          ) : (
+            <Button
+              variant="link"
+              onClick={onComplete}
+              disabled={isProcessing}
+              className="text-muted-foreground"
+            >
+              Skip for now
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   )

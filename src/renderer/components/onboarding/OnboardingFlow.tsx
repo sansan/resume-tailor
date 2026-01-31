@@ -170,9 +170,9 @@ export function OnboardingFlow({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Step indicator */}
-      <div className="border-b">
+    <div className="flex h-screen flex-col bg-background">
+      {/* Step indicator - fixed at top */}
+      <div className="shrink-0 border-b">
         <div className="mx-auto flex max-w-2xl items-center justify-center gap-2 px-4 py-4">
           <StepIndicator
             stepNumber={1}
@@ -197,8 +197,8 @@ export function OnboardingFlow({
         </div>
       </div>
 
-      {/* Main content area */}
-      <div className="flex-1 overflow-auto">
+      {/* Main content area - scrollable with themed scrollbar */}
+      <div className="scrollbar-themed flex-1 overflow-y-auto">
         <div className="mx-auto max-w-4xl px-6 py-8">{renderStep()}</div>
       </div>
     </div>

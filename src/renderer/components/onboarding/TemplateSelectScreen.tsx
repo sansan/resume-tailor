@@ -250,36 +250,41 @@ export function TemplateSelectScreen({
         </div>
       )}
 
-      {/* Footer Actions */}
-      <div className="mt-8 flex items-center justify-between border-t pt-6">
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          disabled={isLoading}
-          className="gap-1"
-        >
-          <ChevronLeft className="size-4" />
-          Back
-        </Button>
+      {/* Spacer to ensure content doesn't hide behind sticky footer */}
+      <div className="h-24" />
 
-        <Button
-          size="lg"
-          onClick={handleComplete}
-          disabled={isLoading}
-          className={cn('min-w-[180px]', isLoading && 'cursor-wait')}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              Complete Setup
-              <ChevronRight className="ml-1 size-4" />
-            </>
-          )}
-        </Button>
+      {/* Footer Actions - sticky at bottom */}
+      <div className="sticky bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            disabled={isLoading}
+            className="gap-1"
+          >
+            <ChevronLeft className="size-4" />
+            Back
+          </Button>
+
+          <Button
+            size="lg"
+            onClick={handleComplete}
+            disabled={isLoading}
+            className={cn('min-w-[180px]', isLoading && 'cursor-wait')}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                Complete Setup
+                <ChevronRight className="ml-1 size-4" />
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )

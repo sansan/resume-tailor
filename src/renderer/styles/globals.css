@@ -135,3 +135,27 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Themed scrollbar - visible and styled */
+.scrollbar-themed {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.scrollbar-themed::-webkit-scrollbar {
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-themed::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+.scrollbar-themed::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.scrollbar-themed::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}

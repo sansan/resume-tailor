@@ -453,32 +453,37 @@ export function ProviderSetupScreen({
         </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="mt-8 flex items-center justify-between border-t pt-6">
-        <Button
-          variant="link"
-          onClick={onComplete}
-          className="text-muted-foreground"
-        >
-          Skip for now
-        </Button>
-        <Button
-          size="lg"
-          onClick={onComplete}
-          disabled={!canContinue}
-          className="min-w-[140px]"
-        >
-          Continue
-          <ChevronRight className="ml-1 size-4" />
-        </Button>
-      </div>
+      {/* Spacer to ensure content doesn't hide behind sticky footer */}
+      <div className="h-24" />
 
-      {/* Helper text when no provider configured */}
-      {!canContinue && (
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Please configure at least one AI provider to continue
-        </p>
-      )}
+      {/* Footer Actions - sticky at bottom */}
+      <div className="sticky bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-4">
+          <Button
+            variant="link"
+            onClick={onComplete}
+            className="text-muted-foreground"
+          >
+            Skip for now
+          </Button>
+          <div className="flex items-center gap-4">
+            {!canContinue && (
+              <p className="text-sm text-muted-foreground">
+                Configure at least one AI provider
+              </p>
+            )}
+            <Button
+              size="lg"
+              onClick={onComplete}
+              disabled={!canContinue}
+              className="min-w-[140px]"
+            >
+              Continue
+              <ChevronRight className="ml-1 size-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
