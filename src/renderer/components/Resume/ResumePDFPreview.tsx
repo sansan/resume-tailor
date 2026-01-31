@@ -4,7 +4,7 @@ import type { Resume } from '@schemas/resume.schema';
 import type { ColorPalette } from '@/hooks/useTemplates';
 import type { PDFTheme } from '@app-types/pdf-theme.types';
 import { defaultPDFTheme } from '../../services/pdf/theme';
-import ResumePDFDocument from '../../services/pdf/ResumePDFDocument';
+import { getTemplateComponent } from '../../services/pdf/templates';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
@@ -135,12 +135,15 @@ interface PDFPreviewContentProps {
 }
 
 function PDFPreviewContent({ url, className }: PDFPreviewContentProps) {
+  // Hide PDF viewer toolbar and navigation
+  const pdfUrl = `${url}#toolbar=0&navpanes=0`;
+
   return (
     <div className={cn('relative w-full', className)}>
       {/* A4 aspect ratio container */}
       <div className="aspect-[210/297] w-full overflow-hidden rounded-lg border bg-white shadow-sm">
         <iframe
-          src={url}
+          src={pdfUrl}
           title="Resume PDF Preview"
           className="h-full w-full border-0"
           style={{ minHeight: '400px' }}
@@ -189,17 +192,16 @@ function ResumePDFPreview({
   // Create theme from palette - memoized to prevent unnecessary re-renders
   const theme = useMemo(() => createThemeFromPalette(palette), [palette]);
 
+  // Get the appropriate template component based on templateId
+  const TemplateComponent = useMemo(
+    () => getTemplateComponent(templateId),
+    [templateId]
+  );
+
   // Memoize the document to prevent unnecessary re-renders
   const document = useMemo(
-    () => (
-      <ResumePDFDocument
-        resume={resume}
-        theme={theme}
-        // templateId can be used in the future to switch layouts
-        // For now, we use the default layout from ResumePDFDocument
-      />
-    ),
-    [resume, theme]
+    () => <TemplateComponent resume={resume} theme={theme} />,
+    [TemplateComponent, resume, theme]
   );
 
   // Retry handler
