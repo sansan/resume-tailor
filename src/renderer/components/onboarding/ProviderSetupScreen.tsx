@@ -320,12 +320,15 @@ export function ProviderSetupScreen({
 
         {/* API Key Options Section */}
         <div>
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             <Key className="size-4" />
             API Key Options
           </h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Keys are stored locally in your system's secure storage (Keychain on macOS, Credential Manager on Windows)
+          </p>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {API_PROVIDERS.map((provider) => {
               const state = providerStates[provider.id]
               return (
@@ -343,15 +346,15 @@ export function ProviderSetupScreen({
                     )}
                   >
                     <CollapsibleTrigger asChild>
-                      <CardHeader className="cursor-pointer select-none py-4 hover:bg-accent/50">
+                      <CardHeader className="cursor-pointer select-none px-4 py-3 hover:bg-accent/50">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Key className="size-5 text-muted-foreground" />
+                          <div className="flex items-center gap-2">
+                            <Key className="size-4 text-muted-foreground" />
                             <div>
-                              <CardTitle className="text-base">
+                              <CardTitle className="text-sm font-medium">
                                 {provider.name}
                               </CardTitle>
-                              <CardDescription className="text-sm">
+                              <CardDescription className="text-xs">
                                 {provider.description}
                               </CardDescription>
                             </div>
@@ -360,16 +363,16 @@ export function ProviderSetupScreen({
                             {state.hasSavedKey && (
                               <Badge
                                 variant="secondary"
-                                className="bg-green-500/10 text-green-600 dark:text-green-400"
+                                className="h-5 bg-green-500/10 px-1.5 text-xs text-green-600 dark:text-green-400"
                               >
                                 <CheckCircle2 className="mr-1 size-3" />
                                 Saved
                               </Badge>
                             )}
                             {state.isOpen ? (
-                              <ChevronDown className="size-5 text-muted-foreground" />
+                              <ChevronDown className="size-4 text-muted-foreground" />
                             ) : (
-                              <ChevronRight className="size-5 text-muted-foreground" />
+                              <ChevronRight className="size-4 text-muted-foreground" />
                             )}
                           </div>
                         </div>
@@ -377,8 +380,8 @@ export function ProviderSetupScreen({
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <CardContent className="pt-0 pb-4">
-                        <div className="space-y-3">
+                      <CardContent className="px-4 pt-0 pb-3">
+                        <div className="space-y-2">
                           <div className="flex gap-2">
                             <div className="relative flex-1">
                               <Input
@@ -396,13 +399,13 @@ export function ProviderSetupScreen({
                                   })
                                 }
                                 disabled={state.isSaving}
-                                className="pr-10"
+                                className="h-9 pr-9 text-sm"
                               />
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                className="absolute right-1 top-1/2 -translate-y-1/2"
+                                className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
                                 onClick={() =>
                                   updateProviderState(provider.id, {
                                     showKey: !state.showKey,
@@ -411,9 +414,9 @@ export function ProviderSetupScreen({
                                 disabled={state.isSaving}
                               >
                                 {state.showKey ? (
-                                  <EyeOff className="size-4" />
+                                  <EyeOff className="size-3.5" />
                                 ) : (
-                                  <Eye className="size-4" />
+                                  <Eye className="size-3.5" />
                                 )}
                                 <span className="sr-only">
                                   {state.showKey ? 'Hide' : 'Show'} API key
@@ -421,6 +424,7 @@ export function ProviderSetupScreen({
                               </Button>
                             </div>
                             <Button
+                              size="sm"
                               onClick={() => handleSaveKey(provider.id)}
                               disabled={
                                 state.isSaving || !state.apiKey.trim()
@@ -428,7 +432,7 @@ export function ProviderSetupScreen({
                             >
                               {state.isSaving ? (
                                 <>
-                                  <Loader2 className="size-4 animate-spin" />
+                                  <Loader2 className="size-3.5 animate-spin" />
                                   Saving...
                                 </>
                               ) : (
@@ -438,7 +442,7 @@ export function ProviderSetupScreen({
                           </div>
 
                           {state.error && (
-                            <p className="text-sm text-destructive">
+                            <p className="text-xs text-destructive">
                               {state.error}
                             </p>
                           )}
