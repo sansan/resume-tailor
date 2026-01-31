@@ -21,10 +21,11 @@ export const ContactSchema = z.object({
 });
 
 // Personal Information Schema
+// Use .nullish() to allow both null and undefined from AI responses
 export const PersonalInfoSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  location: z.string().optional(),
-  summary: z.string().optional(),
+  location: z.string().nullish(),
+  summary: z.string().nullish(),
   contacts: z.array(ContactSchema).default([]),
 });
 
@@ -33,8 +34,8 @@ export const WorkExperienceSchema = z.object({
   company: z.string().min(1, 'Company name is required'),
   title: z.string().min(1, 'Job title is required'),
   startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().optional(), // Optional for current positions
-  location: z.string().optional(),
+  endDate: z.string().nullish(), // Optional for current positions
+  location: z.string().nullish(),
   highlights: z.array(z.string()).default([]),
 });
 
@@ -42,25 +43,25 @@ export const WorkExperienceSchema = z.object({
 export const EducationSchema = z.object({
   institution: z.string().min(1, 'Institution name is required'),
   degree: z.string().min(1, 'Degree is required'),
-  field: z.string().optional(),
-  graduationDate: z.string().optional(),
-  gpa: z.string().optional(),
+  field: z.string().nullish(),
+  graduationDate: z.string().nullish(),
+  gpa: z.string().nullish(),
   highlights: z.array(z.string()).default([]),
 });
 
 // Skill Schema
 export const SkillSchema = z.object({
   name: z.string().min(1, 'Skill name is required'),
-  level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional(),
-  category: z.string().optional(),
+  level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).nullish(),
+  category: z.string().nullish(),
 });
 
 // Project Schema
 export const ProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
-  description: z.string().optional(),
+  description: z.string().nullish(),
   technologies: z.array(z.string()).default([]),
-  url: z.string().url('Invalid project URL').optional(),
+  url: z.string().url('Invalid project URL').nullish(),
   highlights: z.array(z.string()).default([]),
 });
 
@@ -68,8 +69,8 @@ export const ProjectSchema = z.object({
 export const CertificationSchema = z.object({
   name: z.string().min(1, 'Certification name is required'),
   issuer: z.string().min(1, 'Issuer is required'),
-  date: z.string().optional(),
-  url: z.string().url('Invalid certification URL').optional(),
+  date: z.string().nullish(),
+  url: z.string().url('Invalid certification URL').nullish(),
 });
 
 // Full Resume Schema

@@ -325,7 +325,7 @@ function groupSkillsByCategory(skills: Skill[]): Record<string, Skill[]> {
   }, {});
 }
 
-function formatDateRange(start: string, end?: string): string {
+function formatDateRange(start: string, end?: string | null): string {
   return `${start} – ${end || 'Present'}`;
 }
 
