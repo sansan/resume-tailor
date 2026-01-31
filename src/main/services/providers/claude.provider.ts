@@ -63,25 +63,23 @@ export class ClaudeProvider extends BaseAIProvider {
       let processExited = false;
 
       // Build CLI arguments
-      // Use --tools "" to disable tools (we only need text processing)
-      // Use a custom system prompt to avoid loading project context
+      // Pass prompt as argument for non-interactive mode
       const args: string[] = [
         '--print',
-        '--tools', '',  // Disable all tools for pure text processing
+        prompt,  // Pass prompt as argument
       ];
       if (outputFormat === 'json') {
         args.push('--output-format', 'json');
       }
 
       // Spawn the CLI process from user's home directory to avoid loading project context
-      // This prevents the CLI from picking up CLAUDE.md and codebase which inflates the prompt
       const homeDir = process.env.HOME || process.env.USERPROFILE || '/tmp';
       let childProcess: ChildProcess;
       try {
         childProcess = spawn(this.config.cliPath, args, {
           stdio: ['pipe', 'pipe', 'pipe'],
           env: { ...process.env },
-          cwd: homeDir,  // Run from home directory, not project directory
+          cwd: homeDir,
         });
       } catch {
         resolve({
@@ -215,8 +213,7 @@ export class ClaudeProvider extends BaseAIProvider {
         }
       });
 
-      // Write prompt to stdin
-      childProcess.stdin?.write(prompt);
+      // Close stdin since prompt is passed as argument
       childProcess.stdin?.end();
     });
   }
