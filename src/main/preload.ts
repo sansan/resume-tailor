@@ -97,6 +97,11 @@ const electronAPI: ElectronAPI = {
   saveAPIKey: (provider, key) => ipcRenderer.invoke('onboarding:save-api-key', provider, key),
   hasAPIKey: (provider) => ipcRenderer.invoke('onboarding:has-api-key', provider),
   deleteAPIKey: (provider) => ipcRenderer.invoke('onboarding:delete-api-key', provider),
+
+  // Provider Selection
+  getSelectedProvider: () => ipcRenderer.invoke('onboarding:get-selected-provider'),
+  setSelectedProvider: (provider) => ipcRenderer.invoke('onboarding:set-selected-provider', provider),
+  getAvailableProviders: () => ipcRenderer.invoke('onboarding:get-available-providers'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

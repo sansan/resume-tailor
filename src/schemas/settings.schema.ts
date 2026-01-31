@@ -2,6 +2,13 @@ import { z } from 'zod';
 import type { PDFTheme } from '../types/pdf-theme.types';
 
 /**
+ * Schema for AI provider selection.
+ * Includes both CLI-based providers and API-based providers.
+ */
+export const AIProviderTypeSchema = z.enum(['claude', 'codex', 'gemini', 'openai']);
+export type AIProviderTypeSetting = z.infer<typeof AIProviderTypeSchema>;
+
+/**
  * PDF Theme Settings Schema
  *
  * Defines user-customizable theme settings for PDF generation.
@@ -98,6 +105,9 @@ export const AppSettingsSchema = z.object({
   // Onboarding state
   onboardingComplete: z.boolean().default(false),
 
+  // AI provider selection
+  selectedProvider: AIProviderTypeSchema.nullable().default(null),  // null means auto-select first available
+
   // Settings metadata
   version: z.number().default(1),  // Schema version for migrations
 });
@@ -142,6 +152,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
     emphasizeCompanyKnowledge: true,
   },
   onboardingComplete: false,
+  selectedProvider: null,
   pdfTheme: {
     colors: {
       pageBackground: '#FFFFFF',

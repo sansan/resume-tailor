@@ -8,6 +8,7 @@ import {
   Loader2,
   Terminal,
   RefreshCw,
+  Circle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -48,6 +49,7 @@ export interface ProviderSetupScreenProps {
  */
 interface APIProviderConfig {
   id: AIProvider
+  providerId: string // The ID used in settings (maps to AIProviderType)
   name: string
   description: string
 }
@@ -67,18 +69,21 @@ interface CLIToolConfig {
 const API_PROVIDERS: APIProviderConfig[] = [
   {
     id: 'claude',
+    providerId: 'claude',
     name: 'Claude API',
-    description: "Add API key for Anthropic's Claude",
+    description: "Use Anthropic's Claude via API",
   },
   {
     id: 'openai',
+    providerId: 'openai',
     name: 'OpenAI API',
-    description: 'Add API key for GPT models',
+    description: 'Use GPT models via API',
   },
   {
     id: 'google',
+    providerId: 'gemini',
     name: 'Google AI API',
-    description: 'Add API key for Gemini models',
+    description: 'Use Gemini models via API',
   },
 ]
 
@@ -89,17 +94,17 @@ const CLI_TOOLS: CLIToolConfig[] = [
   {
     id: 'claude',
     name: 'Claude CLI',
-    description: 'Ready to use',
+    description: 'Local CLI tool',
   },
   {
     id: 'codex',
     name: 'Codex CLI',
-    description: 'Ready to use',
+    description: 'Local CLI tool',
   },
   {
     id: 'gemini',
     name: 'Gemini CLI',
-    description: 'Ready to use',
+    description: 'Local CLI tool',
   },
 ]
 
@@ -121,6 +126,7 @@ interface ProviderCardState {
  * Helps users configure their AI provider by:
  * 1. Detecting installed CLI tools
  * 2. Allowing API key configuration for each provider
+ * 3. Selecting which provider to use
  */
 export function ProviderSetupScreen({
   onComplete,
@@ -128,6 +134,10 @@ export function ProviderSetupScreen({
   isDetectingCLIs,
   detectCLIs,
 }: ProviderSetupScreenProps): React.JSX.Element {
+  // Selected provider (providerId format: 'claude', 'codex', 'gemini', 'openai')
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null)
+  const [isSavingSelection, setIsSavingSelection] = useState(false)
+
   // Track state for each API provider card
   const [providerStates, setProviderStates] = useState<
     Record<AIProvider, ProviderCardState>
@@ -158,14 +168,15 @@ export function ProviderSetupScreen({
     },
   })
 
-  // Check for existing API keys on mount
+  // Check for existing API keys and selected provider on mount
   useEffect(() => {
-    const checkExistingKeys = async () => {
+    const checkExistingState = async () => {
       try {
-        const [hasClaude, hasOpenAI, hasGoogle] = await Promise.all([
+        const [hasClaude, hasOpenAI, hasGoogle, currentProvider] = await Promise.all([
           window.electronAPI.hasAPIKey('claude'),
           window.electronAPI.hasAPIKey('openai'),
           window.electronAPI.hasAPIKey('google'),
+          window.electronAPI.getSelectedProvider(),
         ])
 
         setProviderStates((prev) => ({
@@ -174,13 +185,38 @@ export function ProviderSetupScreen({
           openai: { ...prev.openai, hasSavedKey: hasOpenAI },
           google: { ...prev.google, hasSavedKey: hasGoogle },
         }))
+
+        if (currentProvider) {
+          setSelectedProvider(currentProvider)
+        }
       } catch (error) {
-        console.error('Failed to check existing API keys:', error)
+        console.error('Failed to check existing state:', error)
       }
     }
 
-    checkExistingKeys()
+    checkExistingState()
   }, [])
+
+  // Auto-select first available provider if none selected
+  useEffect(() => {
+    if (selectedProvider) return
+
+    // Check CLIs first
+    const firstCLI = detectedCLIs[0]
+    if (firstCLI) {
+      setSelectedProvider(firstCLI)
+      return
+    }
+
+    // Then check API keys
+    if (providerStates.claude.hasSavedKey) {
+      setSelectedProvider('claude')
+    } else if (providerStates.openai.hasSavedKey) {
+      setSelectedProvider('openai')
+    } else if (providerStates.google.hasSavedKey) {
+      setSelectedProvider('gemini')
+    }
+  }, [detectedCLIs, providerStates, selectedProvider])
 
   /**
    * Update a specific provider's state.
@@ -216,6 +252,12 @@ export function ProviderSetupScreen({
           apiKey: '',
           isOpen: false,
         })
+
+        // Auto-select this provider if none selected
+        const apiConfig = API_PROVIDERS.find(p => p.id === provider)
+        if (apiConfig && !selectedProvider) {
+          setSelectedProvider(apiConfig.providerId)
+        }
       } catch (error) {
         console.error(`Failed to save ${provider} API key:`, error)
         updateProviderState(provider, {
@@ -224,28 +266,63 @@ export function ProviderSetupScreen({
         })
       }
     },
-    [providerStates, updateProviderState]
+    [providerStates, updateProviderState, selectedProvider]
   )
+
+  /**
+   * Handle provider selection.
+   */
+  const handleSelectProvider = useCallback((providerId: string) => {
+    setSelectedProvider(providerId)
+  }, [])
+
+  /**
+   * Handle continue button click.
+   */
+  const handleContinue = useCallback(async () => {
+    if (!selectedProvider) return
+
+    setIsSavingSelection(true)
+    try {
+      await window.electronAPI.setSelectedProvider(selectedProvider)
+      onComplete()
+    } catch (error) {
+      console.error('Failed to save provider selection:', error)
+      setIsSavingSelection(false)
+    }
+  }, [selectedProvider, onComplete])
 
   /**
    * Check if user can continue.
    * Requires at least one CLI detected OR one API key saved.
    */
-  const canContinue =
+  const hasAnyProvider =
     detectedCLIs.length > 0 ||
     providerStates.claude.hasSavedKey ||
     providerStates.openai.hasSavedKey ||
     providerStates.google.hasSavedKey
+
+  const canContinue = hasAnyProvider && selectedProvider !== null
+
+  /**
+   * Check if a CLI is available (detected).
+   */
+  const isCLIAvailable = (cliId: CLITool) => detectedCLIs.includes(cliId)
+
+  /**
+   * Check if an API provider is available (has saved key).
+   */
+  const isAPIAvailable = (apiId: AIProvider) => providerStates[apiId].hasSavedKey
 
   return (
     <div className="flex min-h-full flex-col">
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight">
-          Let's set up your AI assistant
+          Choose your AI provider
         </h1>
         <p className="text-muted-foreground mt-2 text-lg">
-          We'll use AI to help tailor your resume and generate cover letters
+          Select which AI service to use for resume tailoring and cover letters
         </p>
       </div>
 
@@ -255,7 +332,7 @@ export function ProviderSetupScreen({
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               <Terminal className="size-4" />
-              Detected CLIs
+              CLI Tools
             </h2>
             <Button
               variant="ghost"
@@ -276,17 +353,30 @@ export function ProviderSetupScreen({
               <Loader2 className="size-4 animate-spin" />
               <span>Detecting installed CLI tools...</span>
             </div>
-          ) : detectedCLIs.length > 0 ? (
+          ) : (
             <div className="space-y-2">
-              {detectedCLIs.map((cliId) => {
-                const cli = CLI_TOOLS.find((c) => c.id === cliId)
-                if (!cli) return null
+              {CLI_TOOLS.map((cli) => {
+                const isAvailable = isCLIAvailable(cli.id)
+                const isSelected = selectedProvider === cli.id
                 return (
-                  <div
+                  <button
                     key={cli.id}
-                    className="flex items-center gap-3 rounded-lg border bg-card p-3"
+                    type="button"
+                    onClick={() => isAvailable && handleSelectProvider(cli.id)}
+                    disabled={!isAvailable}
+                    className={cn(
+                      'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
+                      isAvailable
+                        ? 'cursor-pointer hover:bg-accent/50'
+                        : 'cursor-not-allowed opacity-50',
+                      isSelected && 'border-primary bg-primary/5'
+                    )}
                   >
-                    <CheckCircle2 className="size-5 shrink-0 text-green-500" />
+                    {isSelected ? (
+                      <CheckCircle2 className="size-5 shrink-0 text-primary" />
+                    ) : (
+                      <Circle className="size-5 shrink-0 text-muted-foreground" />
+                    )}
                     <div className="flex-1">
                       <span className="font-medium">{cli.name}</span>
                       <span className="text-muted-foreground"> — </span>
@@ -294,29 +384,30 @@ export function ProviderSetupScreen({
                         {cli.description}
                       </span>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-green-500/10 text-green-600 dark:text-green-400"
-                    >
-                      Detected
-                    </Badge>
-                  </div>
+                    {isAvailable ? (
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-500/10 text-green-600 dark:text-green-400"
+                      >
+                        Available
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-muted-foreground">
+                        Not installed
+                      </Badge>
+                    )}
+                  </button>
                 )
               })}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed p-4 text-center text-muted-foreground">
-              No CLI tools detected. You can still use API keys below.
             </div>
           )}
         </div>
 
         {/* API Key Options Section */}
-        {/* API Key Options Section */}
         <div>
           <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             <Key className="size-4" />
-            API Key Options
+            API Keys
           </h2>
           <p className="mb-3 text-xs text-muted-foreground">
             Keys are stored locally in your system's secure storage
@@ -326,27 +417,47 @@ export function ProviderSetupScreen({
             <Accordion type="single" collapsible>
               {API_PROVIDERS.map((provider) => {
                 const state = providerStates[provider.id]
+                const isAvailable = isAPIAvailable(provider.id)
+                const isSelected = selectedProvider === provider.providerId
                 return (
                   <AccordionItem key={provider.id} value={provider.id}>
-                    <AccordionTrigger className="px-3 py-2.5 hover:no-underline">
-                      <div className="flex flex-1 items-center gap-3">
-                        <Key className="size-4 text-muted-foreground" />
-                        <span className="font-medium">{provider.name}</span>
-                        <span className="text-muted-foreground">—</span>
-                        <span className="text-muted-foreground">
-                          {provider.description}
-                        </span>
-                        {state.hasSavedKey && (
-                          <Badge
-                            variant="secondary"
-                            className="ml-auto mr-2 bg-green-500/10 text-green-600 dark:text-green-400"
-                          >
-                            Saved
-                          </Badge>
+                    <div className="flex items-center">
+                      {/* Selection button */}
+                      <button
+                        type="button"
+                        onClick={() => isAvailable && handleSelectProvider(provider.providerId)}
+                        disabled={!isAvailable}
+                        className={cn(
+                          'flex items-center pl-3',
+                          !isAvailable && 'cursor-not-allowed opacity-50'
                         )}
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-3 pb-3">
+                      >
+                        {isSelected ? (
+                          <CheckCircle2 className="size-5 shrink-0 text-primary" />
+                        ) : (
+                          <Circle className="size-5 shrink-0 text-muted-foreground" />
+                        )}
+                      </button>
+                      {/* Accordion trigger */}
+                      <AccordionTrigger className="flex-1 px-3 py-2.5 hover:no-underline">
+                        <div className="flex flex-1 items-center gap-3">
+                          <span className="font-medium">{provider.name}</span>
+                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground">
+                            {provider.description}
+                          </span>
+                          {state.hasSavedKey && (
+                            <Badge
+                              variant="secondary"
+                              className="ml-auto mr-2 bg-green-500/10 text-green-600 dark:text-green-400"
+                            >
+                              Configured
+                            </Badge>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                    </div>
+                    <AccordionContent className="px-3 pb-3 pl-11">
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Input
@@ -431,19 +542,33 @@ export function ProviderSetupScreen({
             Skip for now
           </Button>
           <div className="flex items-center gap-4">
-            {!canContinue && (
+            {!hasAnyProvider && (
               <p className="text-sm text-muted-foreground">
                 Configure at least one AI provider
               </p>
             )}
+            {hasAnyProvider && !selectedProvider && (
+              <p className="text-sm text-muted-foreground">
+                Select a provider to continue
+              </p>
+            )}
             <Button
               size="lg"
-              onClick={onComplete}
-              disabled={!canContinue}
+              onClick={handleContinue}
+              disabled={!canContinue || isSavingSelection}
               className="min-w-[140px]"
             >
-              Continue
-              <ChevronRight className="ml-1 size-4" />
+              {isSavingSelection ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ChevronRight className="ml-1 size-4" />
+                </>
+              )}
             </Button>
           </div>
         </div>

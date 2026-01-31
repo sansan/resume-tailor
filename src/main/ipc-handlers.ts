@@ -429,6 +429,12 @@ export function registerIPCHandlers(): void {
     'profile:import-text',
     async (_event, text: string, fileName?: string): Promise<ImportResumeResponse> => {
       try {
+        // Use the selected provider from settings
+        const settings = await settingsService.loadSettings();
+        if (settings.selectedProvider) {
+          aiProcessorService.setProvider(settings.selectedProvider);
+        }
+
         // Extract structured data using AI
         const resume = await aiProcessorService.extractResume(text);
 
@@ -514,6 +520,78 @@ export function registerIPCHandlers(): void {
     apiKeyService.deleteAPIKey(provider);
   });
 
+  ipcMain.handle('onboarding:get-selected-provider', async (): Promise<string | null> => {
+    const settings = await settingsService.loadSettings();
+    return settings.selectedProvider;
+  });
+
+  ipcMain.handle('onboarding:set-selected-provider', async (_event, provider: string | null): Promise<void> => {
+    await settingsService.saveSettings({ selectedProvider: provider as 'claude' | 'codex' | 'gemini' | 'openai' | null });
+    // Update the AI processor to use the new provider
+    if (provider) {
+      aiProcessorService.setProvider(provider as 'claude' | 'codex' | 'gemini' | 'openai');
+    }
+  });
+
+  /**
+   * Get all available providers - both detected CLIs and configured API keys.
+   * Returns a list of provider objects with type and availability info.
+   */
+  ipcMain.handle('onboarding:get-available-providers', async (): Promise<Array<{
+    id: string;
+    name: string;
+    type: 'cli' | 'api';
+    available: boolean;
+  }>> => {
+    const detectedCLIs = await apiKeyService.detectInstalledCLIs();
+
+    const providers: Array<{
+      id: string;
+      name: string;
+      type: 'cli' | 'api';
+      available: boolean;
+    }> = [];
+
+    // Add CLI providers
+    const cliProviders = [
+      { id: 'claude' as const, name: 'Claude CLI' },
+      { id: 'codex' as const, name: 'Codex CLI' },
+      { id: 'gemini' as const, name: 'Gemini CLI' },
+    ];
+
+    for (const cli of cliProviders) {
+      providers.push({
+        id: cli.id,
+        name: cli.name,
+        type: 'cli',
+        available: detectedCLIs.includes(cli.id),
+      });
+    }
+
+    // Add API providers (openai maps to the 'openai' provider)
+    const apiInfo: Record<string, { id: string; name: string }> = {
+      claude: { id: 'claude', name: 'Claude API' },
+      openai: { id: 'openai', name: 'OpenAI API' },
+      google: { id: 'gemini', name: 'Google AI API' },
+    };
+
+    for (const [apiKey, info] of Object.entries(apiInfo)) {
+      const hasKey = apiKeyService.hasAPIKey(apiKey as AIProvider);
+      // Only add if not already added as CLI or if it's a different provider (like openai)
+      const existingIndex = providers.findIndex(p => p.id === info.id && p.type === 'api');
+      if (existingIndex === -1) {
+        providers.push({
+          id: info.id,
+          name: info.name,
+          type: 'api',
+          available: hasKey,
+        });
+      }
+    }
+
+    return providers;
+  });
+
   // ============================================
   // AI Operation Handlers
   // ============================================
@@ -548,6 +626,11 @@ export function registerIPCHandlers(): void {
 
         const settings = await settingsService.loadSettings();
         const promptOptionsFromSettings = convertResumeSettingsToOptions(settings.resumePromptTemplate);
+
+        // Use the selected provider from settings
+        if (settings.selectedProvider) {
+          aiProcessorService.setProvider(settings.selectedProvider);
+        }
 
         sendProgressUpdate(operationId, {
           status: 'processing',
@@ -622,6 +705,11 @@ export function registerIPCHandlers(): void {
         const settings = await settingsService.loadSettings();
         const promptOptionsFromSettings = convertCoverLetterSettingsToOptions(settings.coverLetterPromptTemplate);
 
+        // Use the selected provider from settings
+        if (settings.selectedProvider) {
+          aiProcessorService.setProvider(settings.selectedProvider);
+        }
+
         sendProgressUpdate(operationId, {
           status: 'processing',
           message: 'Analyzing resume and job posting, generating cover letter...',
@@ -693,7 +781,7 @@ export function removeIPCHandlers(): void {
     'settings:get', 'settings:save', 'settings:select-folder', 'settings:reset', 'settings:validate', 'settings:get-default-folder',
     'history:get', 'history:get-recent', 'history:add', 'history:delete', 'history:clear', 'history:open-file',
     'profile:has', 'profile:load', 'profile:import-file', 'profile:import-text', 'profile:save', 'profile:clear',
-    'onboarding:is-complete', 'onboarding:complete', 'onboarding:detect-clis', 'onboarding:save-api-key', 'onboarding:has-api-key', 'onboarding:delete-api-key',
+    'onboarding:is-complete', 'onboarding:complete', 'onboarding:detect-clis', 'onboarding:save-api-key', 'onboarding:has-api-key', 'onboarding:delete-api-key', 'onboarding:get-selected-provider', 'onboarding:set-selected-provider', 'onboarding:get-available-providers',
     'ai:check-availability', 'ai:refine-resume', 'ai:generate-cover-letter', 'ai:cancel-operation',
   ];
 

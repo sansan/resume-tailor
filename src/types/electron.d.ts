@@ -186,6 +186,16 @@ export type AIProvider = 'claude' | 'openai' | 'google';
  */
 export type CLITool = 'claude' | 'codex' | 'gemini';
 
+/**
+ * Represents an available AI provider (CLI or API).
+ */
+export interface AvailableProvider {
+  id: string;
+  name: string;
+  type: 'cli' | 'api';
+  available: boolean;
+}
+
 // ============================================
 // Electron API Interface
 // ============================================
@@ -243,6 +253,11 @@ export interface ElectronAPI {
   saveAPIKey: (provider: AIProvider, key: string) => Promise<void>;
   hasAPIKey: (provider: AIProvider) => Promise<boolean>;
   deleteAPIKey: (provider: AIProvider) => Promise<void>;
+
+  // Provider Selection
+  getSelectedProvider: () => Promise<string | null>;
+  setSelectedProvider: (provider: string | null) => Promise<void>;
+  getAvailableProviders: () => Promise<AvailableProvider[]>;
 }
 
 declare global {
