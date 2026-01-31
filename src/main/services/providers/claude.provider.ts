@@ -169,13 +169,16 @@ export class ClaudeProvider extends BaseAIProvider {
         }
 
         if (code !== 0) {
+          // Combine stderr and stdout for better error diagnostics
+          // Some CLIs write errors to stdout
+          const errorOutput = stderr || stdout || 'Unknown error';
           resolve({
             success: false,
             error: new AIProviderError(
               AIProviderErrorCode.PROVIDER_ERROR,
               'claude',
-              `CLI exited with code ${code}: ${stderr || 'Unknown error'}`,
-              { exitCode: code, stderr }
+              `CLI exited with code ${code}: ${errorOutput.trim().substring(0, 500)}`,
+              { exitCode: code, stderr, stdout: stdout.substring(0, 500) }
             ),
           });
           return;

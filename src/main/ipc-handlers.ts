@@ -441,11 +441,23 @@ export function registerIPCHandlers(): void {
         };
       } catch (error) {
         if (error instanceof AIProcessorError) {
+          // Provide more user-friendly error messages
+          let userMessage = error.message;
+          if (error.code === AIProcessorErrorCode.CLI_NOT_AVAILABLE) {
+            userMessage = 'AI service is not available. Please check your AI provider configuration.';
+          } else if (error.code === AIProcessorErrorCode.EXECUTION_FAILED) {
+            // CLI execution failed - likely authentication or other issue
+            if (error.message.includes('exited with code')) {
+              userMessage = 'AI CLI failed to process the request. The CLI may need authentication. ' +
+                'Please run the CLI tool manually once to complete setup, or configure an API key instead.';
+            }
+          }
+
           return {
             success: false,
             error: {
               code: error.code,
-              message: error.message,
+              message: userMessage,
               ...(error.details ? { details: error.details } : {}),
             },
           };
