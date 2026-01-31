@@ -452,10 +452,13 @@ export function registerIPCHandlers(): void {
           if (error.code === AIProcessorErrorCode.CLI_NOT_AVAILABLE) {
             userMessage = 'AI service is not available. Please check your AI provider configuration.';
           } else if (error.code === AIProcessorErrorCode.EXECUTION_FAILED) {
-            // CLI execution failed - likely authentication or other issue
-            if (error.message.includes('exited with code')) {
-              userMessage = 'AI CLI failed to process the request. The CLI may need authentication. ' +
-                'Please run the CLI tool manually once to complete setup, or configure an API key instead.';
+            // CLI execution failed - show actual error for debugging
+            const details = error.details as Record<string, unknown> | undefined;
+            const cliOutput = details?.stderr || details?.stdout || '';
+            if (cliOutput) {
+              userMessage = `AI processing failed: ${String(cliOutput).trim().substring(0, 200)}`;
+            } else {
+              userMessage = `AI processing failed: ${error.message}`;
             }
           }
 
