@@ -17,7 +17,7 @@ import {
   AIProviderError,
   AIProviderErrorCode,
   DEFAULT_PROVIDER_CONFIGS,
-} from '@app-types/ai-provider.types';
+} from '../../../types/ai-provider.types';
 
 /**
  * Gemini-specific configuration.

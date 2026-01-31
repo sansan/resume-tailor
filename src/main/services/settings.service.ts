@@ -17,11 +17,11 @@ import {
   DEFAULT_APP_SETTINGS,
   type AppSettings,
   type PartialAppSettings,
-} from '@schemas/settings.schema';
+} from '../../schemas/settings.schema';
 import {
   validateSettings as validateSettingsData,
   SettingsValidationErrorCode,
-} from '@shared/settings-validation';
+} from '../../shared/settings-validation';
 
 /**
  * Current settings schema version.

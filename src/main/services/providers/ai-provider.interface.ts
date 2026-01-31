@@ -11,7 +11,7 @@ import type {
   AIProviderRequest,
   AIProviderResponse,
   AIProviderStatus,
-} from '@app-types/ai-provider.types';
+} from '../../../types/ai-provider.types';
 
 /**
  * Interface that all AI providers must implement.

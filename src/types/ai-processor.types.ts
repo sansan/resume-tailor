@@ -9,6 +9,7 @@ import type {
   CoverLetterGenerationOptions,
   CompanyInfo,
 } from '@prompts/cover-letter.prompt';
+import type { ResumeExtractionOptions } from '@prompts/resume-extraction.prompt';
 
 /**
  * Configuration options for the AI processor service.
@@ -56,6 +57,20 @@ export interface GenerateCoverLetterOptions {
   companyInfo?: CompanyInfo;
   /** Options for customizing the prompt template */
   promptOptions?: CoverLetterGenerationOptions;
+  /** Override the default timeout (in milliseconds) */
+  timeout?: number;
+  /** Override retry settings for this operation */
+  retryOnValidationFailure?: boolean;
+  /** Maximum validation retries for this operation */
+  maxValidationRetries?: number;
+}
+
+/**
+ * Options for resume extraction from document text.
+ */
+export interface ExtractResumeOptions {
+  /** Options for customizing the prompt template */
+  promptOptions?: ResumeExtractionOptions;
   /** Override the default timeout (in milliseconds) */
   timeout?: number;
   /** Override retry settings for this operation */

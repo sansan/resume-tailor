@@ -8,7 +8,7 @@ import type {
   ExportSinglePDFParams,
   ExportApplicationPDFsIPCParams,
   ExportSinglePDFIPCParams,
-} from '@app-types/electron';
+} from '../types/electron';
 
 // Expose protected methods that allow the renderer process to use
 // ipcRenderer without exposing the entire object
@@ -81,6 +81,14 @@ const electronAPI: ElectronAPI = {
   deleteHistoryEntry: (entryId) => ipcRenderer.invoke('history:delete', entryId),
   clearHistory: () => ipcRenderer.invoke('history:clear'),
   openHistoryFile: (filePath) => ipcRenderer.invoke('history:open-file', filePath),
+
+  // Profile Operations
+  hasProfile: () => ipcRenderer.invoke('profile:has'),
+  loadProfile: () => ipcRenderer.invoke('profile:load'),
+  importResumeFromFile: (filePath) => ipcRenderer.invoke('profile:import-file', filePath),
+  importResumeFromText: (text, fileName) => ipcRenderer.invoke('profile:import-text', text, fileName),
+  saveProfile: (resume) => ipcRenderer.invoke('profile:save', resume),
+  clearProfile: () => ipcRenderer.invoke('profile:clear'),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

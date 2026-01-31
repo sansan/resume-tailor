@@ -16,31 +16,36 @@ import {
   type AIProviderType,
   type AIProviderConfig,
   AIProviderErrorCode,
-} from '@app-types/ai-provider.types';
+} from '../../types/ai-provider.types';
 import {
   type AIProcessorConfig,
   type RefineResumeOptions,
   type GenerateCoverLetterOptions,
+  type ExtractResumeOptions,
   DEFAULT_AI_PROCESSOR_CONFIG,
   AIProcessorError,
   AIProcessorErrorCode,
-} from '@app-types/ai-processor.types';
-import type { Resume } from '@schemas/resume.schema';
+} from '../../types/ai-processor.types';
+import { ResumeSchema, type Resume } from '../../schemas/resume.schema';
 import {
   RefinedResumeSchema,
   GeneratedCoverLetterSchema,
   type RefinedResume,
   type GeneratedCoverLetter,
-} from '@schemas/ai-output.schema';
+} from '../../schemas/ai-output.schema';
 import {
   buildCombinedResumeRefinementPrompt,
   type ResumeRefinementOptions,
-} from '@prompts/resume-refinement.prompt';
+} from '../../prompts/resume-refinement.prompt';
 import {
   buildCombinedCoverLetterPrompt,
   type CoverLetterGenerationOptions,
-} from '@prompts/cover-letter.prompt';
-import { sanitizeAIResponse } from '@shared/sanitize';
+} from '../../prompts/cover-letter.prompt';
+import {
+  buildResumeExtractionPrompt,
+  type ResumeExtractionOptions,
+} from '../../prompts/resume-extraction.prompt';
+import { sanitizeAIResponse } from '../../shared/sanitize';
 
 /**
  * Extended configuration with provider selection.
@@ -302,6 +307,89 @@ export class AIProcessorService {
       new AIProcessorError(
         AIProcessorErrorCode.UNKNOWN,
         'Unknown error during cover letter generation'
+      )
+    );
+  }
+
+  /**
+   * Extracts structured resume data from document text.
+   *
+   * @param documentText - Raw text extracted from a resume document
+   * @param options - Optional configuration for the extraction
+   * @returns The extracted resume data
+   * @throws AIProcessorError if processing fails
+   */
+  async extractResume(
+    documentText: string,
+    options: ExtractResumeOptions = {}
+  ): Promise<Resume> {
+    // Check provider availability
+    const isAvailable = await this.isAvailable();
+    if (!isAvailable) {
+      throw new AIProcessorError(
+        AIProcessorErrorCode.CLI_NOT_AVAILABLE,
+        `AI provider '${this.provider.type}' is not available.`
+      );
+    }
+
+    // Build the prompt
+    const promptOptions: ResumeExtractionOptions = {
+      inferSkillLevels: options.promptOptions?.inferSkillLevels ?? false,
+    };
+
+    const prompt = buildResumeExtractionPrompt(documentText, promptOptions);
+
+    // Determine retry settings
+    const enableRetry =
+      options.retryOnValidationFailure ??
+      this.config.enableRetryOnValidationFailure;
+    const maxRetries =
+      options.maxValidationRetries ?? this.config.maxValidationRetries;
+
+    // Execute with validation retry loop
+    let lastError: Error | undefined;
+    const attempts = enableRetry ? maxRetries + 1 : 1;
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        const result = await this.executeAndValidate<Resume>(
+          prompt,
+          ResumeSchema,
+          options.timeout
+        );
+
+        // Sanitize output if enabled
+        const finalResult = this.config.sanitizeOutput
+          ? sanitizeAIResponse(result)
+          : result;
+
+        return finalResult;
+      } catch (error) {
+        lastError = error as Error;
+
+        // Only retry on validation failures
+        if (
+          !(error instanceof AIProcessorError) ||
+          error.code !== AIProcessorErrorCode.VALIDATION_FAILED
+        ) {
+          throw error;
+        }
+
+        // If this was the last attempt, throw
+        if (attempt >= attempts - 1) {
+          throw error;
+        }
+
+        // Otherwise, continue to next attempt
+      }
+    }
+
+    // Should not reach here, but throw the last error just in case
+    throw (
+      lastError ??
+      new AIProcessorError(
+        AIProcessorErrorCode.UNKNOWN,
+        'Unknown error during resume extraction'
       )
     );
   }

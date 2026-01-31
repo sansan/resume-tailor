@@ -128,3 +128,13 @@ export function getContactByType(contacts: Contact[] | undefined, type: ContactT
 export function getContactsByType(contacts: Contact[] | undefined, type: ContactType): Contact[] {
   return contacts?.filter((c) => c.type === type) ?? [];
 }
+
+// User Profile Schema (extends Resume with import metadata)
+export const UserProfileSchema = z.object({
+  resume: ResumeSchema,
+  importedAt: z.string().datetime().optional(),
+  sourceFile: z.string().optional(),
+  lastModifiedAt: z.string().datetime().optional(),
+});
+
+export type UserProfile = z.infer<typeof UserProfileSchema>;

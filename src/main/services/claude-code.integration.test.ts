@@ -13,9 +13,9 @@ import { AIProcessorService } from './ai-processor.service';
 import {
   RefinedResumeSchema,
   GeneratedCoverLetterSchema,
-} from '@schemas/ai-output.schema';
-import { ResumeSchema } from '@schemas/resume.schema';
-import { sanitize, sanitizeAIResponse } from '@shared/sanitize';
+} from '../../schemas/ai-output.schema';
+import { ResumeSchema } from '../../schemas/resume.schema';
+import { sanitize, sanitizeAIResponse } from '../../shared/sanitize';
 
 // Test result tracking
 interface TestResult {

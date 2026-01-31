@@ -1,7 +1,9 @@
+import { useCallback, useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import {
   User,
   Palette,
@@ -12,9 +14,11 @@ import {
   Clock
 } from 'lucide-react'
 import { useResume } from '@/hooks/useResume'
+import { ResumeImportDropzone } from '@/components/profile/resume-import-dropzone'
 import type { Resume } from '@schemas/resume.schema'
 import { getContactByType } from '@schemas/resume.schema'
 import { APP_PAGES } from '@config/constants'
+import { toast } from 'sonner'
 
 interface DashboardPageProps {
   onNavigate?: (page: APP_PAGES) => void
@@ -60,6 +64,24 @@ function calculateCompleteness(resume: Resume): number {
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const { resume, isValid, loadFromFile, setJsonText, validate } = useResume()
+  const [hasPersistedProfile, setHasPersistedProfile] = useState<boolean | null>(null)
+
+  // Check if there's a persisted profile on mount
+  useEffect(() => {
+    window.electronAPI.hasProfile().then(setHasPersistedProfile)
+  }, [])
+
+  // Load profile from persistence if it exists and current resume is empty
+  useEffect(() => {
+    if (hasPersistedProfile && !isValid) {
+      window.electronAPI.loadProfile().then((profile) => {
+        if (profile) {
+          setJsonText(JSON.stringify(profile.resume, null, 2))
+          validate()
+        }
+      })
+    }
+  }, [hasPersistedProfile, isValid, setJsonText, validate])
 
   const handleImportResume = async () => {
     try {
@@ -92,6 +114,30 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     onNavigate?.(APP_PAGES.RESUME)
   }
 
+  const handleAIImportComplete = useCallback(
+    (success: boolean, errorMessage?: string) => {
+      if (success) {
+        toast.success('Resume imported successfully!', {
+          description: 'Your resume data has been extracted and saved.',
+        })
+        // Reload profile and navigate to edit
+        window.electronAPI.loadProfile().then((profile) => {
+          if (profile) {
+            setJsonText(JSON.stringify(profile.resume, null, 2))
+            validate()
+            setHasPersistedProfile(true)
+            onNavigate?.(APP_PAGES.RESUME)
+          }
+        })
+      } else {
+        toast.error('Failed to import resume', {
+          description: errorMessage ?? 'Please try again or use a different file.',
+        })
+      }
+    },
+    [setJsonText, validate, onNavigate]
+  )
+
   const hasResume = isValid && resume !== null
   const completeness = hasResume ? calculateCompleteness(resume) : 0
 
@@ -106,25 +152,42 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           </p>
         </div>
 
-        <Card className="border-dashed">
+        <Card>
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <FileText className="h-6 w-6 text-primary" />
             </div>
             <CardTitle>Welcome to Resume Tailor</CardTitle>
             <CardDescription>
-              Get started by importing your existing resume or creating one from scratch.
+              Get started by importing your existing resume. AI will extract your information automatically.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-            <Button onClick={handleImportResume} className="gap-2">
-              <Upload className="h-4 w-4" />
-              Import Resume
-            </Button>
-            <Button variant="outline" onClick={handleStartFromScratch} className="gap-2">
-              <Sparkles className="h-4 w-4" />
-              Start from Scratch
-            </Button>
+          <CardContent className="space-y-6 pt-4">
+            {/* AI-powered import dropzone */}
+            <ResumeImportDropzone
+              onImportComplete={handleAIImportComplete}
+              className="min-h-[180px]"
+            />
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button variant="outline" onClick={handleImportResume} className="gap-2">
+                <Upload className="h-4 w-4" />
+                Import JSON Resume
+              </Button>
+              <Button variant="outline" onClick={handleStartFromScratch} className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Start from Scratch
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

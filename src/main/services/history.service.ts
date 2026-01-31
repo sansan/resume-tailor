@@ -18,7 +18,7 @@ import {
   MAX_HISTORY_ENTRIES,
   type ExportHistory,
   type HistoryEntry,
-} from '@schemas/history.schema';
+} from '../../schemas/history.schema';
 
 /**
  * History file name.

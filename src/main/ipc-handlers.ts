@@ -2,15 +2,17 @@ import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { aiProcessorService } from './services/ai-processor.service';
-import { AIProcessorError, AIProcessorErrorCode } from '@app-types/ai-processor.types';
+import { AIProcessorError, AIProcessorErrorCode } from '../types/ai-processor.types';
 import { settingsService, SettingsError, SettingsErrorCode } from './services/settings.service';
 import { historyService } from './services/history.service';
-import type { RefineResumeOptions, GenerateCoverLetterOptions } from '@app-types/ai-processor.types';
-import type { ResumeRefinementOptions, } from '@prompts/resume-refinement.prompt';
-import type { CoverLetterGenerationOptions, CompanyInfo } from '@prompts/cover-letter.prompt';
-import type { RefinedResume, GeneratedCoverLetter } from '@schemas/ai-output.schema';
-import type { AppSettings, PartialAppSettings, ResumePromptTemplateSettings, CoverLetterPromptTemplateSettings } from '@schemas/settings.schema';
-import type { ExportHistory, HistoryEntry } from '@schemas/history.schema';
+import { profileService } from './services/profile.service';
+import { documentExtractorService } from './services/document-extractor.service';
+import type { RefineResumeOptions, GenerateCoverLetterOptions } from '../types/ai-processor.types';
+import type { ResumeRefinementOptions, } from '../prompts/resume-refinement.prompt';
+import type { CoverLetterGenerationOptions, CompanyInfo } from '../prompts/cover-letter.prompt';
+import type { RefinedResume, GeneratedCoverLetter } from '../schemas/ai-output.schema';
+import type { AppSettings, PartialAppSettings, ResumePromptTemplateSettings, CoverLetterPromptTemplateSettings } from '../schemas/settings.schema';
+import type { ExportHistory, HistoryEntry } from '../schemas/history.schema';
 
 // Import shared types from the single source of truth
 import type {
@@ -24,8 +26,9 @@ import type {
   ExportPDFResult,
   CheckExportFilesParams,
   CheckExportFilesResult,
-} from '@app-types/electron';
-import type { Resume } from '@schemas/resume.schema';
+  ImportResumeResponse,
+} from '../types/electron';
+import type { Resume, UserProfile } from '../schemas/resume.schema';
 
 // IPC-specific param types (may differ slightly from renderer types)
 interface RefineResumeIPCParams {
@@ -360,6 +363,111 @@ export function registerIPCHandlers(): void {
   });
 
   // ============================================
+  // Profile Handlers
+  // ============================================
+
+  ipcMain.handle('profile:has', async (): Promise<boolean> => {
+    return profileService.hasProfile();
+  });
+
+  ipcMain.handle('profile:load', async (): Promise<UserProfile | null> => {
+    return profileService.loadProfile();
+  });
+
+  ipcMain.handle(
+    'profile:import-file',
+    async (_event, filePath: string): Promise<ImportResumeResponse> => {
+      try {
+        // Extract text from document
+        const extraction = await documentExtractorService.extractText(filePath);
+        if (!extraction.success) {
+          return {
+            success: false,
+            error: {
+              code: extraction.error.code,
+              message: extraction.error.message,
+              ...(extraction.error.details ? { details: extraction.error.details } : {}),
+            },
+          };
+        }
+
+        // Extract structured data using AI
+        const resume = await aiProcessorService.extractResume(extraction.text);
+
+        // Save to profile
+        const profile = await profileService.saveProfile(resume, filePath);
+
+        return {
+          success: true,
+          profile,
+        };
+      } catch (error) {
+        if (error instanceof AIProcessorError) {
+          return {
+            success: false,
+            error: {
+              code: error.code,
+              message: error.message,
+              ...(error.details ? { details: error.details } : {}),
+            },
+          };
+        }
+        return {
+          success: false,
+          error: {
+            code: 'IMPORT_FAILED',
+            message: error instanceof Error ? error.message : 'Unknown error',
+          },
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    'profile:import-text',
+    async (_event, text: string, fileName?: string): Promise<ImportResumeResponse> => {
+      try {
+        // Extract structured data using AI
+        const resume = await aiProcessorService.extractResume(text);
+
+        // Save to profile
+        const profile = await profileService.saveProfile(resume, fileName);
+
+        return {
+          success: true,
+          profile,
+        };
+      } catch (error) {
+        if (error instanceof AIProcessorError) {
+          return {
+            success: false,
+            error: {
+              code: error.code,
+              message: error.message,
+              ...(error.details ? { details: error.details } : {}),
+            },
+          };
+        }
+        return {
+          success: false,
+          error: {
+            code: 'IMPORT_FAILED',
+            message: error instanceof Error ? error.message : 'Unknown error',
+          },
+        };
+      }
+    }
+  );
+
+  ipcMain.handle('profile:save', async (_event, resume: Resume): Promise<UserProfile> => {
+    return profileService.saveProfile(resume);
+  });
+
+  ipcMain.handle('profile:clear', async (): Promise<void> => {
+    return profileService.clearProfile();
+  });
+
+  // ============================================
   // AI Operation Handlers
   // ============================================
 
@@ -537,6 +645,7 @@ export function removeIPCHandlers(): void {
     'check-export-files', 'export-application-pdfs', 'export-single-pdf',
     'settings:get', 'settings:save', 'settings:select-folder', 'settings:reset', 'settings:validate', 'settings:get-default-folder',
     'history:get', 'history:get-recent', 'history:add', 'history:delete', 'history:clear', 'history:open-file',
+    'profile:has', 'profile:load', 'profile:import-file', 'profile:import-text', 'profile:save', 'profile:clear',
     'ai:check-availability', 'ai:refine-resume', 'ai:generate-cover-letter', 'ai:cancel-operation',
   ];
 

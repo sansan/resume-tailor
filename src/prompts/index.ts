@@ -29,3 +29,9 @@ export {
   type CoverLetterPromptTemplate,
   type CompanyInfo,
 } from './cover-letter.prompt';
+
+// Resume extraction prompt templates
+export {
+  buildResumeExtractionPrompt,
+  type ResumeExtractionOptions,
+} from './resume-extraction.prompt';

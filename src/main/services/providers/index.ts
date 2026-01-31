@@ -13,7 +13,7 @@ import type {
   AIProviderType,
   AIProviderConfig,
   AIProviderStatus,
-} from '@app-types/ai-provider.types';
+} from '../../../types/ai-provider.types';
 
 // Re-export provider instances and types
 export { claudeProvider, type ClaudeProvider } from './claude.provider';

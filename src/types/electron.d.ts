@@ -1,6 +1,6 @@
 // Type declarations for the Electron API exposed via contextBridge
 
-import type { Resume } from '../schemas/resume.schema';
+import type { Resume, UserProfile } from '../schemas/resume.schema';
 import type {
   RefinedResume,
   GeneratedCoverLetter,
@@ -153,6 +153,26 @@ export interface SaveResumeData {
 }
 
 // ============================================
+// Profile Import Types
+// ============================================
+
+export interface ImportResumeResult {
+  success: true;
+  profile: UserProfile;
+}
+
+export interface ImportResumeError {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: Record<string, unknown>;
+  };
+}
+
+export type ImportResumeResponse = ImportResumeResult | ImportResumeError;
+
+// ============================================
 // Electron API Interface
 // ============================================
 
@@ -193,6 +213,14 @@ export interface ElectronAPI {
   deleteHistoryEntry: (entryId: string) => Promise<void>;
   clearHistory: () => Promise<void>;
   openHistoryFile: (filePath: string) => Promise<boolean>;
+
+  // Profile Operations
+  hasProfile: () => Promise<boolean>;
+  loadProfile: () => Promise<UserProfile | null>;
+  importResumeFromFile: (filePath: string) => Promise<ImportResumeResponse>;
+  importResumeFromText: (text: string, fileName?: string) => Promise<ImportResumeResponse>;
+  saveProfile: (resume: Resume) => Promise<UserProfile>;
+  clearProfile: () => Promise<void>;
 }
 
 declare global {
