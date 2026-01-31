@@ -1,21 +1,21 @@
 /**
- * Claude Code Integration Manual Test Suite
+ * AI Provider Integration Manual Test Suite
  *
- * This file contains manual tests for the Claude Code integration.
- * Run with: npx ts-node --esm src/main/services/claude-code.integration.test.ts
- * Or compile and run: npx tsc -p tsconfig.electron.json && node dist-electron/main/services/claude-code.integration.test.js
+ * This file contains manual tests for the AI provider integration.
+ * Run with: npx ts-node --esm electron/services/claude-code.integration.test.ts
+ * Or compile and run: npx tsc -p tsconfig.electron.json && node dist-electron/services/claude-code.integration.test.js
  */
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { ClaudeCodeService } from './claude-code.service';
+import { ClaudeProvider } from './providers/claude.provider';
 import { AIProcessorService } from './ai-processor.service';
 import {
   RefinedResumeSchema,
   GeneratedCoverLetterSchema,
-} from '../../shared/schemas/ai-output.schema';
-import { ResumeSchema } from '../../shared/schemas/resume.schema';
-import { sanitize, sanitizeAIResponse } from '../../shared/utils/sanitize';
+} from '@schemas/ai-output.schema';
+import { ResumeSchema } from '@schemas/resume.schema';
+import { sanitize, sanitizeAIResponse } from '@shared/sanitize';
 
 // Test result tracking
 interface TestResult {
@@ -111,7 +111,7 @@ function getTestDataPaths(): { resume: string; jobPosting: string } {
 // ============================================================================
 async function testCLIAccessibility(): Promise<void> {
   const cliPath = findClaudeCLIPath();
-  const service = new ClaudeCodeService({ cliPath });
+  const service = new ClaudeProvider({ cliPath });
 
   const isAvailable = await service.isAvailable();
   if (!isAvailable) {
@@ -126,7 +126,7 @@ async function testCLIAccessibility(): Promise<void> {
 // ============================================================================
 async function testBasicExecution(): Promise<void> {
   const cliPath = findClaudeCLIPath();
-  const service = new ClaudeCodeService({ cliPath, timeout: 60000 });
+  const service = new ClaudeProvider({ cliPath, timeout: 60000 });
 
   const response = await service.execute({
     prompt: 'Reply with exactly: "Hello, World!" and nothing else.',
@@ -150,7 +150,7 @@ async function testBasicExecution(): Promise<void> {
 // ============================================================================
 async function testJSONOutput(): Promise<void> {
   const cliPath = findClaudeCLIPath();
-  const service = new ClaudeCodeService({ cliPath, timeout: 60000 });
+  const service = new ClaudeProvider({ cliPath, timeout: 60000 });
 
   const response = await service.execute({
     prompt:
@@ -307,7 +307,7 @@ async function testResumeRefinement(): Promise<void> {
       enableRetryOnValidationFailure: false,
     }
   );
-  processor.updateClaudeConfig({ cliPath, timeout: 180000 }); // 3 minute timeout
+  processor.updateProviderConfig({ cliPath, timeout: 180000 }); // 3 minute timeout
 
   // Load test data
   const testPaths = getTestDataPaths();
@@ -357,7 +357,7 @@ async function testCoverLetterGeneration(): Promise<void> {
     includeMetadata: true,
     enableRetryOnValidationFailure: false,
   });
-  processor.updateClaudeConfig({ cliPath, timeout: 180000 }); // 3 minute timeout
+  processor.updateProviderConfig({ cliPath, timeout: 180000 }); // 3 minute timeout
 
   // Load test data
   const testPaths = getTestDataPaths();
@@ -405,7 +405,7 @@ async function testCoverLetterGeneration(): Promise<void> {
 // ============================================================================
 async function testTimeoutHandling(): Promise<void> {
   const cliPath = findClaudeCLIPath();
-  const service = new ClaudeCodeService({
+  const service = new ClaudeProvider({
     cliPath,
     timeout: 100, // Very short timeout
   });

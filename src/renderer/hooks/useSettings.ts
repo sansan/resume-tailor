@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type {
   AppSettings,
   PartialAppSettings,
-} from '../../shared/schemas/settings.schema';
+} from '@schemas/settings.schema';
 import {
   validateSettings as validateSettingsData,
   errorsToFieldMap,
   type ValidationError,
   type ValidationWarning,
-} from '../../shared/utils/settings-validation';
+} from '@shared/settings-validation';
 
 /**
  * State interface for the useSettings hook.

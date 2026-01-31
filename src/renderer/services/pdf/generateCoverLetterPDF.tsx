@@ -1,6 +1,6 @@
 import { pdf } from '@react-pdf/renderer';
-import type { GeneratedCoverLetter } from '../../../shared/schemas/ai-output.schema';
-import type { PersonalInfo } from '../../../shared/schemas/resume.schema';
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
+import type { PersonalInfo } from '@schemas/resume.schema';
 import type { PDFTheme } from './theme';
 import CoverLetterPDFDocument from './CoverLetterPDFDocument';
 

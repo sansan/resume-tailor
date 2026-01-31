@@ -1,0 +1,5 @@
+export { DashboardPage } from './dashboard'
+export { ProfilePage } from './profile'
+export { TargetingPage } from './targeting'
+export { PreviewPage } from './preview'
+export { SettingsPage } from './settings'

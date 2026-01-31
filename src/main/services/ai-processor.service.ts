@@ -2,16 +2,21 @@
  * AI Processor Service
  *
  * Orchestrates AI-based resume refinement and cover letter generation.
- * Coordinates between Claude Code CLI, prompt templates, Zod validation,
- * and output sanitization.
+ * Uses the provider abstraction to support multiple AI backends
+ * (Claude CLI, Codex CLI, Gemini API, etc.)
  */
 
 import { ZodError } from 'zod';
-import { ClaudeCodeService, claudeCodeService } from './claude-code.service';
 import {
-  type ClaudeCodeConfig,
-  ClaudeCodeErrorCode,
-} from './claude-code.types';
+  type IAIProvider,
+  providerRegistry,
+  getProvider,
+} from './providers';
+import {
+  type AIProviderType,
+  type AIProviderConfig,
+  AIProviderErrorCode,
+} from '@app-types/ai-provider.types';
 import {
   type AIProcessorConfig,
   type RefineResumeOptions,
@@ -19,65 +24,105 @@ import {
   DEFAULT_AI_PROCESSOR_CONFIG,
   AIProcessorError,
   AIProcessorErrorCode,
-} from './ai-processor.types';
-import type { Resume } from '../../shared/schemas/resume.schema';
+} from '@app-types/ai-processor.types';
+import type { Resume } from '@schemas/resume.schema';
 import {
   RefinedResumeSchema,
   GeneratedCoverLetterSchema,
   type RefinedResume,
   type GeneratedCoverLetter,
-} from '../../shared/schemas/ai-output.schema';
+} from '@schemas/ai-output.schema';
 import {
   buildCombinedResumeRefinementPrompt,
   type ResumeRefinementOptions,
-} from '../../shared/prompts/resume-refinement.prompt';
+} from '@prompts/resume-refinement.prompt';
 import {
   buildCombinedCoverLetterPrompt,
   type CoverLetterGenerationOptions,
-} from '../../shared/prompts/cover-letter.prompt';
-import { sanitizeAIResponse } from '../../shared/utils/sanitize';
+} from '@prompts/cover-letter.prompt';
+import { sanitizeAIResponse } from '@shared/sanitize';
+
+/**
+ * Extended configuration with provider selection.
+ */
+export interface AIProcessorServiceConfig extends AIProcessorConfig {
+  /** Which AI provider to use */
+  provider?: AIProviderType;
+}
 
 /**
  * Service for processing AI-based resume refinement and cover letter generation.
  */
 export class AIProcessorService {
-  private config: AIProcessorConfig;
-  private claudeService: ClaudeCodeService;
+  private config: AIProcessorServiceConfig;
+  private provider: IAIProvider;
 
-  constructor(
-    config: Partial<AIProcessorConfig> = {},
-    claudeService?: ClaudeCodeService
-  ) {
+  constructor(config: Partial<AIProcessorServiceConfig> = {}) {
     this.config = { ...DEFAULT_AI_PROCESSOR_CONFIG, ...config };
-    this.claudeService = claudeService ?? claudeCodeService;
+
+    // Get the specified provider or default
+    this.provider = config.provider
+      ? getProvider(config.provider)
+      : providerRegistry.getDefaultProvider();
   }
 
   /**
    * Updates the service configuration.
    */
-  updateConfig(config: Partial<AIProcessorConfig>): void {
+  updateConfig(config: Partial<AIProcessorServiceConfig>): void {
     this.config = { ...this.config, ...config };
+
+    // Switch provider if specified
+    if (config.provider) {
+      this.provider = getProvider(config.provider);
+    }
   }
 
   /**
    * Gets the current configuration.
    */
-  getConfig(): AIProcessorConfig {
+  getConfig(): AIProcessorServiceConfig {
     return { ...this.config };
   }
 
   /**
-   * Updates the underlying Claude Code service configuration.
+   * Gets the current provider type.
    */
-  updateClaudeConfig(config: Partial<ClaudeCodeConfig>): void {
-    this.claudeService.updateConfig(config);
+  getProviderType(): AIProviderType {
+    return this.provider.type;
   }
 
   /**
-   * Checks if the Claude Code CLI is available.
+   * Sets the AI provider to use.
+   */
+  setProvider(type: AIProviderType): void {
+    this.provider = getProvider(type);
+    this.config.provider = type;
+  }
+
+  /**
+   * Updates the current provider's configuration.
+   * Accepts provider-specific config properties (e.g., cliPath, model).
+   */
+  updateProviderConfig(config: Partial<AIProviderConfig> & Record<string, unknown>): void {
+    this.provider.updateConfig(config);
+  }
+
+  /**
+   * Checks if the current AI provider is available.
    */
   async isAvailable(): Promise<boolean> {
-    return this.claudeService.isAvailable();
+    return this.provider.isAvailable();
+  }
+
+  /**
+   * Gets all available providers.
+   */
+  async getAvailableProviders(): Promise<AIProviderType[]> {
+    const statuses = await providerRegistry.checkAllAvailability();
+    return statuses
+      .filter((s) => s.available)
+      .map((s) => s.provider);
   }
 
   /**
@@ -94,12 +139,12 @@ export class AIProcessorService {
     jobPosting: string,
     options: RefineResumeOptions = {}
   ): Promise<RefinedResume> {
-    // Check CLI availability
+    // Check provider availability
     const isAvailable = await this.isAvailable();
     if (!isAvailable) {
       throw new AIProcessorError(
         AIProcessorErrorCode.CLI_NOT_AVAILABLE,
-        'Claude Code CLI is not available. Please ensure it is installed and accessible in PATH.'
+        `AI provider '${this.provider.type}' is not available.`
       );
     }
 
@@ -184,12 +229,12 @@ export class AIProcessorService {
     jobPosting: string,
     options: GenerateCoverLetterOptions = {}
   ): Promise<GeneratedCoverLetter> {
-    // Check CLI availability
+    // Check provider availability
     const isAvailable = await this.isAvailable();
     if (!isAvailable) {
       throw new AIProcessorError(
         AIProcessorErrorCode.CLI_NOT_AVAILABLE,
-        'Claude Code CLI is not available. Please ensure it is installed and accessible in PATH.'
+        `AI provider '${this.provider.type}' is not available.`
       );
     }
 
@@ -262,7 +307,7 @@ export class AIProcessorService {
   }
 
   /**
-   * Executes a prompt via Claude Code and validates the response.
+   * Executes a prompt and validates the response.
    *
    * @param prompt - The prompt to send
    * @param schema - The Zod schema to validate against
@@ -277,14 +322,14 @@ export class AIProcessorService {
   ): Promise<T> {
     // Update timeout if specified
     if (timeout !== undefined) {
-      const originalConfig = this.claudeService.getConfig();
-      this.claudeService.updateConfig({ timeout });
+      const originalConfig = this.provider.getConfig();
+      this.provider.updateConfig({ timeout });
 
       try {
         return await this.doExecuteAndValidate(prompt, schema);
       } finally {
         // Restore original timeout
-        this.claudeService.updateConfig({ timeout: originalConfig.timeout });
+        this.provider.updateConfig({ timeout: originalConfig.timeout });
       }
     }
 
@@ -298,8 +343,8 @@ export class AIProcessorService {
     prompt: string,
     schema: { parse: (data: unknown) => T }
   ): Promise<T> {
-    // Execute the Claude Code CLI
-    const response = await this.claudeService.execute({
+    // Execute via the current provider
+    const response = await this.provider.execute({
       prompt,
       outputFormat: 'json',
     });
@@ -309,31 +354,38 @@ export class AIProcessorService {
       const error = response.error;
 
       switch (error.code) {
-        case ClaudeCodeErrorCode.CLI_NOT_FOUND:
+        case AIProviderErrorCode.PROVIDER_NOT_AVAILABLE:
           throw new AIProcessorError(
             AIProcessorErrorCode.CLI_NOT_AVAILABLE,
             error.message,
             error.details
           );
 
-        case ClaudeCodeErrorCode.TIMEOUT:
+        case AIProviderErrorCode.AUTH_FAILED:
+          throw new AIProcessorError(
+            AIProcessorErrorCode.CLI_NOT_AVAILABLE,
+            `Authentication failed: ${error.message}`,
+            error.details
+          );
+
+        case AIProviderErrorCode.TIMEOUT:
           throw new AIProcessorError(
             AIProcessorErrorCode.TIMEOUT,
             error.message,
             error.details
           );
 
-        case ClaudeCodeErrorCode.INVALID_JSON:
+        case AIProviderErrorCode.INVALID_JSON:
           throw new AIProcessorError(
             AIProcessorErrorCode.PARSE_FAILED,
             error.message,
             error.details
           );
 
-        case ClaudeCodeErrorCode.SCHEMA_VALIDATION_FAILED:
+        case AIProviderErrorCode.RATE_LIMITED:
           throw new AIProcessorError(
-            AIProcessorErrorCode.VALIDATION_FAILED,
-            error.message,
+            AIProcessorErrorCode.EXECUTION_FAILED,
+            `Rate limited: ${error.message}`,
             error.details
           );
 

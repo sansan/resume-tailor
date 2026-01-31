@@ -2,7 +2,7 @@
   "name": "resume-creator",
   "version": "1.0.0",
   "description": "A desktop application for creating professional resumes and cover letters",
-  "main": "dist-electron/electron/main.js",
+  "main": "dist-electron/src/main/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"tsc -p tsconfig.electron.json --watch\" \"electron .\"",
     "dev:vite": "vite",

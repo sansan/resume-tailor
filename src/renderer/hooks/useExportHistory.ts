@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { ExportHistory, HistoryEntry } from '../../shared/schemas/history.schema';
+import type { ExportHistory, HistoryEntry } from '@schemas/history.schema';
 
 /**
  * State interface for the useExportHistory hook.

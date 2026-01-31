@@ -1,14 +1,13 @@
 import {
   LayoutDashboard,
   User,
-  Palette,
   Target,
   FileOutput,
-  History,
   Settings,
   Moon,
   Sun,
   Monitor,
+  PanelLeftClose, PanelLeft
 } from 'lucide-react'
 
 import {
@@ -21,7 +20,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -29,31 +28,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
-import { useTheme } from '@renderer/components/theme-provider'
-import { useAIStatus } from '@renderer/components/ai-status-provider'
-
-export type PageId =
-  | 'dashboard'
-  | 'profile'
-  | 'templates'
-  | 'targeting'
-  | 'preview'
-  | 'history'
-  | 'settings'
+import { useTheme } from '@/components/theme-provider'
+import { useAIStatus } from '@/components/ai-status-provider'
+import { APP_PAGES } from '@config/constants'
 
 interface AppSidebarProps {
-  activePage: PageId
-  onNavigate: (page: PageId) => void
+  activePage: APP_PAGES
+  onNavigate: (page: APP_PAGES) => void
 }
 
-const navItems: Array<{ id: PageId; label: string; icon: typeof LayoutDashboard }> = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'templates', label: 'Templates', icon: Palette },
-  { id: 'targeting', label: 'Job Targeting', icon: Target },
-  { id: 'preview', label: 'Preview & Export', icon: FileOutput },
-  { id: 'history', label: 'History', icon: History },
+const navItems: Array<{ id: APP_PAGES; label: string; icon: typeof LayoutDashboard }> = [
+  { id: APP_PAGES.DASHBOARD, label: APP_PAGES.DASHBOARD, icon: LayoutDashboard },
+  { id: APP_PAGES.RESUME, label: APP_PAGES.RESUME, icon: User },
+  { id: APP_PAGES.COVER_LETTER, label: APP_PAGES.COVER_LETTER, icon: FileOutput },
+  { id: APP_PAGES.TARGETING, label: APP_PAGES.TARGETING, icon: Target },
+  { id: APP_PAGES.SETTINGS, label: APP_PAGES.SETTINGS, icon: Settings },
 ]
 
 function AIStatusIndicator() {
@@ -74,10 +63,30 @@ function AIStatusIndicator() {
   }
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5">
-      <span className={`h-2 w-2 rounded-full ${getStatusColor()}`} />
-      <span className="text-xs text-muted-foreground">{getStatusText()}</span>
+    <div className="flex items-center gap-2">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+        <span className={`h-2 w-2 rounded-full ${getStatusColor()}`} />
+      </div>
+      <span className="text-xs text-muted-foreground whitespace-nowrap group-data-[collapsible=icon]:hidden">{getStatusText()}</span>
     </div>
+  )
+}
+
+function SidebarToggle() {
+  const { toggleSidebar, open } = useSidebar()
+
+  return (
+    <button
+      onClick={toggleSidebar}
+      className="flex h-8 w-full items-center gap-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+    >
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+        {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+      </div>
+      <span className="text-xs whitespace-nowrap group-data-[collapsible=icon]:hidden">
+        {open ? 'Collapse' : 'Expand'}
+      </span>
+    </button>
   )
 }
 
@@ -93,12 +102,14 @@ function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="w-full justify-start gap-2">
-          {getIcon()}
-          <span className="text-xs">
+        <button className="flex h-8 w-full items-center gap-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+            {getIcon()}
+          </div>
+          <span className="text-xs whitespace-nowrap group-data-[collapsible=icon]:hidden">
             {theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'System'}
           </span>
-        </Button>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-32">
         <DropdownMenuItem onClick={() => setTheme('light')}>
@@ -120,20 +131,20 @@ function ThemeToggle() {
 
 export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
   return (
-    <Sidebar>
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="shrink-0 border-b border-sidebar-border p-2">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <FileOutput className="h-4 w-4" />
           </div>
-          <span className="font-semibold">Resume Tailor</span>
+          <span className="font-semibold whitespace-nowrap group-data-[collapsible=icon]:hidden">Resume Tailor</span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-auto scrollbar-hide">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="items-start">
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
@@ -141,38 +152,20 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
                     onClick={() => onNavigate(item.id)}
                     tooltip={item.label}
                   >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span className="whitespace-nowrap group-data-[collapsible=icon]:hidden">{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={activePage === 'settings'}
-                  onClick={() => onNavigate('settings')}
-                  tooltip="Settings"
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
+      <SidebarFooter className="shrink-0 border-t border-sidebar-border p-2">
         <AIStatusIndicator />
         <ThemeToggle />
+        <SidebarToggle />
       </SidebarFooter>
     </Sidebar>
   )

@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { Save, FileJson, Sparkles } from 'lucide-react'
+import { Save, FileJson, Sparkles, Eye } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -12,7 +12,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { ExperienceSection } from './experience-section'
 import { EducationSection } from './education-section'
 import { SkillsSection } from './skills-section'
-import type { Resume, PersonalInfo, WorkExperience, Education, Skill } from '@/shared/schemas/resume.schema'
+import { ContactsSection } from './contacts-section'
+import type { Resume, PersonalInfo, WorkExperience, Education, Skill, Contact } from '@schemas/resume.schema'
 
 const SUMMARY_MAX_LENGTH = 500
 
@@ -32,7 +33,7 @@ export function ProfileForm({
   onJsonChange,
   onSave,
   isDirty,
-}: ProfileFormProps) {
+}: Readonly<ProfileFormProps>) {
   const summary = resume?.personalInfo?.summary ?? ''
   const summaryLength = summary.length
 
@@ -70,6 +71,19 @@ export function ProfileForm({
     [onChange]
   )
 
+  const handleContactsChange = useCallback(
+    (contacts: Contact[]) => {
+      if (!resume) return
+      onChange({
+        personalInfo: {
+          ...resume.personalInfo,
+          contacts,
+        },
+      })
+    },
+    [resume, onChange]
+  )
+
   const handleAiRescan = useCallback(() => {
     // TODO: Implement AI re-scan functionality
     console.log('AI Re-scan triggered')
@@ -96,6 +110,10 @@ export function ProfileForm({
           <TabsTrigger value="json">
             <FileJson className="mr-1.5 h-4 w-4" />
             JSON
+          </TabsTrigger>
+          <TabsTrigger value="preview">
+            <Eye className="mr-1.5 h-4 w-4" />
+            Preview
           </TabsTrigger>
         </TabsList>
 
@@ -154,7 +172,7 @@ export function ProfileForm({
             <Card>
               <CardContent className="pt-6">
                 <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2 mb-6">
                   <div>
                     <Label htmlFor="name">Full Name</Label>
                     <Input
@@ -162,26 +180,6 @@ export function ProfileForm({
                       value={resume.personalInfo.name}
                       onChange={(e) => handlePersonalInfoChange('name', e.target.value)}
                       placeholder="John Doe"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={resume.personalInfo.email}
-                      onChange={(e) => handlePersonalInfoChange('email', e.target.value)}
-                      placeholder="john.doe@example.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={resume.personalInfo.phone ?? ''}
-                      onChange={(e) => handlePersonalInfoChange('phone', e.target.value)}
-                      placeholder="+1 (555) 123-4567"
                     />
                   </div>
                   <div>
@@ -193,27 +191,15 @@ export function ProfileForm({
                       placeholder="San Francisco, CA"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="linkedin">LinkedIn</Label>
-                    <Input
-                      id="linkedin"
-                      type="url"
-                      value={resume.personalInfo.linkedin ?? ''}
-                      onChange={(e) => handlePersonalInfoChange('linkedin', e.target.value)}
-                      placeholder="https://linkedin.com/in/johndoe"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="website">Website</Label>
-                    <Input
-                      id="website"
-                      type="url"
-                      value={resume.personalInfo.website ?? ''}
-                      onChange={(e) => handlePersonalInfoChange('website', e.target.value)}
-                      placeholder="https://johndoe.com"
-                    />
-                  </div>
                 </div>
+
+                <Separator className="my-6" />
+
+                {/* Contacts Section */}
+                <ContactsSection
+                  contacts={resume.personalInfo.contacts ?? []}
+                  onChange={handleContactsChange}
+                />
               </CardContent>
             </Card>
 

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import type { Education } from '@/shared/schemas/resume.schema'
+import type { Education } from '@schemas/resume.schema'
 
 interface EducationSectionProps {
   education: Education[]

@@ -20,8 +20,13 @@
     /* Paths */
     "baseUrl": ".",
     "paths": {
-      "@shared/*": ["src/shared/*"]
+      "@/*": ["src/*"],
+      "@schemas/*": ["src/schemas/*"],
+      "@app-types/*": ["src/types/*"],
+      "@shared/*": ["src/shared/*"],
+      "@config/*": ["src/config/*"],
+      "@prompts/*": ["src/prompts/*"]
     }
   },
-  "include": ["electron/**/*", "src/shared/**/*", "src/main/**/*"]
+  "include": ["src/main/**/*", "src/schemas/**/*", "src/types/**/*", "src/shared/**/*", "src/config/**/*", "src/prompts/**/*"]
 }

@@ -5,7 +5,7 @@ import {
   type ResumePromptTemplateSettings,
   type CoverLetterPromptTemplateSettings,
   type PDFThemeSettings as PDFThemeSettingsType,
-} from '../../../shared/schemas/settings.schema';
+} from '@schemas/settings.schema';
 import OutputFolderSettings from './OutputFolderSettings';
 import PromptSettings from './PromptSettings';
 import PDFThemeSettingsComponent from './PDFThemeSettings';

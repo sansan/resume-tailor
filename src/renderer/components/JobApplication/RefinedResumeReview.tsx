@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import type { Resume, WorkExperience, Project } from '../../../shared/schemas/resume.schema';
-import type { RefinedResume } from '../../../shared/schemas/ai-output.schema';
+import type { Resume, WorkExperience, Project } from '@schemas/resume.schema';
+import { getContactByType } from '@schemas/resume.schema';
+import type { RefinedResume } from '@schemas/ai-output.schema';
 import ResumeSection from '../Resume/ResumeSection';
 
 type ViewMode = 'sideBySide' | 'original' | 'refined';
@@ -453,9 +454,11 @@ function RefinedResumeReview({
         <ResumeSection title="Personal Info">
           <div className="refined-resume-review__personal-info">
             <strong>{refinedResume.personalInfo.name}</strong>
-            <span>{refinedResume.personalInfo.email}</span>
-            {refinedResume.personalInfo.phone && (
-              <span>{refinedResume.personalInfo.phone}</span>
+            {getContactByType(refinedResume.personalInfo.contacts, 'email') && (
+              <span>{getContactByType(refinedResume.personalInfo.contacts, 'email')}</span>
+            )}
+            {getContactByType(refinedResume.personalInfo.contacts, 'phone') && (
+              <span>{getContactByType(refinedResume.personalInfo.contacts, 'phone')}</span>
             )}
             {refinedResume.personalInfo.location && (
               <span>{refinedResume.personalInfo.location}</span>

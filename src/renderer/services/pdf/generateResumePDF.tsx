@@ -1,5 +1,5 @@
 import { pdf } from '@react-pdf/renderer';
-import type { Resume, WorkExperience, Project } from '../../../shared/schemas/resume.schema';
+import type { Resume, WorkExperience, Project } from '@schemas/resume.schema';
 import type { PDFTheme } from './theme';
 import ResumePDFDocument from './ResumePDFDocument';
 

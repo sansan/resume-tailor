@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import type { RefinedResume, GeneratedCoverLetter } from '../../../shared/schemas/ai-output.schema';
-import type { AppSettings } from '../../../shared/schemas/settings.schema';
-import { generateHistoryEntryId } from '../../../shared/schemas/history.schema';
+import type { RefinedResume, GeneratedCoverLetter } from '@schemas/ai-output.schema';
+import type { AppSettings } from '@schemas/settings.schema';
+import { generateHistoryEntryId } from '@schemas/history.schema';
 import { renderResumeToPDFBlob, renderCoverLetterToPDFBlob, createPDFTheme, type PDFTheme } from '../../services/pdf';
-import { convertToPDFTheme } from '../../../shared/schemas/settings.schema';
+import { convertToPDFTheme } from '@schemas/settings.schema';
 
 export interface ExportPanelProps {
   refinedResume: RefinedResume;

@@ -4,7 +4,7 @@ import {
   type ResumePromptTemplateSettings,
   type CoverLetterPromptTemplateSettings,
   DEFAULT_APP_SETTINGS,
-} from '../../../shared/schemas/settings.schema';
+} from '@schemas/settings.schema';
 
 /**
  * Available prompt variables with descriptions.

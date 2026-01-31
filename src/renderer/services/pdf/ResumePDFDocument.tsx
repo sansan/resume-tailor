@@ -7,7 +7,8 @@ import {
   StyleSheet,
   Link,
 } from '@react-pdf/renderer';
-import type { Resume, Skill, WorkExperience, Project } from '../../../shared/schemas/resume.schema';
+import type { Resume, Skill, WorkExperience, Project } from '@schemas/resume.schema';
+import { getContactByType } from '@schemas/resume.schema';
 import { defaultPDFTheme, type PDFTheme } from './theme';
 
 // =============================================================================
@@ -482,21 +483,23 @@ function ResumePDFDocument({
               <View style={styles.contactBar}>
                 <Text style={styles.contactBarText}>Contact & Info</Text>
               </View>
-              {personalInfo.phone && <Text style={styles.sidebarText}>{personalInfo.phone}</Text>}
-              {personalInfo.email && (
-                <Link style={styles.sidebarLink} src={`mailto:${personalInfo.email}`}>
-                  {personalInfo.email}
+              {getContactByType(personalInfo.contacts, 'phone') && (
+                <Text style={styles.sidebarText}>{getContactByType(personalInfo.contacts, 'phone')}</Text>
+              )}
+              {getContactByType(personalInfo.contacts, 'email') && (
+                <Link style={styles.sidebarLink} src={`mailto:${getContactByType(personalInfo.contacts, 'email')}`}>
+                  {getContactByType(personalInfo.contacts, 'email')}
                 </Link>
               )}
               {personalInfo.location && <Text style={styles.sidebarText}>{personalInfo.location}</Text>}
-              {personalInfo.linkedin && (
-                <Link style={styles.sidebarLink} src={personalInfo.linkedin}>
-                  {personalInfo.linkedin.replace('https://', '').replace('www.', '')}
+              {getContactByType(personalInfo.contacts, 'linkedin') && (
+                <Link style={styles.sidebarLink} src={getContactByType(personalInfo.contacts, 'linkedin')!}>
+                  {getContactByType(personalInfo.contacts, 'linkedin')!.replace('https://', '').replace('www.', '')}
                 </Link>
               )}
-              {personalInfo.website && (
-                <Link style={styles.sidebarLink} src={personalInfo.website}>
-                  {personalInfo.website.replace('https://', '').replace('www.', '')}
+              {getContactByType(personalInfo.contacts, 'website') && (
+                <Link style={styles.sidebarLink} src={getContactByType(personalInfo.contacts, 'website')!}>
+                  {getContactByType(personalInfo.contacts, 'website')!.replace('https://', '').replace('www.', '')}
                 </Link>
               )}
             </View>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import type { GeneratedCoverLetter } from '../../../shared/schemas/ai-output.schema';
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
 import CoverLetterPreview from '../CoverLetter/CoverLetterPreview';
 
 type ViewMode = 'edit' | 'preview';

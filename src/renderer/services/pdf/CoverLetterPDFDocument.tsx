@@ -7,8 +7,9 @@ import {
   StyleSheet,
   Link,
 } from '@react-pdf/renderer';
-import type { GeneratedCoverLetter } from '../../../shared/schemas/ai-output.schema';
-import type { PersonalInfo } from '../../../shared/schemas/resume.schema';
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
+import type { PersonalInfo } from '@schemas/resume.schema';
+import { getContactByType } from '@schemas/resume.schema';
 import { defaultPDFTheme, type PDFTheme } from './theme';
 
 // =============================================================================
@@ -264,12 +265,12 @@ function CoverLetterPDFDocument({
 
           {/* Signature */}
           <Text style={styles.signatureName}>{signature}</Text>
-          {personalInfo?.phone && (
-            <Text style={styles.signatureContact}>{personalInfo.phone}</Text>
+          {getContactByType(personalInfo?.contacts, 'phone') && (
+            <Text style={styles.signatureContact}>{getContactByType(personalInfo?.contacts, 'phone')}</Text>
           )}
-          {personalInfo?.email && (
-            <Link style={styles.signatureLink} src={`mailto:${personalInfo.email}`}>
-              {personalInfo.email}
+          {getContactByType(personalInfo?.contacts, 'email') && (
+            <Link style={styles.signatureLink} src={`mailto:${getContactByType(personalInfo?.contacts, 'email')}`}>
+              {getContactByType(personalInfo?.contacts, 'email')}
             </Link>
           )}
         </View>

@@ -5,7 +5,7 @@ import ProcessingError from './ProcessingError';
 import RefinedResumeReview from './RefinedResumeReview';
 import CoverLetterReview from './CoverLetterReview';
 import ExportPanel from './ExportPanel';
-import type { Resume } from '../../../shared/schemas/resume.schema';
+import type { Resume } from '@schemas/resume.schema';
 import type {
   UseJobApplicationState,
   UseJobApplicationActions,

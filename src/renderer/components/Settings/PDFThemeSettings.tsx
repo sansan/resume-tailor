@@ -4,7 +4,7 @@ import {
   DEFAULT_APP_SETTINGS,
   type AppSettings,
   type PDFThemeSettings as PDFThemeSettingsType,
-} from '../../../shared/schemas/settings.schema';
+} from '@schemas/settings.schema';
 
 /**
  * Props for the PDFThemeSettings component.

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ResumeSchema, type Resume } from '../../shared/schemas/resume.schema';
+import { ResumeSchema, type Resume } from '@schemas/resume.schema';
 import { ZodError } from 'zod';
 
 export interface ValidationError {

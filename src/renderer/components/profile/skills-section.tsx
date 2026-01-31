@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import type { Skill } from '@/shared/schemas/resume.schema'
+import type { Skill } from '@schemas/resume.schema'
 
 interface SkillsSectionProps {
   skills: Skill[]

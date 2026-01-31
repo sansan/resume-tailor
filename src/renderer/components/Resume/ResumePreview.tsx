@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import type { Resume } from '../../../shared/schemas/resume.schema';
+import type { Resume } from '@schemas/resume.schema';
+import { getContactByType } from '@schemas/resume.schema';
 import { saveResumePDF } from '../../services/pdf';
 
 interface ResumePreviewProps {
@@ -82,27 +83,31 @@ function ResumePreview({ resume }: ResumePreviewProps): React.JSX.Element {
       <header className="resume-preview__header">
         <h1 className="resume-preview__name">{personalInfo.name}</h1>
         <div className="resume-preview__contact">
-          {personalInfo.email && (
+          {getContactByType(personalInfo.contacts, 'email') && (
             <span className="resume-preview__contact-item">
-              <a href={`mailto:${personalInfo.email}`}>{personalInfo.email}</a>
+              <a href={`mailto:${getContactByType(personalInfo.contacts, 'email')}`}>
+                {getContactByType(personalInfo.contacts, 'email')}
+              </a>
             </span>
           )}
-          {personalInfo.phone && (
-            <span className="resume-preview__contact-item">{personalInfo.phone}</span>
+          {getContactByType(personalInfo.contacts, 'phone') && (
+            <span className="resume-preview__contact-item">
+              {getContactByType(personalInfo.contacts, 'phone')}
+            </span>
           )}
           {personalInfo.location && (
             <span className="resume-preview__contact-item">{personalInfo.location}</span>
           )}
-          {personalInfo.linkedin && (
+          {getContactByType(personalInfo.contacts, 'linkedin') && (
             <span className="resume-preview__contact-item">
-              <a href={personalInfo.linkedin} target="_blank" rel="noopener noreferrer">
+              <a href={getContactByType(personalInfo.contacts, 'linkedin')} target="_blank" rel="noopener noreferrer">
                 LinkedIn
               </a>
             </span>
           )}
-          {personalInfo.website && (
+          {getContactByType(personalInfo.contacts, 'website') && (
             <span className="resume-preview__contact-item">
-              <a href={personalInfo.website} target="_blank" rel="noopener noreferrer">
+              <a href={getContactByType(personalInfo.contacts, 'website')} target="_blank" rel="noopener noreferrer">
                 Website
               </a>
             </span>

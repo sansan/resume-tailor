@@ -1,7 +1,0 @@
-export { DashboardPage } from './dashboard'
-export { ProfilePage } from './profile'
-export { TemplatesPage } from './templates'
-export { TargetingPage } from './targeting'
-export { PreviewPage } from './preview'
-export { HistoryPage } from './history'
-export { SettingsPage } from './settings'

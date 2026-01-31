@@ -6,23 +6,46 @@ A desktop application for creating professional resumes and cover letters, built
 
 ```
 resume-creator/
-├── electron/           # Electron main process
-│   ├── main.ts         # Main entry point
-│   └── preload.ts      # Preload script with contextBridge
 ├── src/
-│   ├── main/           # Electron main process helpers
-│   ├── renderer/       # React app
-│   │   ├── components/ # React components
-│   │   ├── hooks/      # Custom React hooks
-│   │   ├── schemas/    # Renderer-specific schemas
-│   │   ├── services/   # Services (PDF generation, etc.)
-│   │   ├── styles/     # CSS files
-│   │   └── types/      # TypeScript types
-│   └── shared/         # Shared types and utilities
-├── dist/               # Vite build output
-├── dist-electron/      # Electron TypeScript output
-└── release/            # Electron-builder output
+│   ├── main/              # Electron main process
+│   │   ├── main.ts        # Main entry point
+│   │   ├── preload.ts     # Preload script with contextBridge
+│   │   ├── ipc-handlers.ts
+│   │   └── services/      # Main-process services (Node.js APIs)
+│   │       ├── providers/ # AI provider implementations
+│   │       │   ├── claude.provider.ts
+│   │       │   ├── codex.provider.ts
+│   │       │   ├── gemini.provider.ts
+│   │       │   └── index.ts
+│   │       ├── ai-processor.service.ts
+│   │       ├── settings.service.ts
+│   │       └── history.service.ts
+│   ├── renderer/          # React app (browser context)
+│   │   ├── App.tsx        # Main React component
+│   │   ├── main.tsx       # React entry point
+│   │   ├── components/    # React components
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── services/pdf/  # PDF generation
+│   │   ├── lib/           # Utilities (cn, etc.)
+│   │   └── styles/        # CSS files
+│   ├── schemas/           # Shared Zod schemas
+│   ├── types/             # Shared TypeScript types
+│   ├── shared/            # Shared utilities
+│   ├── config/            # Configuration constants
+│   └── prompts/           # AI prompt templates
+├── dist/                  # Vite build output
+├── dist-electron/         # Electron TypeScript output
+└── release/               # Electron-builder output
 ```
+
+## Path Aliases
+
+- `@/*` - `src/renderer/*` (for renderer files)
+- `@schemas/*` - `src/schemas/*`
+- `@app-types/*` - `src/types/*`
+- `@shared/*` - `src/shared/*`
+- `@config/*` - `src/config/*`
+- `@prompts/*` - `src/prompts/*`
 
 ## Development Commands
 
@@ -60,20 +83,51 @@ resume-creator/
 - `openFolder(folderPath)` - Open folder in file explorer
 - `selectFolder()` - Open folder selection dialog
 
-### AI Operations (requires Claude CLI installed)
+### AI Operations (requires AI CLI installed)
 - `refineResume(params)` - Refine resume for a job posting using AI
 - `generateCoverLetter(params)` - Generate cover letter using AI
-- `checkAIAvailability()` - Check if Claude CLI is available
+- `checkAIAvailability()` - Check if AI CLI is available
 - `cancelAIOperation(operationId)` - Cancel an in-progress AI operation
 - `onAIProgress(callback)` - Listen for AI operation progress updates
 
-## Claude Code Integration
+## AI Provider Architecture
 
-The app uses Claude Code CLI as the AI backend for resume refinement and cover letter generation.
+The app supports multiple AI backends through a provider abstraction:
+
+### Supported Providers
+- **Claude** (`claude`) - Claude Code CLI
+- **Codex** (`codex`) - OpenAI Codex CLI
+- **Gemini** (`gemini`) - Google Gemini CLI
 
 ### Architecture
-- `src/main/services/claude-code.service.ts` - Low-level Claude CLI interaction
-- `src/main/services/ai-processor.service.ts` - High-level orchestration (prompt building, validation, sanitization)
-- `src/shared/schemas/ai-output.schema.ts` - Zod schemas for AI response validation
-- `src/shared/prompts/` - Prompt templates for resume and cover letter generation
-- `src/shared/utils/sanitize.ts` - AI output sanitization utilities
+```
+src/main/services/providers/
+├── ai-provider.interface.ts  # IAIProvider interface
+├── claude.provider.ts        # spawn('claude', ['--print', ...])
+├── codex.provider.ts         # spawn('codex', [...])
+├── gemini.provider.ts        # spawn('gemini', ['-p', ...])
+└── index.ts                  # ProviderRegistry
+```
+
+### Usage
+```typescript
+import { aiProcessorService } from './ai-processor.service';
+import { providerRegistry, checkProviders } from './providers';
+
+// Check available providers
+const statuses = await checkProviders();
+
+// Switch provider
+aiProcessorService.setProvider('gemini');
+
+// Configure provider
+providerRegistry.updateProviderConfig('claude', { timeout: 180000 });
+```
+
+### Key Files
+- `src/main/services/providers/` - AI provider implementations
+- `src/main/services/ai-processor.service.ts` - High-level orchestration
+- `src/types/ai-provider.types.ts` - Shared provider types
+- `src/schemas/ai-output.schema.ts` - Zod schemas for AI response validation
+- `src/prompts/` - Prompt templates
+- `src/shared/sanitize.ts` - AI output sanitization

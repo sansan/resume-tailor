@@ -2,20 +2,20 @@ import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 import { aiProcessorService } from './services/ai-processor.service';
-import { AIProcessorError, AIProcessorErrorCode } from './services/ai-processor.types';
+import { AIProcessorError, AIProcessorErrorCode } from '@app-types/ai-processor.types';
 import { settingsService, SettingsError, SettingsErrorCode, type SettingsValidationResult } from './services/settings.service';
 import { historyService } from './services/history.service';
-import type { Resume } from '../shared/schemas/resume.schema';
-import type { RefineResumeOptions, GenerateCoverLetterOptions } from './services/ai-processor.types';
-import type { CompanyInfo } from '../shared/prompts/cover-letter.prompt';
-import type { ResumeRefinementOptions } from '../shared/prompts/resume-refinement.prompt';
-import type { CoverLetterGenerationOptions } from '../shared/prompts/cover-letter.prompt';
+import type { Resume } from '@schemas/resume.schema';
+import type { RefineResumeOptions, GenerateCoverLetterOptions } from '@app-types/ai-processor.types';
+import type { CompanyInfo } from '@prompts/cover-letter.prompt';
+import type { ResumeRefinementOptions } from '@prompts/resume-refinement.prompt';
+import type { CoverLetterGenerationOptions } from '@prompts/cover-letter.prompt';
 import type {
   RefinedResume,
   GeneratedCoverLetter,
-} from '../shared/schemas/ai-output.schema';
-import type { AppSettings, PartialAppSettings, ResumePromptTemplateSettings, CoverLetterPromptTemplateSettings } from '../shared/schemas/settings.schema';
-import type { ExportHistory, HistoryEntry } from '../shared/schemas/history.schema';
+} from '@schemas/ai-output.schema';
+import type { AppSettings, PartialAppSettings, ResumePromptTemplateSettings, CoverLetterPromptTemplateSettings } from '@schemas/settings.schema';
+import type { ExportHistory, HistoryEntry } from '@schemas/history.schema';
 
 /**
  * Converts resume prompt settings to ResumeRefinementOptions for the AI processor.

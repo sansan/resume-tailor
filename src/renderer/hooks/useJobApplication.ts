@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { Resume } from '../../shared/schemas/resume.schema';
-import type { RefinedResume, GeneratedCoverLetter } from '../../shared/schemas/ai-output.schema';
-import type { AIProgressUpdate, AIResult } from '../types/electron';
+import type { Resume } from '@schemas/resume.schema';
+import type { RefinedResume, GeneratedCoverLetter } from '@schemas/ai-output.schema';
+import type { AIProgressUpdate, AIResult } from '@app-types/electron';
 
 export type JobApplicationStep = 'input' | 'processing' | 'review' | 'export';
 

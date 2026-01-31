@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GeneratedCoverLetter } from '../../../shared/schemas/ai-output.schema';
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
 
 interface CoverLetterPreviewProps {
   coverLetter: GeneratedCoverLetter;

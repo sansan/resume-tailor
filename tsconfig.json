@@ -25,11 +25,15 @@
     /* Paths */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["src/renderer/*"],
+      "@schemas/*": ["src/schemas/*"],
+      "@app-types/*": ["src/types/*"],
       "@shared/*": ["src/shared/*"],
-      "@renderer/*": ["src/renderer/*"]
+      "@config/*": ["src/config/*"],
+      "@prompts/*": ["src/prompts/*"]
     }
   },
-  "include": ["src/renderer/**/*", "src/shared/**/*"],
+  "include": ["src/renderer/**/*", "src/schemas/**/*", "src/types/**/*", "src/shared/**/*", "src/config/**/*", "src/prompts/**/*"],
+  "exclude": ["src/main/**/*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

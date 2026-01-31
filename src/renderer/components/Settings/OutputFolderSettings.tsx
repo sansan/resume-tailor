@@ -2,7 +2,7 @@ import React from 'react';
 import {
   FILE_NAMING_VARIABLES,
   type AppSettings,
-} from '../../../shared/schemas/settings.schema';
+} from '@schemas/settings.schema';
 
 /**
  * Props for the OutputFolderSettings component.

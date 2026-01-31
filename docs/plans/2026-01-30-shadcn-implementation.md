@@ -996,7 +996,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { GripVertical, Plus, Trash2, X } from 'lucide-react'
-import type { WorkExperience } from '@/shared/schemas/resume.schema'
+import type { WorkExperience } from '@/schemas/resume.schema'
 
 interface ExperienceSectionProps {
   experiences: WorkExperience[]
@@ -1180,7 +1180,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GripVertical, Plus, Trash2 } from 'lucide-react'
-import type { Education } from '@/shared/schemas/resume.schema'
+import type { Education } from '@/schemas/resume.schema'
 
 interface EducationSectionProps {
   education: Education[]
@@ -1312,7 +1312,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Plus, X } from 'lucide-react'
-import type { Skill } from '@/shared/schemas/resume.schema'
+import type { Skill } from '@/schemas/resume.schema'
 
 interface SkillsSectionProps {
   skills: Skill[]
@@ -1422,7 +1422,7 @@ import { Save, FileJson, Sparkles } from 'lucide-react'
 import { ExperienceSection } from './experience-section'
 import { EducationSection } from './education-section'
 import { SkillsSection } from './skills-section'
-import type { Resume } from '@/shared/schemas/resume.schema'
+import type { Resume } from '@/schemas/resume.schema'
 
 interface ProfileFormProps {
   resume: Resume | null
