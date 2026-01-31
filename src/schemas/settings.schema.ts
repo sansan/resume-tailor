@@ -95,6 +95,9 @@ export const AppSettingsSchema = z.object({
   // PDF theme customization
   pdfTheme: PDFThemeSettingsSchema,
 
+  // Onboarding state
+  onboardingComplete: z.boolean().default(false),
+
   // Settings metadata
   version: z.number().default(1),  // Schema version for migrations
 });
@@ -138,6 +141,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
     style: 'detailed',
     emphasizeCompanyKnowledge: true,
   },
+  onboardingComplete: false,
   pdfTheme: {
     colors: {
       pageBackground: '#FFFFFF',

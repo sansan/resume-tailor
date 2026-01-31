@@ -173,6 +173,20 @@ export interface ImportResumeError {
 export type ImportResumeResponse = ImportResumeResult | ImportResumeError;
 
 // ============================================
+// Onboarding & API Key Types
+// ============================================
+
+/**
+ * Supported AI providers for API key storage.
+ */
+export type AIProvider = 'claude' | 'openai' | 'google';
+
+/**
+ * Supported CLI tools for detection.
+ */
+export type CLITool = 'claude' | 'codex' | 'gemini';
+
+// ============================================
 // Electron API Interface
 // ============================================
 
@@ -221,6 +235,14 @@ export interface ElectronAPI {
   importResumeFromText: (text: string, fileName?: string) => Promise<ImportResumeResponse>;
   saveProfile: (resume: Resume) => Promise<UserProfile>;
   clearProfile: () => Promise<void>;
+
+  // Onboarding Operations
+  isOnboardingComplete: () => Promise<boolean>;
+  completeOnboarding: () => Promise<void>;
+  detectInstalledCLIs: () => Promise<CLITool[]>;
+  saveAPIKey: (provider: AIProvider, key: string) => Promise<void>;
+  hasAPIKey: (provider: AIProvider) => Promise<boolean>;
+  deleteAPIKey: (provider: AIProvider) => Promise<void>;
 }
 
 declare global {

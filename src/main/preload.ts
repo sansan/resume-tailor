@@ -89,6 +89,14 @@ const electronAPI: ElectronAPI = {
   importResumeFromText: (text, fileName) => ipcRenderer.invoke('profile:import-text', text, fileName),
   saveProfile: (resume) => ipcRenderer.invoke('profile:save', resume),
   clearProfile: () => ipcRenderer.invoke('profile:clear'),
+
+  // Onboarding Operations
+  isOnboardingComplete: () => ipcRenderer.invoke('onboarding:is-complete'),
+  completeOnboarding: () => ipcRenderer.invoke('onboarding:complete'),
+  detectInstalledCLIs: () => ipcRenderer.invoke('onboarding:detect-clis'),
+  saveAPIKey: (provider, key) => ipcRenderer.invoke('onboarding:save-api-key', provider, key),
+  hasAPIKey: (provider) => ipcRenderer.invoke('onboarding:has-api-key', provider),
+  deleteAPIKey: (provider) => ipcRenderer.invoke('onboarding:delete-api-key', provider),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

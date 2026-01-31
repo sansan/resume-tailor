@@ -7,6 +7,8 @@ import { settingsService, SettingsError, SettingsErrorCode } from './services/se
 import { historyService } from './services/history.service';
 import { profileService } from './services/profile.service';
 import { documentExtractorService } from './services/document-extractor.service';
+import { apiKeyService } from './services/api-key.service';
+import type { AIProvider, CLITool } from './services/api-key.service';
 import type { RefineResumeOptions, GenerateCoverLetterOptions } from '../types/ai-processor.types';
 import type { ResumeRefinementOptions, } from '../prompts/resume-refinement.prompt';
 import type { CoverLetterGenerationOptions, CompanyInfo } from '../prompts/cover-letter.prompt';
@@ -468,6 +470,39 @@ export function registerIPCHandlers(): void {
   });
 
   // ============================================
+  // Onboarding & API Key Handlers
+  // ============================================
+
+  ipcMain.handle('onboarding:is-complete', async (): Promise<boolean> => {
+    try {
+      const settings = await settingsService.loadSettings();
+      return settings.onboardingComplete === true;
+    } catch {
+      return false;
+    }
+  });
+
+  ipcMain.handle('onboarding:complete', async (): Promise<void> => {
+    await settingsService.saveSettings({ onboardingComplete: true });
+  });
+
+  ipcMain.handle('onboarding:detect-clis', async (): Promise<CLITool[]> => {
+    return apiKeyService.detectInstalledCLIs();
+  });
+
+  ipcMain.handle('onboarding:save-api-key', async (_event, provider: AIProvider, key: string): Promise<void> => {
+    apiKeyService.saveAPIKey(provider, key);
+  });
+
+  ipcMain.handle('onboarding:has-api-key', async (_event, provider: AIProvider): Promise<boolean> => {
+    return apiKeyService.hasAPIKey(provider);
+  });
+
+  ipcMain.handle('onboarding:delete-api-key', async (_event, provider: AIProvider): Promise<void> => {
+    apiKeyService.deleteAPIKey(provider);
+  });
+
+  // ============================================
   // AI Operation Handlers
   // ============================================
 
@@ -646,6 +681,7 @@ export function removeIPCHandlers(): void {
     'settings:get', 'settings:save', 'settings:select-folder', 'settings:reset', 'settings:validate', 'settings:get-default-folder',
     'history:get', 'history:get-recent', 'history:add', 'history:delete', 'history:clear', 'history:open-file',
     'profile:has', 'profile:load', 'profile:import-file', 'profile:import-text', 'profile:save', 'profile:clear',
+    'onboarding:is-complete', 'onboarding:complete', 'onboarding:detect-clis', 'onboarding:save-api-key', 'onboarding:has-api-key', 'onboarding:delete-api-key',
     'ai:check-availability', 'ai:refine-resume', 'ai:generate-cover-letter', 'ai:cancel-operation',
   ];
 
