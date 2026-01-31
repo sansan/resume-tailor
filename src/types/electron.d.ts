@@ -242,7 +242,7 @@ export interface ElectronAPI {
   hasProfile: () => Promise<boolean>;
   loadProfile: () => Promise<UserProfile | null>;
   importResumeFromFile: (filePath: string) => Promise<ImportResumeResponse>;
-  importResumeFromText: (text: string, fileName?: string) => Promise<ImportResumeResponse>;
+  importResumeFromText: (content: string | Uint8Array, fileName?: string) => Promise<ImportResumeResponse>;
   saveProfile: (resume: Resume) => Promise<UserProfile>;
   clearProfile: () => Promise<void>;
 

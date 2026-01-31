@@ -427,10 +427,37 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle(
     'profile:import-text',
-    async (_event, text: string, fileName?: string): Promise<ImportResumeResponse> => {
-      console.log(`[profile:import-text] Input text length: ${text.length} chars, file: ${fileName}`);
+    async (_event, content: string | Uint8Array, fileName?: string): Promise<ImportResumeResponse> => {
+      const isBuffer = content instanceof Uint8Array || ArrayBuffer.isView(content);
+      console.log(`[profile:import-text] Input: ${isBuffer ? 'binary' : 'text'}, length: ${isBuffer ? (content as Uint8Array).length : (content as string).length}, file: ${fileName}`);
 
       try {
+        let extractedText: string;
+
+        // Check if we need to extract text from binary document (PDF, DOCX)
+        const ext = fileName ? fileName.toLowerCase().split('.').pop() : '';
+        if (isBuffer || ext === 'pdf' || ext === 'docx') {
+          console.log('[profile:import-text] Extracting text from document...');
+          const buffer = isBuffer ? Buffer.from(content as Uint8Array) : Buffer.from(content, 'binary');
+          const extraction = await documentExtractorService.extractFromContent(buffer, fileName || 'document.pdf');
+
+          if (!extraction.success) {
+            return {
+              success: false,
+              error: {
+                code: extraction.error.code,
+                message: extraction.error.message,
+                ...(extraction.error.details ? { details: extraction.error.details } : {}),
+              },
+            };
+          }
+          extractedText = extraction.text;
+          console.log(`[profile:import-text] Extracted ${extractedText.length} chars of text`);
+        } else {
+          // Plain text file
+          extractedText = content as string;
+        }
+
         // Use the selected provider from settings
         const settings = await settingsService.loadSettings();
         if (settings.selectedProvider) {
@@ -439,7 +466,7 @@ export function registerIPCHandlers(): void {
 
         // Extract structured data using AI
         console.log('[profile:import-text] Calling extractResume...');
-        const resume = await aiProcessorService.extractResume(text);
+        const resume = await aiProcessorService.extractResume(extractedText);
         console.log('[profile:import-text] extractResume succeeded');
 
         // Save to profile

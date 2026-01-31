@@ -131,12 +131,23 @@ export function ResumeUploadScreen({
         // Start processing animation
         const phaseSimulation = simulateProcessingPhases()
 
-        // Read file content
-        const text = await file.text()
+        // Read file content - use ArrayBuffer for binary files (PDF, DOCX)
+        const ext = file.name.toLowerCase().split('.').pop()
+        const isBinary = ext === 'pdf' || ext === 'docx'
 
-        // Send to main process for AI extraction
+        let content: string | Uint8Array
+        if (isBinary) {
+          // Send binary data for PDF/DOCX so main process can extract text properly
+          const arrayBuffer = await file.arrayBuffer()
+          content = new Uint8Array(arrayBuffer)
+        } else {
+          // Plain text files can be read as text
+          content = await file.text()
+        }
+
+        // Send to main process for extraction and AI processing
         const result = await window.electronAPI.importResumeFromText(
-          text,
+          content,
           file.name
         )
 
