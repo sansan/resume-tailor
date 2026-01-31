@@ -1,4 +1,4 @@
-# Resume Creator
+# Resume Tailor
 
 A desktop application for creating professional resumes and cover letters, built with Electron + React + TypeScript.
 

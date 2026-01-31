@@ -2,7 +2,7 @@
 
 ## Overview
 
-Redesign the Resume Creator app using shadcn/ui components for a consistent, modern interface. The app helps users create tailored resumes and cover letters using local AI (Claude CLI).
+Redesign the Resume Tailor app using shadcn/ui components for a consistent, modern interface. The app helps users create tailored resumes and cover letters using local AI (Claude CLI).
 
 ## Design Decisions
 

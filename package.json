@@ -67,8 +67,8 @@
     "vite": "^5.3.3"
   },
   "build": {
-    "appId": "com.resume-creator.app",
-    "productName": "Resume Creator",
+    "appId": "com.resume-tailor.app",
+    "productName": "Resume Tailor",
     "directories": {
       "output": "release"
     },

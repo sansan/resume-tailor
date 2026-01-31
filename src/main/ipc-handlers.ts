@@ -428,6 +428,8 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(
     'profile:import-text',
     async (_event, text: string, fileName?: string): Promise<ImportResumeResponse> => {
+      console.log(`[profile:import-text] Input text length: ${text.length} chars, file: ${fileName}`);
+
       try {
         // Use the selected provider from settings
         const settings = await settingsService.loadSettings();
@@ -436,7 +438,9 @@ export function registerIPCHandlers(): void {
         }
 
         // Extract structured data using AI
+        console.log('[profile:import-text] Calling extractResume...');
         const resume = await aiProcessorService.extractResume(text);
+        console.log('[profile:import-text] extractResume succeeded');
 
         // Save to profile
         const profile = await profileService.saveProfile(resume, fileName);

@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Rebuild the Resume Creator UI using shadcn components with a sidebar-based navigation structure.
+**Goal:** Rebuild the Resume Tailor UI using shadcn components with a sidebar-based navigation structure.
 
 **Architecture:** Replace the current tab-based Header with a persistent Sidebar. Create 7 pages (Dashboard, Profile, Templates, Job Targeting, Preview, History, Settings) as separate components. Keep existing hooks and services intact - only replace the UI layer.
 
