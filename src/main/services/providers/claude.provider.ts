@@ -62,24 +62,27 @@ export class ClaudeProvider extends BaseAIProvider {
       let timedOut = false;
       let processExited = false;
 
-      // Build CLI arguments
-      // Pass prompt as argument for non-interactive mode
+      // Build CLI arguments for clean, minimal execution
+      // --tools "" disables all tools, reducing system prompt from 22k to 9k tokens
+      // --no-session-persistence prevents session caching
+      // --model sonnet for faster responses
       const args: string[] = [
         '--print',
-        prompt,  // Pass prompt as argument
+        '--no-session-persistence',
+        '--tools', '',
+        '--model', 'sonnet',
       ];
       if (outputFormat === 'json') {
         args.push('--output-format', 'json');
       }
 
-      // Spawn the CLI process from user's home directory to avoid loading project context
-      const homeDir = process.env.HOME || process.env.USERPROFILE || '/tmp';
+      // Spawn the CLI process from /tmp to avoid loading any project context
       let childProcess: ChildProcess;
       try {
         childProcess = spawn(this.config.cliPath, args, {
           stdio: ['pipe', 'pipe', 'pipe'],
           env: { ...process.env },
-          cwd: homeDir,
+          cwd: '/tmp',  // Use /tmp to ensure no project context is loaded
         });
       } catch {
         resolve({
@@ -213,7 +216,8 @@ export class ClaudeProvider extends BaseAIProvider {
         }
       });
 
-      // Close stdin since prompt is passed as argument
+      // Write prompt to stdin and close
+      childProcess.stdin?.write(prompt);
       childProcess.stdin?.end();
     });
   }
