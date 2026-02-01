@@ -160,7 +160,8 @@ Planned improvements and features:
 
 ### Testing & Quality
 
-- Comprehensive unit test coverage
+- ~~Basic Vitest setup~~ (Done)
+- Expand unit test coverage (schemas, services, components)
 - End-to-end testing with Playwright
 - AI response validation and error handling improvements
 
