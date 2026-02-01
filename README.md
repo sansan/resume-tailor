@@ -1,6 +1,9 @@
 # Resume Tailor
 
-A desktop application for creating professional resumes and cover letters.
+A **free, open-source desktop application** that uses artificial intelligence to
+optimize your resume for specific job postings. Simply paste a job description,
+and watch as AI transforms your existing resume into a perfectly tailored
+application.
 
 > ⚠️ **Important: Unsigned Binaries**
 >
@@ -59,10 +62,45 @@ A desktop application for creating professional resumes and cover letters.
 
 ## Features
 
-- Create and edit resumes from JSON data
-- Validate resume data against schemas
-- Generate professional PDF exports
-- Job application management (coming soon)
+### AI-Powered Resume Optimization
+
+Automatically highlights relevant skills and experience, matches keywords from
+job descriptions, and restructures content for maximum ATS compatibility.
+
+### Cover Letter Generation
+
+Generate personalized cover letters in seconds. AI analyzes the job posting to
+craft compelling narratives. Edit and refine with built-in editor.
+
+### Professional PDF Export
+
+Multiple modern templates to choose from, customizable color schemes, and clean,
+recruiter-friendly formatting.
+
+### Job Application Tracking
+
+Keep track of all your applications in one place with status updates, notes, and
+history.
+
+## Why Tailoring Your Resume Matters
+
+Studies show that tailored resumes are **3x more likely** to get past Applicant
+Tracking Systems (ATS). Generic resumes often get filtered out before a human
+ever sees them.
+
+Resume Tailor helps you:
+
+- **Beat the ATS** by matching job-specific keywords
+- **Save hours** of manual editing per application
+- **Increase interview callbacks** with targeted content
+
+## Supported AI Providers
+
+Resume Tailor works with popular AI coding assistants:
+
+- [Claude CLI](https://docs.anthropic.com/en/docs/claude-code)
+- [OpenAI Codex CLI](https://github.com/openai/codex)
+- [Google Gemini CLI](https://github.com/google-gemini/gemini-cli)
 
 ## Getting Started
 
