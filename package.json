@@ -33,7 +33,10 @@
     "test:integration:live": "npm run build && node dist-electron/src/main/services/claude-code.integration.test.js --live",
     "prepare": "husky",
     "postinstall": "electron-rebuild -f -w better-sqlite3",
-    "version": "npm run build"
+    "version": "npm run build",
+    "release:patch": "npm version patch && git push && git push --tags",
+    "release:minor": "npm version minor && git push && git push --tags",
+    "release:major": "npm version major && git push && git push --tags"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
