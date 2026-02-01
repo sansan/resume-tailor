@@ -12,7 +12,7 @@ import type { AIProvider, CLITool } from './services/api-key.service';
 import type { RefineResumeOptions, GenerateCoverLetterOptions } from '../types/ai-processor.types';
 import type { ResumeRefinementOptions, } from '../prompts/resume-refinement.prompt';
 import type { CoverLetterGenerationOptions, CompanyInfo } from '../prompts/cover-letter.prompt';
-import type { RefinedResume, GeneratedCoverLetter } from '../schemas/ai-output.schema';
+import type { RefinedResume, GeneratedCoverLetter, ExtractedJobPosting } from '../schemas/ai-output.schema';
 import type { AppSettings, PartialAppSettings, ResumePromptTemplateSettings, CoverLetterPromptTemplateSettings } from '../schemas/settings.schema';
 import type { ExportHistory, HistoryEntry } from '../schemas/history.schema';
 
@@ -29,6 +29,7 @@ import type {
   CheckExportFilesParams,
   CheckExportFilesResult,
   ImportResumeResponse,
+  FetchJobPostingResult,
 } from '../types/electron';
 import type { Resume, UserProfile } from '../schemas/resume.schema';
 
@@ -44,6 +45,19 @@ interface GenerateCoverLetterIPCParams {
   jobPosting: string;
   companyInfo?: CompanyInfo;
   options?: GenerateCoverLetterOptions;
+}
+
+interface ShortenCoverLetterIPCParams {
+  coverLetter: GeneratedCoverLetter;
+  currentCharCount: number;
+  targetCharCount: number;
+}
+
+interface ExtractJobPostingIPCParams {
+  jobPostingText: string;
+  options?: {
+    inferSalary?: boolean;
+  };
 }
 
 /**
@@ -171,10 +185,10 @@ export function registerIPCHandlers(): void {
     return targetPath;
   });
 
-  ipcMain.handle('generate-pdf', async (_event, pdfData: Buffer): Promise<string | null> => {
+  ipcMain.handle('generate-pdf', async (_event, pdfData: Buffer, defaultFileName?: string): Promise<string | null> => {
     const result = await dialog.showSaveDialog({
       filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
-      defaultPath: 'resume.pdf',
+      defaultPath: defaultFileName ?? 'resume.pdf',
     });
 
     if (result.canceled || !result.filePath) {
@@ -199,6 +213,80 @@ export function registerIPCHandlers(): void {
     }
 
     return result.filePaths[0] ?? null;
+  });
+
+  // ============================================
+  // Job Posting Fetch Handler
+  // ============================================
+
+  ipcMain.handle('fetch-job-posting', async (_event, url: string): Promise<FetchJobPostingResult> => {
+    try {
+      // Validate URL
+      const parsedUrl = new URL(url);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        return { success: false, error: 'Only HTTP and HTTPS URLs are supported' };
+      }
+
+      // Fetch the page content
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        signal: AbortSignal.timeout(15000), // 15 second timeout
+      });
+
+      if (!response.ok) {
+        return { success: false, error: `Failed to fetch: ${response.status} ${response.statusText}` };
+      }
+
+      const html = await response.text();
+
+      // Extract text content from HTML
+      // Remove script and style content
+      let text = html
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+        .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, ' ');
+
+      // Convert common block elements to newlines
+      text = text
+        .replace(/<\/?(p|div|br|h[1-6]|li|tr|section|article|header|footer)[^>]*>/gi, '\n')
+        .replace(/<\/?[^>]+(>|$)/g, ' ') // Remove remaining HTML tags
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/&[a-z]+;/gi, ' ') // Remove other HTML entities
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join('\n');
+
+      if (text.length < 100) {
+        return {
+          success: false,
+          error: 'Could not extract meaningful content from the page. The page may require authentication or use JavaScript to load content.',
+        };
+      }
+
+      return { success: true, content: text };
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('URL')) {
+        return { success: false, error: 'Invalid URL format' };
+      }
+      if (error instanceof Error) {
+        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+          return { success: false, error: 'Request timed out. The page may be too slow or unavailable.' };
+        }
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Failed to fetch job posting' };
+    }
   });
 
   // ============================================
@@ -801,6 +889,88 @@ export function registerIPCHandlers(): void {
     }
   );
 
+  ipcMain.handle(
+    'ai:shorten-cover-letter',
+    async (_event, params: ShortenCoverLetterIPCParams): Promise<AIResult<GeneratedCoverLetter>> => {
+      const operationId = generateOperationId();
+      const startTime = Date.now();
+
+      try {
+        sendProgressUpdate(operationId, {
+          status: 'started',
+          message: 'Shortening cover letter...',
+          progress: 0,
+        });
+
+        const result = await aiProcessorService.shortenCoverLetter(
+          params.coverLetter,
+          params.currentCharCount,
+          params.targetCharCount
+        );
+
+        const processingTimeMs = Date.now() - startTime;
+        sendProgressUpdate(operationId, {
+          status: 'completed',
+          message: 'Cover letter shortened successfully',
+          progress: 100,
+        });
+
+        return { success: true, data: result, processingTimeMs };
+      } catch (error) {
+        const errorResult = convertErrorToResult(error);
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
+        return errorResult;
+      }
+    }
+  );
+
+  ipcMain.handle(
+    'ai:extract-job-posting',
+    async (_event, params: ExtractJobPostingIPCParams): Promise<AIResult<ExtractedJobPosting>> => {
+      const operationId = generateOperationId();
+      const startTime = Date.now();
+
+      try {
+        sendProgressUpdate(operationId, {
+          status: 'started',
+          message: 'Extracting job posting details...',
+          progress: 0,
+        });
+
+        const settings = await settingsService.loadSettings();
+
+        // Use the selected provider from settings
+        if (settings.selectedProvider) {
+          aiProcessorService.setProvider(settings.selectedProvider);
+        }
+
+        sendProgressUpdate(operationId, {
+          status: 'processing',
+          message: 'Analyzing job posting...',
+          progress: 50,
+        });
+
+        const result = await aiProcessorService.extractJobPosting(
+          params.jobPostingText,
+          { promptOptions: params.options }
+        );
+
+        const processingTimeMs = Date.now() - startTime;
+        sendProgressUpdate(operationId, {
+          status: 'completed',
+          message: 'Job posting extracted successfully',
+          progress: 100,
+        });
+
+        return { success: true, data: result, processingTimeMs };
+      } catch (error) {
+        const errorResult = convertErrorToResult(error);
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
+        return errorResult;
+      }
+    }
+  );
+
   ipcMain.handle('ai:cancel-operation', async (_event, operationId: string): Promise<boolean> => {
     const controller = activeOperations.get(operationId);
     if (controller) {
@@ -818,13 +988,13 @@ export function registerIPCHandlers(): void {
  */
 export function removeIPCHandlers(): void {
   const handlers = [
-    'load-resume', 'save-resume', 'generate-pdf', 'open-folder', 'select-folder',
+    'load-resume', 'save-resume', 'generate-pdf', 'open-folder', 'select-folder', 'fetch-job-posting',
     'check-export-files', 'export-application-pdfs', 'export-single-pdf',
     'settings:get', 'settings:save', 'settings:select-folder', 'settings:reset', 'settings:validate', 'settings:get-default-folder',
     'history:get', 'history:get-recent', 'history:add', 'history:delete', 'history:clear', 'history:open-file',
     'profile:has', 'profile:load', 'profile:import-file', 'profile:import-text', 'profile:save', 'profile:clear',
     'onboarding:is-complete', 'onboarding:complete', 'onboarding:detect-clis', 'onboarding:save-api-key', 'onboarding:has-api-key', 'onboarding:delete-api-key', 'onboarding:get-selected-provider', 'onboarding:set-selected-provider', 'onboarding:get-available-providers',
-    'ai:check-availability', 'ai:refine-resume', 'ai:generate-cover-letter', 'ai:cancel-operation',
+    'ai:check-availability', 'ai:refine-resume', 'ai:generate-cover-letter', 'ai:shorten-cover-letter', 'ai:extract-job-posting', 'ai:cancel-operation',
   ];
 
   for (const handler of handlers) {

@@ -233,6 +233,9 @@ export class ClaudeProvider extends BaseAIProvider {
    * Claude wraps responses in { type: "result", result: "..." }
    */
   private parseClaudeJsonResponse(rawResponse: string): unknown {
+    console.log('[ClaudeProvider] Raw response length:', rawResponse.length);
+    console.log('[ClaudeProvider] Raw response preview:', rawResponse.substring(0, 500));
+
     const parsed = JSON.parse(rawResponse);
 
     // Handle Claude's wrapper format
@@ -244,24 +247,72 @@ export class ClaudeProvider extends BaseAIProvider {
       'result' in parsed
     ) {
       let resultStr = String(parsed.result);
+      console.log('[ClaudeProvider] Result string length:', resultStr.length);
+      console.log('[ClaudeProvider] Result string preview:', resultStr.substring(0, 500));
 
-      // Extract from markdown if wrapped
+      // Extract from markdown code blocks if wrapped
       const blockMatch = resultStr.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (blockMatch?.[1]) {
+        console.log('[ClaudeProvider] Found markdown code block, extracting...');
         resultStr = blockMatch[1].trim();
       }
 
-      // Parse inner JSON if applicable
-      if (resultStr.trim().startsWith('{') || resultStr.trim().startsWith('[')) {
+      // Try to find and extract JSON object from the string
+      // This handles cases where there's text before or after the JSON
+      const jsonMatch = resultStr.match(/(\{[\s\S]*\})/);
+      if (jsonMatch?.[1]) {
         try {
-          return JSON.parse(resultStr);
-        } catch {
-          return resultStr;
+          const result = JSON.parse(jsonMatch[1]);
+          console.log('[ClaudeProvider] Successfully parsed JSON object');
+          return result;
+        } catch (e) {
+          // Log parsing error for debugging
+          console.error('[ClaudeProvider] Failed to parse extracted JSON:', e);
+          console.error('[ClaudeProvider] Extracted string:', jsonMatch[1].substring(0, 500));
         }
       }
-      return resultStr;
+
+      // Fallback: try parsing the whole string
+      if (resultStr.trim().startsWith('{') || resultStr.trim().startsWith('[')) {
+        try {
+          const result = JSON.parse(resultStr);
+          console.log('[ClaudeProvider] Successfully parsed result string as JSON');
+          return result;
+        } catch (e) {
+          console.error('[ClaudeProvider] Failed to parse result string as JSON:', e);
+          console.error('[ClaudeProvider] Result string:', resultStr.substring(0, 500));
+        }
+      }
+
+      // If we still have a string, throw an error so the caller knows parsing failed
+      console.error('[ClaudeProvider] Could not find valid JSON. Result string:', resultStr.substring(0, 1000));
+      throw new Error(`Could not extract valid JSON from response. Raw result starts with: ${resultStr.substring(0, 100)}`);
     }
 
+    // Response is not in wrapper format
+    // If it's already an object, return it
+    if (typeof parsed === 'object' && parsed !== null) {
+      console.log('[ClaudeProvider] Response is not in wrapper format but is an object, returning as-is');
+      return parsed;
+    }
+
+    // If it's a string, try to extract JSON from it
+    if (typeof parsed === 'string') {
+      console.log('[ClaudeProvider] Response is a string, trying to extract JSON...');
+      const jsonMatch = parsed.match(/(\{[\s\S]*\})/);
+      if (jsonMatch?.[1]) {
+        try {
+          const result = JSON.parse(jsonMatch[1]);
+          console.log('[ClaudeProvider] Successfully extracted JSON from string response');
+          return result;
+        } catch (e) {
+          console.error('[ClaudeProvider] Failed to extract JSON from string response:', e);
+        }
+      }
+      throw new Error(`Response is a string but couldn't extract JSON: ${parsed.substring(0, 200)}`);
+    }
+
+    console.log('[ClaudeProvider] Returning parsed response as-is');
     return parsed;
   }
 

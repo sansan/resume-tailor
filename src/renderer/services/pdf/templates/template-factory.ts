@@ -34,18 +34,20 @@ export const TEMPLATE_IDS = {
 export type TemplateId = (typeof TEMPLATE_IDS)[keyof typeof TEMPLATE_IDS];
 
 /**
- * Template component map for direct lookup.
- */
-const TEMPLATE_COMPONENTS: Record<string, React.ComponentType<TemplateProps>> = {
-  [TEMPLATE_IDS.CLASSIC]: ClassicTemplate,
-  [TEMPLATE_IDS.MODERN]: ModernTemplate,
-  [TEMPLATE_IDS.CREATIVE]: CreativeTemplate,
-  [TEMPLATE_IDS.EXECUTIVE]: ExecutiveTemplate,
-};
-
-/**
  * Returns the component for the given templateId.
  */
 export function getTemplateComponent(templateId: string): React.ComponentType<TemplateProps> {
-  return TEMPLATE_COMPONENTS[templateId] ?? ClassicTemplate;
+  switch (templateId) {
+    case TEMPLATE_IDS.MODERN:
+      return ModernTemplate;
+    case TEMPLATE_IDS.CREATIVE:
+      return CreativeTemplate;
+    case TEMPLATE_IDS.EXECUTIVE:
+      return ExecutiveTemplate;
+    case TEMPLATE_IDS.CLASSIC:
+    default:
+      return ClassicTemplate;
+  }
 }
+
+

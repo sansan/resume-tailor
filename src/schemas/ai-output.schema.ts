@@ -69,11 +69,41 @@ export const createAIResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
 export const RefinedResumeResponseSchema = createAIResponseSchema(RefinedResumeSchema);
 export const GeneratedCoverLetterResponseSchema = createAIResponseSchema(GeneratedCoverLetterSchema);
 
+// ExtractedJobPosting schema: structured data from a job posting
+export const ExtractedJobPostingSchema = z.object({
+  // Company information
+  companyName: z.string().nullish(),
+  companyDescription: z.string().nullish(),
+
+  // Job information
+  jobTitle: z.string().nullish(),
+  location: z.string().nullish(),
+  employmentType: z.string().nullish(), // Full-time, Part-time, Contract, etc.
+  salaryRange: z.string().nullish(),
+
+  // Key extracted sections
+  requirements: z.array(z.string()).default([]),
+  responsibilities: z.array(z.string()).default([]),
+  qualifications: z.array(z.string()).default([]),
+  benefits: z.array(z.string()).default([]),
+
+  // Skills mentioned
+  requiredSkills: z.array(z.string()).default([]),
+  preferredSkills: z.array(z.string()).default([]),
+
+  // Additional context
+  teamInfo: z.string().nullish(),
+  applicationDeadline: z.string().nullish(),
+});
+
+export const ExtractedJobPostingResponseSchema = createAIResponseSchema(ExtractedJobPostingSchema);
+
 // TypeScript types inferred from Zod schemas
 export type RefinementMetadata = z.infer<typeof RefinementMetadataSchema>;
 export type RefinedResume = z.infer<typeof RefinedResumeSchema>;
 export type CoverLetterMetadata = z.infer<typeof CoverLetterMetadataSchema>;
 export type GeneratedCoverLetter = z.infer<typeof GeneratedCoverLetterSchema>;
+export type ExtractedJobPosting = z.infer<typeof ExtractedJobPostingSchema>;
 export type AIErrorCode = z.infer<typeof AIErrorCodeSchema>;
 export type AIError = z.infer<typeof AIErrorSchema>;
 
@@ -94,3 +124,4 @@ export type AIResponse<T> = AISuccessResponse<T> | AIErrorResponse;
 // Specific response types
 export type RefinedResumeResponse = AIResponse<RefinedResume>;
 export type GeneratedCoverLetterResponse = AIResponse<GeneratedCoverLetter>;
+export type ExtractedJobPostingResponse = AIResponse<ExtractedJobPosting>;

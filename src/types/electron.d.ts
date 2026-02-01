@@ -4,6 +4,7 @@ import type { Resume, UserProfile } from '../schemas/resume.schema';
 import type {
   RefinedResume,
   GeneratedCoverLetter,
+  ExtractedJobPosting,
 } from '../schemas/ai-output.schema';
 import type {
   AppSettings,
@@ -81,6 +82,19 @@ export interface GenerateCoverLetterParams {
   };
 }
 
+export interface ShortenCoverLetterParams {
+  coverLetter: GeneratedCoverLetter;
+  currentCharCount: number;
+  targetCharCount: number;
+}
+
+export interface ExtractJobPostingParams {
+  jobPostingText: string;
+  options?: {
+    inferSalary?: boolean;
+  };
+}
+
 // ============================================
 // PDF Export Types (Renderer side - uses Blob)
 // ============================================
@@ -116,6 +130,16 @@ export interface CheckExportFilesParams {
 export interface CheckExportFilesResult {
   exists: boolean;
   existingFiles: string[];
+}
+
+// ============================================
+// Job Posting Fetch Types
+// ============================================
+
+export interface FetchJobPostingResult {
+  success: boolean;
+  content?: string;
+  error?: string;
 }
 
 // ============================================
@@ -204,7 +228,7 @@ export interface ElectronAPI {
   // File operations
   loadResume: () => Promise<LoadResumeResult | null>;
   saveResume: (data: SaveResumeData) => Promise<string | null>;
-  generatePDF: (pdfData: Uint8Array) => Promise<string | null>;
+  generatePDF: (pdfData: Uint8Array, defaultFileName?: string) => Promise<string | null>;
   openFolder: (folderPath: string) => Promise<void>;
   selectFolder: () => Promise<string | null>;
 
@@ -213,9 +237,14 @@ export interface ElectronAPI {
   exportApplicationPDFs: (params: ExportApplicationPDFsParams) => Promise<ExportPDFResult>;
   exportSinglePDF: (params: ExportSinglePDFParams) => Promise<ExportPDFResult>;
 
+  // Job Posting Operations
+  fetchJobPosting: (url: string) => Promise<FetchJobPostingResult>;
+
   // AI Operations
   refineResume: (params: RefineResumeParams) => Promise<AIResult<RefinedResume>>;
   generateCoverLetter: (params: GenerateCoverLetterParams) => Promise<AIResult<GeneratedCoverLetter>>;
+  shortenCoverLetter: (params: ShortenCoverLetterParams) => Promise<AIResult<GeneratedCoverLetter>>;
+  extractJobPosting: (params: ExtractJobPostingParams) => Promise<AIResult<ExtractedJobPosting>>;
   cancelAIOperation: (operationId: string) => Promise<boolean>;
   checkAIAvailability: () => Promise<boolean>;
 

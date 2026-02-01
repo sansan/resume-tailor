@@ -45,14 +45,14 @@ export interface CompanyInfo {
 }
 
 const DEFAULT_OPTIONS: Required<CoverLetterGenerationOptions> = {
-  maxOpeningLength: 300,
-  maxBodyParagraphs: 3,
+  maxOpeningLength: 100,
+  maxBodyParagraphs: 2,
   tone: 'formal',
-  includeMetadata: true,
-  focusAreas: ['achievements', 'technical-skills'],
-  customInstructions: '',
-  style: 'detailed',
-  emphasizeCompanyKnowledge: true,
+  includeMetadata: false,
+  focusAreas: ['achievements'],
+  customInstructions: 'STRICT LIMIT: Total letter MUST be under 2000 characters (about 150-200 words). Be extremely brief.',
+  style: 'concise',
+  emphasizeCompanyKnowledge: false,
 };
 
 /**
@@ -104,6 +104,18 @@ export function generateCoverLetterSystemPrompt(
 
 - **Style**: ${styleDescriptions[opts.style]}
 
+## Length Constraints - CRITICAL - MUST FOLLOW
+
+**The cover letter MUST be under 2000 characters total (including spaces).** This is a strict, non-negotiable requirement.
+
+- **MAXIMUM 2000 characters** for the entire letter content (opening + body + closing combined)
+- Total: 150-200 words maximum
+- Opening: 1-2 sentences
+- Body: 1-2 short paragraphs, 2 sentences each
+- Closing: 1-2 sentences
+- Be extremely concise - cut ruthlessly
+- NO redundant phrases, NO filler words, NO excessive detail
+
 ## What to Avoid
 
 - Generic statements that could apply to any job
@@ -111,12 +123,18 @@ export function generateCoverLetterSystemPrompt(
 - Apologetic language or underselling the candidate
 - Overly long sentences or paragraphs
 - Clichés like "I'm a team player" without supporting evidence
+- Exceeding one page - brevity is essential
 
 ${opts.customInstructions ? `\n## Additional Instructions\n\n${opts.customInstructions}` : ''}
 
-## Output Format
+## Output Format - CRITICAL
 
-You must respond with ONLY a valid JSON object matching the schema provided. Do not include any text before or after the JSON. Do not use markdown code blocks.`;
+You must respond with ONLY a valid JSON object. This is absolutely critical:
+- Start your response with { and end with }
+- Do NOT include any text, explanation, or commentary before or after the JSON
+- Do NOT wrap the JSON in markdown code blocks (\`\`\`)
+- Do NOT include phrases like "Here is the cover letter:" or similar
+- The ENTIRE response must be parseable as a single JSON object`;
 }
 
 /**
@@ -152,7 +170,10 @@ ${companyInfo.teamInfo ? `Team Information: ${companyInfo.teamInfo}` : ''}
 `
     : '';
 
-  return `## Job Posting
+  const hasJobPosting = jobPosting && jobPosting.trim().length > 0;
+
+  const jobPostingSection = hasJobPosting
+    ? `## Job Posting
 
 Analyze the following job posting to understand:
 - Required qualifications and skills
@@ -163,7 +184,17 @@ Analyze the following job posting to understand:
 
 <job_posting>
 ${jobPosting}
-</job_posting>
+</job_posting>`
+    : `## Job Posting
+
+No specific job posting was provided. Generate a GENERIC cover letter that:
+- Highlights the candidate's key strengths and experiences
+- Can be easily customized for any position
+- Uses placeholder "[Position Title]" for the job title
+- Uses placeholder "[Company Name]" for the company name
+- Focuses on transferable skills and achievements`;
+
+  return `${jobPostingSection}
 
 ${companySection}
 ## Candidate's Resume
@@ -176,25 +207,15 @@ ${JSON.stringify(resume, null, 2)}
 
 ## Your Task
 
-Generate a compelling cover letter that:
+Generate a compelling cover letter. **STRICT LIMIT: Maximum 2000 characters, 150-200 words.**
 
-1. **Opening Paragraph** (max ${opts.maxOpeningLength} characters):
-   - Start with an engaging hook that captures attention
-   - Clearly state the position being applied for
-   - Briefly establish why the candidate is an excellent fit
-   - Show enthusiasm for the specific company/role
+1. **Opening** (1-2 sentences): Hook + position + fit
 
-2. **Body Paragraphs** (${opts.maxBodyParagraphs} paragraphs):
-   - Each paragraph should focus on a different strength or qualification
-   - Connect specific experiences from the resume to job requirements
-   - Use concrete examples and quantifiable achievements where available
-   - Demonstrate understanding of the role's challenges and how the candidate can address them
+2. **Body** (1-2 short paragraphs, 2 sentences each): Key strengths with specific examples
 
-3. **Closing Paragraph**:
-   - Summarize the candidate's value proposition
-   - Express genuine enthusiasm for the opportunity
-   - Include a confident call to action
-   - Thank the reader for their consideration
+3. **Closing** (1-2 sentences): Enthusiasm + call to action
+
+**CRITICAL: Total content MUST be under 2000 characters. This is approximately 150-200 words. Be extremely brief.**
 ${focusAreasSection}
 ${schemaInstructions}
 
@@ -206,9 +227,9 @@ Include the metadata object with:
 - tone: The tone used (${opts.tone})
 ` : ''}
 
-## Response
+## Response - IMPORTANT
 
-Respond with ONLY the cover letter as a valid JSON object. No additional text or formatting.`;
+Your response must be ONLY the JSON object. No text before or after. Start with { and end with }.`;
 }
 
 /**
@@ -245,6 +266,82 @@ export function buildCombinedCoverLetterPrompt(
   );
 
   return `${systemPrompt}\n\n---\n\n${userPrompt}`;
+}
+
+/**
+ * Builds a prompt to shorten an existing cover letter.
+ * Used when the rendered PDF exceeds one page.
+ */
+export function buildShortenCoverLetterPrompt(
+  coverLetter: {
+    opening: string;
+    body: string[];
+    closing: string;
+    recipientName?: string | null | undefined;
+    recipientTitle?: string | null | undefined;
+    companyName: string;
+    companyAddress?: string | null | undefined;
+    date?: string | null | undefined;
+    signature: string;
+    metadata?: unknown;
+  },
+  currentCharCount: number,
+  targetCharCount: number
+): string {
+  const overageChars = currentCharCount - targetCharCount;
+  const overagePercent = Math.round((overageChars / currentCharCount) * 100);
+
+  return `You are a professional editor. Your task is to shorten an existing cover letter while preserving its key message and professional tone.
+
+## Current Cover Letter
+
+Opening:
+${coverLetter.opening}
+
+Body paragraphs:
+${coverLetter.body.map((p, i) => `${i + 1}. ${p}`).join('\n\n')}
+
+Closing:
+${coverLetter.closing}
+
+## Problem
+
+The cover letter is TOO LONG and doesn't fit on a single page.
+- Current length: ${currentCharCount} characters
+- Target length: ${targetCharCount} characters (maximum)
+- Need to remove: ${overageChars} characters (${overagePercent}% reduction needed)
+
+## Your Task
+
+Shorten the cover letter to fit within ${targetCharCount} characters total (opening + body + closing combined).
+
+Guidelines:
+- Cut redundant phrases and filler words
+- Combine similar points
+- Remove less impactful details
+- Keep the strongest examples and achievements
+- Maintain professional tone
+- Preserve the core message and key qualifications
+
+## Output Format - CRITICAL
+
+Respond with ONLY a valid JSON object. Start with { and end with }.
+Do NOT include any text before or after the JSON.
+
+Required JSON structure:
+{
+  "recipientName": ${JSON.stringify(coverLetter.recipientName)},
+  "recipientTitle": ${JSON.stringify(coverLetter.recipientTitle)},
+  "companyName": ${JSON.stringify(coverLetter.companyName)},
+  "companyAddress": ${JSON.stringify(coverLetter.companyAddress)},
+  "date": ${JSON.stringify(coverLetter.date)},
+  "opening": "shortened opening paragraph here",
+  "body": ["shortened body paragraph 1", "shortened body paragraph 2"],
+  "closing": "shortened closing paragraph here",
+  "signature": ${JSON.stringify(coverLetter.signature)}
+}
+
+Remember: The combined length of opening + body paragraphs + closing MUST be under ${targetCharCount} characters.`;
 }
 
 /**

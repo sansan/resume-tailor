@@ -5,7 +5,7 @@ import {
   DashboardPage,
   ProfilePage,
   TargetingPage,
-  PreviewPage,
+  CoverLetterPage,
   SettingsPage,
 } from '@/components/pages'
 import { OnboardingFlow } from '@/components/onboarding'
@@ -25,10 +25,25 @@ function LoadingScreen(): React.JSX.Element {
   )
 }
 
+// Key for storing current page in sessionStorage (survives refresh, not tab close)
+const PAGE_STORAGE_KEY = 'resume-creator-active-page'
+
 function App() {
   const [isLoading, setIsLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const [activePage, setActivePage] = useState<APP_PAGES>(APP_PAGES.DASHBOARD)
+  // Restore page from sessionStorage on mount
+  const [activePage, setActivePage] = useState<APP_PAGES>(() => {
+    const stored = sessionStorage.getItem(PAGE_STORAGE_KEY)
+    if (stored && Object.values(APP_PAGES).includes(stored as APP_PAGES)) {
+      return stored as APP_PAGES
+    }
+    return APP_PAGES.DASHBOARD
+  })
+
+  // Persist active page to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem(PAGE_STORAGE_KEY, activePage)
+  }, [activePage])
 
   /**
    * Check if onboarding is needed on app startup.
@@ -69,7 +84,7 @@ function App() {
       case APP_PAGES.TARGETING:
         return <TargetingPage />
       case APP_PAGES.COVER_LETTER:
-        return <PreviewPage />
+        return <CoverLetterPage />
       case APP_PAGES.SETTINGS:
         return <SettingsPage />
       default:

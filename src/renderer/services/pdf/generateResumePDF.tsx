@@ -1,7 +1,8 @@
 import { pdf } from '@react-pdf/renderer';
-import type { Resume, WorkExperience, Project } from '@schemas/resume.schema';
+import type { Resume } from '@schemas/resume.schema';
 import type { PDFTheme } from './theme';
-import ResumePDFDocument from './ResumePDFDocument';
+import { defaultPDFTheme } from './theme';
+import { getTemplateComponent } from './templates';
 
 /**
  * Options for rendering a resume to PDF.
@@ -11,30 +12,29 @@ export interface RenderResumeOptions {
   theme?: PDFTheme;
   /** Optional target job title for header display */
   targetJobTitle?: string;
-  /** Optional relevant items to highlight in the PDF */
-  relevantItems?: Array<{
-    type: 'job' | 'project';
-    data: WorkExperience | Project;
-  }>;
+  /** Template ID to use (defaults to 'classic') */
+  templateId?: string;
 }
 
 /**
- * Renders a Resume to a PDF blob.
+ * Renders a Resume to a PDF blob using the template system.
  *
  * @param resume - The validated resume data
- * @param options - Optional rendering options including custom theme
+ * @param options - Optional rendering options including custom theme and templateId
  * @returns A Promise resolving to a Blob containing the PDF data
  */
 export async function renderResumeToPDFBlob(
   resume: Resume,
   options?: RenderResumeOptions
 ): Promise<Blob> {
+  const TemplateComponent = getTemplateComponent(options?.templateId ?? 'classic');
+  const theme = options?.theme ?? defaultPDFTheme;
+
   const blob = await pdf(
-    <ResumePDFDocument
+    <TemplateComponent
       resume={resume}
-      theme={options?.theme}
-      {...(options?.targetJobTitle !== undefined && { targetJobTitle: options.targetJobTitle })}
-      {...(options?.relevantItems !== undefined && { relevantItems: options.relevantItems })}
+      theme={theme}
+      {...(options?.targetJobTitle ? { targetJobTitle: options.targetJobTitle } : {})}
     />
   ).toBlob();
   return blob;

@@ -1,13 +1,12 @@
+import { useState } from 'react'
 import {
   LayoutDashboard,
   User,
   Target,
   FileOutput,
   Settings,
-  Moon,
-  Sun,
-  Monitor,
-  PanelLeftClose, PanelLeft
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react'
 
 import {
@@ -22,13 +21,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useTheme } from '@/components/theme-provider'
 import { useAIStatus } from '@/components/ai-status-provider'
 import { APP_PAGES } from '@config/constants'
 
@@ -37,12 +29,12 @@ interface AppSidebarProps {
   onNavigate: (page: APP_PAGES) => void
 }
 
+// Main nav items (without Settings)
 const navItems: Array<{ id: APP_PAGES; label: string; icon: typeof LayoutDashboard }> = [
   { id: APP_PAGES.DASHBOARD, label: APP_PAGES.DASHBOARD, icon: LayoutDashboard },
   { id: APP_PAGES.RESUME, label: APP_PAGES.RESUME, icon: User },
   { id: APP_PAGES.COVER_LETTER, label: APP_PAGES.COVER_LETTER, icon: FileOutput },
   { id: APP_PAGES.TARGETING, label: APP_PAGES.TARGETING, icon: Target },
-  { id: APP_PAGES.SETTINGS, label: APP_PAGES.SETTINGS, icon: Settings },
 ]
 
 function AIStatusIndicator() {
@@ -72,72 +64,41 @@ function AIStatusIndicator() {
   )
 }
 
-function SidebarToggle() {
-  const { toggleSidebar, open } = useSidebar()
-
-  return (
-    <button
-      onClick={toggleSidebar}
-      className="flex h-8 w-full items-center gap-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-    >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-        {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
-      </div>
-      <span className="text-xs whitespace-nowrap group-data-[collapsible=icon]:hidden">
-        {open ? 'Collapse' : 'Expand'}
-      </span>
-    </button>
-  )
-}
-
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-
-  const getIcon = () => {
-    if (theme === 'dark') return <Moon className="h-4 w-4" />
-    if (theme === 'light') return <Sun className="h-4 w-4" />
-    return <Monitor className="h-4 w-4" />
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="flex h-8 w-full items-center gap-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-            {getIcon()}
-          </div>
-          <span className="text-xs whitespace-nowrap group-data-[collapsible=icon]:hidden">
-            {theme === 'dark' ? 'Dark' : theme === 'light' ? 'Light' : 'System'}
-          </span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-32">
-        <DropdownMenuItem onClick={() => setTheme('light')}>
-          <Sun className="mr-2 h-4 w-4" />
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('dark')}>
-          <Moon className="mr-2 h-4 w-4" />
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme('system')}>
-          <Monitor className="mr-2 h-4 w-4" />
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
 export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
+  const { toggleSidebar, open } = useSidebar()
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false)
+
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="shrink-0 border-b border-sidebar-border p-2">
+      <SidebarHeader
+        className="shrink-0 border-b border-sidebar-border p-2"
+        onMouseEnter={() => setIsHeaderHovered(true)}
+        onMouseLeave={() => setIsHeaderHovered(false)}
+      >
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <FileOutput className="h-4 w-4" />
-          </div>
-          <span className="font-semibold whitespace-nowrap group-data-[collapsible=icon]:hidden">Resume Tailor</span>
+          {/* Logo - clickable to expand when collapsed */}
+          <button
+            onClick={() => !open && toggleSidebar()}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground relative"
+          >
+            {/* Show expand icon on hover when collapsed */}
+            {!open && isHeaderHovered ? (
+              <PanelLeft className="h-4 w-4" />
+            ) : (
+              <FileOutput className="h-4 w-4" />
+            )}
+          </button>
+          <span className="font-semibold whitespace-nowrap group-data-[collapsible=icon]:hidden flex-1">Resume Tailor</span>
+          {/* Collapse button - only visible when expanded */}
+          {open && (
+            <button
+              onClick={toggleSidebar}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </SidebarHeader>
 
@@ -164,8 +125,19 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
 
       <SidebarFooter className="shrink-0 border-t border-sidebar-border p-2">
         <AIStatusIndicator />
-        <ThemeToggle />
-        <SidebarToggle />
+        {/* Settings at the very bottom */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={activePage === APP_PAGES.SETTINGS}
+              onClick={() => onNavigate(APP_PAGES.SETTINGS)}
+              tooltip="Settings"
+            >
+              <Settings className="h-4 w-4 shrink-0" />
+              <span className="whitespace-nowrap group-data-[collapsible=icon]:hidden">Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )

@@ -3,6 +3,7 @@
  *
  * Traditional two-column layout with a sidebar for contact info,
  * education, and skills. Main content area for experience.
+ * Supports multi-page with "Other Experience" on page 2+.
  */
 
 import React, { useMemo } from 'react';
@@ -22,15 +23,12 @@ import type { PDFTheme } from '@app-types/pdf-theme.types';
 // =============================================================================
 // LAYOUT CONSTANTS
 // =============================================================================
-const A4_HEIGHT = 842;
-const HEADER_MARGIN_BOTTOM = 18;
-
 const LAYOUT = {
-  padTop: 40,
-  padBottom: 40,
-  padLeft: 40,
+  padTop: 20,
+  padBottom: 20,
+  padLeft: 30,
   padRight: 40,
-  sidebarWidth: 195,
+  sidebarWidth: 200,
   gutter: 24,
   sidebarPadX: 14,
   sidebarPadY: 22,
@@ -40,7 +38,6 @@ const LAYOUT = {
   headingToContent: 10,
   itemGap: 14,
   bulletGap: 4,
-  rowHeight: A4_HEIGHT - 40 - 40 - 70 - HEADER_MARGIN_BOTTOM,
 };
 
 // =============================================================================
@@ -100,7 +97,7 @@ function createStyles(theme: PDFTheme) {
     },
     row: {
       flexDirection: 'row',
-      height: LAYOUT.rowHeight,
+      flex: 1,
       width: '100%',
     },
     sidebar: {
@@ -118,6 +115,11 @@ function createStyles(theme: PDFTheme) {
       flex: 1,
       minWidth: 0,
       marginLeft: LAYOUT.gutter,
+      paddingTop: 6,
+    },
+    // Full-width main content for page 2+
+    mainFull: {
+      flex: 1,
       paddingTop: 6,
     },
     contactBar: {
@@ -277,6 +279,9 @@ function formatDateRange(start: string, end?: string | null): string {
   return `${start} – ${end || 'Present'}`;
 }
 
+// Number of experiences to show on page 1
+const PAGE_1_EXPERIENCE_COUNT = 3;
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -292,8 +297,13 @@ export function ClassicTemplate({
   const skillsByCategory = groupSkillsByCategory(skills);
   const about = personalInfo.summary?.trim() || '';
 
+  // Split experience into page 1 and other pages
+  const page1Experience = workExperience.slice(0, PAGE_1_EXPERIENCE_COUNT);
+  const otherExperience = workExperience.slice(PAGE_1_EXPERIENCE_COUNT);
+
   return (
     <Document>
+      {/* PAGE 1 - Two column layout */}
       <Page size="A4" style={styles.page} wrap={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -417,10 +427,10 @@ export function ClassicTemplate({
             )}
 
             {/* Experience */}
-            {workExperience.length > 0 && (
+            {page1Experience.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.sectionHeading}>Experience</Text>
-                {workExperience.slice(0, 3).map((job, i) => (
+                {page1Experience.map((job, i) => (
                   <View key={i} style={styles.item}>
                     <Text style={styles.itemTitle}>{job.title}</Text>
                     <Text style={styles.itemMeta}>
@@ -445,6 +455,50 @@ export function ClassicTemplate({
           </View>
         </View>
       </Page>
+
+      {/* PAGE 2+ - Other Experience (full width) */}
+      {otherExperience.length > 0 && (
+        <Page size="A4" style={styles.page} wrap>
+          {/* Header (repeated) */}
+          <View style={styles.header}>
+            <View style={styles.nameWrap}>
+              <Text style={styles.nameText}>{personalInfo.name}</Text>
+            </View>
+            {displayTitle && (
+              <View style={styles.titleBox}>
+                <Text style={styles.titleText}>{displayTitle}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Full-width content */}
+          <View style={styles.mainFull}>
+            <View style={styles.section}>
+              <Text style={styles.sectionHeading}>Other Experience</Text>
+              {otherExperience.map((job, i) => (
+                <View key={i} style={styles.item} wrap={false}>
+                  <Text style={styles.itemTitle}>{job.title}</Text>
+                  <Text style={styles.itemMeta}>
+                    {job.company}
+                    {job.location ? ` / ${job.location}` : ''} /{' '}
+                    {formatDateRange(job.startDate, job.endDate)}
+                  </Text>
+                  {job.highlights && job.highlights.length > 0 && (
+                    <View>
+                      {job.highlights.map((h, hi) => (
+                        <View key={hi} style={styles.bulletItem}>
+                          <Text style={styles.bulletChar}>•</Text>
+                          <Text style={styles.bulletText}>{h}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        </Page>
+      )}
     </Document>
   );
 }

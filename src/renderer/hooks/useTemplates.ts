@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import type { TemplateId, PaletteId } from '@schemas/settings.schema';
 
 /**
  * Color palette definition.
@@ -46,14 +47,16 @@ export interface UseTemplatesReturn {
 }
 
 /**
- * Local storage key for template preferences.
- */
-const STORAGE_KEY = 'resume-creator-template-preferences';
-
-/**
  * Predefined color palettes from design doc.
  */
 export const PREDEFINED_PALETTES: ColorPalette[] = [
+  {
+    id: 'classic-gray',
+    name: 'Classic Gray',
+    primary: '#374151',
+    secondary: '#6b7280',
+    accent: '#9ca3af',
+  },
   {
     id: 'professional-blue',
     name: 'Professional Blue',
@@ -74,13 +77,6 @@ export const PREDEFINED_PALETTES: ColorPalette[] = [
     primary: '#b91c1c',
     secondary: '#ef4444',
     accent: '#f87171',
-  },
-  {
-    id: 'classic-gray',
-    name: 'Classic Gray',
-    primary: '#374151',
-    secondary: '#6b7280',
-    accent: '#9ca3af',
   },
   {
     id: 'forest-green',
@@ -125,62 +121,27 @@ export const AVAILABLE_TEMPLATES: Template[] = [
 ];
 
 /**
- * Interface for persisted preferences.
+ * Default values matching the settings schema.
  */
-interface TemplatePreferences {
-  templateId: string;
-  paletteId: string;
-}
-
-/**
- * Load preferences from local storage.
- */
-function loadFromLocalStorage(): TemplatePreferences | null {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored) as TemplatePreferences;
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return null;
-}
-
-/**
- * Save preferences to local storage.
- */
-function saveToLocalStorage(preferences: TemplatePreferences): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
-  } catch {
-    // Ignore storage errors
-  }
-}
+const DEFAULT_TEMPLATE = 'classic';
+const DEFAULT_PALETTE = 'classic-gray';
 
 /**
  * Hook for managing template and palette selection.
  *
  * Provides template and palette lists, selection state,
- * and persistence functionality.
+ * and persistence functionality via app settings.
  */
 export function useTemplates(): UseTemplatesReturn {
-  // Load initial state from local storage
-  const storedPrefs = loadFromLocalStorage();
-
   // Template state
-  const [selectedTemplate, setSelectedTemplateInternal] = useState<string>(
-    storedPrefs?.templateId ?? 'classic'
-  );
+  const [selectedTemplate, setSelectedTemplateInternal] = useState<string>(DEFAULT_TEMPLATE);
 
   // Palette state
-  const [selectedPalette, setSelectedPaletteInternal] = useState<string>(
-    storedPrefs?.paletteId ?? 'professional-blue'
-  );
+  const [selectedPalette, setSelectedPaletteInternal] = useState<string>(DEFAULT_PALETTE);
 
   // Loading/saving state
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Memoized template and palette lists
   const templates = useMemo(() => AVAILABLE_TEMPLATES, []);
@@ -193,13 +154,10 @@ export function useTemplates(): UseTemplatesReturn {
     const exists = AVAILABLE_TEMPLATES.some((t) => t.id === id);
     if (exists) {
       setSelectedTemplateInternal(id);
-      // Auto-save to local storage
-      const currentPalette = selectedPalette;
-      saveToLocalStorage({ templateId: id, paletteId: currentPalette });
     } else {
       console.warn(`Template with id "${id}" not found`);
     }
-  }, [selectedPalette]);
+  }, []);
 
   /**
    * Set selected palette with validation.
@@ -208,13 +166,10 @@ export function useTemplates(): UseTemplatesReturn {
     const exists = PREDEFINED_PALETTES.some((p) => p.id === id);
     if (exists) {
       setSelectedPaletteInternal(id);
-      // Auto-save to local storage
-      const currentTemplate = selectedTemplate;
-      saveToLocalStorage({ templateId: currentTemplate, paletteId: id });
     } else {
       console.warn(`Palette with id "${id}" not found`);
     }
-  }, [selectedTemplate]);
+  }, []);
 
   /**
    * Get the currently selected template object.
@@ -236,35 +191,30 @@ export function useTemplates(): UseTemplatesReturn {
   const savePreferences = useCallback(async () => {
     setIsSaving(true);
     try {
-      // Get current settings and update with template/palette
+      // Get current settings
       const currentSettings = await window.electronAPI.getSettings();
 
       // Get selected palette for theme colors
       const palette = PREDEFINED_PALETTES.find((p) => p.id === selectedPalette);
 
-      if (palette) {
-        // Update theme colors based on selected palette
-        const updatedSettings = {
-          ...currentSettings,
+      // Build updated settings
+      const updatedSettings = {
+        ...currentSettings,
+        selectedTemplate: selectedTemplate as TemplateId,
+        selectedPalette: selectedPalette as PaletteId,
+        ...(palette && {
           pdfTheme: {
             ...currentSettings.pdfTheme,
             colors: {
               ...currentSettings.pdfTheme.colors,
               primary: palette.primary,
               accent: palette.secondary,
-              // Keep other colors from current settings
             },
           },
-        };
+        }),
+      };
 
-        await window.electronAPI.saveSettings(updatedSettings);
-      }
-
-      // Also save to local storage
-      saveToLocalStorage({
-        templateId: selectedTemplate,
-        paletteId: selectedPalette,
-      });
+      await window.electronAPI.saveSettings(updatedSettings);
     } catch (error) {
       console.error('Failed to save template preferences:', error);
       throw error;
@@ -279,18 +229,25 @@ export function useTemplates(): UseTemplatesReturn {
   const loadPreferences = useCallback(async () => {
     setIsLoading(true);
     try {
-      // First try local storage
-      const stored = loadFromLocalStorage();
-      if (stored) {
-        // Validate stored values exist
-        const templateExists = AVAILABLE_TEMPLATES.some((t) => t.id === stored.templateId);
-        const paletteExists = PREDEFINED_PALETTES.some((p) => p.id === stored.paletteId);
+      const settings = await window.electronAPI.getSettings();
 
+      // Load template if valid
+      if (settings.selectedTemplate) {
+        const templateExists = AVAILABLE_TEMPLATES.some(
+          (t) => t.id === settings.selectedTemplate
+        );
         if (templateExists) {
-          setSelectedTemplateInternal(stored.templateId);
+          setSelectedTemplateInternal(settings.selectedTemplate);
         }
+      }
+
+      // Load palette if valid
+      if (settings.selectedPalette) {
+        const paletteExists = PREDEFINED_PALETTES.some(
+          (p) => p.id === settings.selectedPalette
+        );
         if (paletteExists) {
-          setSelectedPaletteInternal(stored.paletteId);
+          setSelectedPaletteInternal(settings.selectedPalette);
         }
       }
     } catch (error) {

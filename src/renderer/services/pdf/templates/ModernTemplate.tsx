@@ -234,7 +234,7 @@ export function ModernTemplate({
 
   return (
     <Document>
-      <Page size="A4" style={styles.page} wrap={false}>
+      <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.name}>{personalInfo.name}</Text>
@@ -286,7 +286,7 @@ export function ModernTemplate({
         {workExperience.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>Experience</Text>
-            {workExperience.slice(0, 3).map((job, i) => (
+            {workExperience.map((job, i) => (
               <View key={i} style={styles.item}>
                 <View style={styles.itemHeader}>
                   <Text style={styles.itemTitle}>{job.title}</Text>

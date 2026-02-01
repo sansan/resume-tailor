@@ -50,7 +50,8 @@ function createStyles(theme: PDFTheme) {
     nameWrap: {
       flexGrow: 1,
       paddingRight: 16,
-      maxWidth: 330,
+      maxWidth: 450,
+      justifyContent: 'center',
     },
     nameText: {
       fontSize: theme.fontSizes.name,
@@ -159,7 +160,7 @@ function createStyles(theme: PDFTheme) {
 // =============================================================================
 // HELPERS
 // =============================================================================
-function formatDate(dateStr?: string): string {
+function formatDate(dateStr?: string | null): string {
   if (dateStr) return dateStr;
   return new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -204,19 +205,26 @@ function CoverLetterPDFDocument({
 
   const styles = useMemo(() => createStyles(theme ?? defaultPDFTheme), [theme]);
 
-  // Name for header
-  const displayName = personalInfo?.name || signature;
+  // Name for header - ensure not empty
+  const displayName = (personalInfo?.name || signature || '').trim() || 'Your Name';
 
   // Job title for header box
-  const displayTitle = targetJobTitle || '';
+  const displayTitle = (targetJobTitle || '').trim();
 
   // Salutation
-  const salutation = recipientName
-    ? `Dear ${recipientName},`
+  const recipientNameTrimmed = (recipientName || '').trim();
+  const salutation = recipientNameTrimmed
+    ? `Dear ${recipientNameTrimmed},`
     : 'Dear Hiring Manager,';
 
   // Formatted date
   const formattedDate = formatDate(date);
+
+  // Signature - ensure not empty
+  const displaySignature = (signature || '').trim() || displayName;
+
+  // Body paragraphs - ensure array and filter empty
+  const bodyParagraphs = (body || []).filter(para => para && para.trim());
 
   return (
     <Document>
@@ -226,11 +234,11 @@ function CoverLetterPDFDocument({
           <View style={styles.nameWrap}>
             <Text style={styles.nameText}>{displayName}</Text>
           </View>
-          {displayTitle && (
+          {displayTitle ? (
             <View style={styles.titleBox}>
               <Text style={styles.titleText}>{displayTitle}</Text>
             </View>
-          )}
+          ) : null}
         </View>
 
         {/* Full-width letter body */}
@@ -240,39 +248,45 @@ function CoverLetterPDFDocument({
 
           {/* Recipient block */}
           <View style={styles.recipientBlock}>
-            {recipientName && <Text style={styles.recipientName}>{recipientName}</Text>}
-            {recipientTitle && <Text style={styles.recipientInfo}>{recipientTitle}</Text>}
-            <Text style={styles.recipientInfo}>{companyName}</Text>
-            {companyAddress && <Text style={styles.recipientInfo}>{companyAddress}</Text>}
+            {recipientName?.trim() ? <Text style={styles.recipientName}>{recipientName}</Text> : null}
+            {recipientTitle?.trim() ? <Text style={styles.recipientInfo}>{recipientTitle}</Text> : null}
+            {companyName?.trim() ? <Text style={styles.recipientInfo}>{companyName}</Text> : null}
+            {companyAddress?.trim() ? <Text style={styles.recipientInfo}>{companyAddress}</Text> : null}
           </View>
 
           {/* Salutation */}
           <Text style={styles.salutation}>{salutation}</Text>
 
           {/* Opening paragraph */}
-          <Text style={styles.paragraph}>{opening}</Text>
+          {opening?.trim() ? <Text style={styles.paragraph}>{opening}</Text> : null}
 
           {/* Body paragraphs */}
-          {body.map((para, i) => (
+          {bodyParagraphs.map((para, i) => (
             <Text key={i} style={styles.paragraph}>{para}</Text>
           ))}
 
           {/* Closing paragraph */}
-          <Text style={styles.paragraph}>{closing}</Text>
+          {closing?.trim() ? <Text style={styles.paragraph}>{closing}</Text> : null}
 
           {/* Sign-off */}
           <Text style={styles.closingText}>Sincerely,</Text>
 
           {/* Signature */}
-          <Text style={styles.signatureName}>{signature}</Text>
-          {getContactByType(personalInfo?.contacts, 'phone') && (
-            <Text style={styles.signatureContact}>{getContactByType(personalInfo?.contacts, 'phone')}</Text>
-          )}
-          {getContactByType(personalInfo?.contacts, 'email') && (
-            <Link style={styles.signatureLink} src={`mailto:${getContactByType(personalInfo?.contacts, 'email')}`}>
-              {getContactByType(personalInfo?.contacts, 'email')}
-            </Link>
-          )}
+          <Text style={styles.signatureName}>{displaySignature}</Text>
+          {(() => {
+            const phone = getContactByType(personalInfo?.contacts, 'phone');
+            return phone && phone.trim() ? (
+              <Text style={styles.signatureContact}>{phone}</Text>
+            ) : null;
+          })()}
+          {(() => {
+            const email = getContactByType(personalInfo?.contacts, 'email');
+            return email && email.trim() ? (
+              <Link style={styles.signatureLink} src={`mailto:${email}`}>
+                {email}
+              </Link>
+            ) : null;
+          })()}
         </View>
       </Page>
     </Document>

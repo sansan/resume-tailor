@@ -16,12 +16,13 @@ const electronAPI: ElectronAPI = {
   // File operations
   loadResume: () => ipcRenderer.invoke('load-resume'),
   saveResume: (data) => ipcRenderer.invoke('save-resume', data),
-  generatePDF: (pdfData) => ipcRenderer.invoke('generate-pdf', Buffer.from(pdfData)),
+  generatePDF: (pdfData, defaultFileName) => ipcRenderer.invoke('generate-pdf', Buffer.from(pdfData), defaultFileName),
   openFolder: (folderPath) => ipcRenderer.invoke('open-folder', folderPath),
   selectFolder: () => ipcRenderer.invoke('select-folder'),
 
   // Export Operations
   checkExportFiles: (params) => ipcRenderer.invoke('check-export-files', params),
+  fetchJobPosting: (url) => ipcRenderer.invoke('fetch-job-posting', url),
   exportApplicationPDFs: async (params: ExportApplicationPDFsParams) => {
     // Convert Blobs to Uint8Array since Blobs don't serialize through IPC
     const resumeArrayBuffer = await params.resumeBlob.arrayBuffer();
@@ -51,6 +52,8 @@ const electronAPI: ElectronAPI = {
   // AI Operations
   refineResume: (params) => ipcRenderer.invoke('ai:refine-resume', params),
   generateCoverLetter: (params) => ipcRenderer.invoke('ai:generate-cover-letter', params),
+  shortenCoverLetter: (params) => ipcRenderer.invoke('ai:shorten-cover-letter', params),
+  extractJobPosting: (params) => ipcRenderer.invoke('ai:extract-job-posting', params),
   cancelAIOperation: (operationId) => ipcRenderer.invoke('ai:cancel-operation', operationId),
   checkAIAvailability: () => ipcRenderer.invoke('ai:check-availability'),
 

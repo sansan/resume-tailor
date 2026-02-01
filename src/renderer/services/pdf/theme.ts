@@ -84,3 +84,54 @@ export function createPDFTheme(overrides?: PartialPDFTheme): PDFTheme {
 
 export const pdfTheme: PDFTheme = defaultPDFTheme;
 export default pdfTheme;
+
+/**
+ * Color palette interface for theme creation.
+ */
+export interface ColorPalette {
+  id: string;
+  name: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+}
+
+/**
+ * Converts a hex color to a lighter version (for backgrounds).
+ * Returns a hex color with opacity applied as a lighter shade.
+ */
+function adjustColorOpacity(hexColor: string, opacity: number): string {
+  // Parse hex color
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Blend with white based on opacity
+  const blend = 1 - opacity;
+  const newR = Math.round(r * opacity + 255 * blend);
+  const newG = Math.round(g * opacity + 255 * blend);
+  const newB = Math.round(b * opacity + 255 * blend);
+
+  // Convert back to hex
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Creates a PDF theme by applying a color palette to the default theme.
+ * Maps palette colors to appropriate theme colors.
+ */
+export function createThemeFromPalette(palette: ColorPalette): PDFTheme {
+  return {
+    ...defaultPDFTheme,
+    colors: {
+      ...defaultPDFTheme.colors,
+      // Primary color for headings and name
+      primary: palette.primary,
+      // Accent color for header bars and highlights
+      accent: palette.secondary,
+      // Use secondary as sidebar background tint
+      sidebarBackground: adjustColorOpacity(palette.accent, 0.15),
+    },
+  };
+}

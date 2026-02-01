@@ -271,7 +271,7 @@ export function CreativeTemplate({
 
   return (
     <Document>
-      <Page size="A4" style={styles.page} wrap={false}>
+      <Page size="A4" style={styles.page}>
         {/* Header Banner */}
         <View style={styles.headerBanner}>
           <Text style={styles.name}>{personalInfo.name}</Text>
@@ -323,7 +323,7 @@ export function CreativeTemplate({
                     <View style={styles.sectionAccent} />
                     <Text style={styles.sectionTitle}>Experience</Text>
                   </View>
-                  {workExperience.slice(0, 3).map((job, i) => (
+                  {workExperience.map((job, i) => (
                     <View key={i} style={styles.item}>
                       <Text style={styles.itemTitle}>{job.title}</Text>
                       <Text style={styles.itemMeta}>
@@ -357,7 +357,7 @@ export function CreativeTemplate({
                     <View style={styles.sectionAccent} />
                     <Text style={styles.sectionTitle}>Skills</Text>
                   </View>
-                  {skills.slice(0, 6).map((skill, i) => (
+                  {skills.map((skill, i) => (
                     <View key={i} style={styles.skillItem}>
                       <Text style={styles.skillName}>{skill.name}</Text>
                       <View style={styles.skillBarBg}>

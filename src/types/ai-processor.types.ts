@@ -10,6 +10,7 @@ import type {
   CompanyInfo,
 } from '@prompts/cover-letter.prompt';
 import type { ResumeExtractionOptions } from '@prompts/resume-extraction.prompt';
+import type { JobExtractionOptions } from '@prompts/job-extraction.prompt';
 
 /**
  * Configuration options for the AI processor service.
@@ -77,6 +78,20 @@ export interface ExtractResumeOptions {
   retryOnValidationFailure?: boolean;
   /** Maximum validation retries for this operation */
   maxValidationRetries?: number;
+}
+
+/**
+ * Options for job posting extraction.
+ */
+export interface ExtractJobPostingOptions {
+  /** Options for customizing the prompt template */
+  promptOptions?: JobExtractionOptions | undefined;
+  /** Override the default timeout (in milliseconds) */
+  timeout?: number | undefined;
+  /** Override retry settings for this operation */
+  retryOnValidationFailure?: boolean | undefined;
+  /** Maximum validation retries for this operation */
+  maxValidationRetries?: number | undefined;
 }
 
 /**

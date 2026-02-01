@@ -1,15 +1,23 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { BlobProvider } from '@react-pdf/renderer';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import type { Resume } from '@schemas/resume.schema';
 import type { ColorPalette } from '@/hooks/useTemplates';
-import type { PDFTheme } from '@app-types/pdf-theme.types';
-import { defaultPDFTheme } from '../../services/pdf/theme';
+import { createThemeFromPalette } from '../../services/pdf/theme';
 import { getTemplateComponent } from '../../services/pdf/templates';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '../ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
+
+// Configure PDF.js worker using local bundle
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 // =============================================================================
 // TYPES
@@ -24,50 +32,8 @@ export interface ResumePDFPreviewProps {
   palette: ColorPalette;
   /** Optional className for the container */
   className?: string;
-}
-
-// =============================================================================
-// HELPERS
-// =============================================================================
-
-/**
- * Creates a PDF theme by applying a color palette to the default theme.
- * Maps palette colors to appropriate theme colors.
- */
-function createThemeFromPalette(palette: ColorPalette): PDFTheme {
-  return {
-    ...defaultPDFTheme,
-    colors: {
-      ...defaultPDFTheme.colors,
-      // Primary color for headings and name
-      primary: palette.primary,
-      // Accent color for header bars and highlights
-      accent: palette.secondary,
-      // Use secondary as sidebar background tint
-      sidebarBackground: adjustColorOpacity(palette.accent, 0.15),
-    },
-  };
-}
-
-/**
- * Converts a hex color to a lighter version (for backgrounds).
- * Returns a hex color with opacity applied as a lighter shade.
- */
-function adjustColorOpacity(hexColor: string, opacity: number): string {
-  // Parse hex color
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  // Blend with white based on opacity
-  const blend = 1 - opacity;
-  const newR = Math.round(r * opacity + 255 * blend);
-  const newG = Math.round(g * opacity + 255 * blend);
-  const newB = Math.round(b * opacity + 255 * blend);
-
-  // Convert back to hex
-  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  /** Max height for scrollable view (enables multi-page scrolling) */
+  maxHeight?: string;
 }
 
 // =============================================================================
@@ -78,7 +44,7 @@ function PDFLoadingState({ className }: { className?: string }) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-4', className)}>
       {/* A4 aspect ratio skeleton */}
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full">
         <div className="aspect-[210/297] w-full">
           <Skeleton className="h-full w-full rounded-lg" />
         </div>
@@ -126,7 +92,76 @@ function PDFErrorState({ error, onRetry, className }: PDFErrorStateProps) {
 }
 
 // =============================================================================
-// PDF PREVIEW COMPONENT
+// PDF PAGES VIEWER COMPONENT (using react-pdf)
+// =============================================================================
+
+interface PDFPagesViewerProps {
+  url: string;
+  className?: string;
+  maxHeight?: string | undefined;
+}
+
+function PDFPagesViewer({ url, className, maxHeight }: PDFPagesViewerProps) {
+  const [numPages, setNumPages] = useState<number>(0);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
+  }, []);
+
+  // Track container width for responsive page sizing
+  React.useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
+    const updateWidth = () => {
+      setContainerWidth(node.clientWidth);
+    };
+
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
+    resizeObserver.observe(node);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Generate page numbers array
+  const pageNumbers = React.useMemo(() => {
+    return Array.from({ length: numPages }, (_, i) => i + 1);
+  }, [numPages]);
+
+  return (
+    <div className={cn('relative w-full', className)}>
+      <div
+        ref={containerRef}
+        className="w-full rounded-lg border bg-white shadow-sm overflow-auto"
+        style={maxHeight ? { maxHeight } : undefined}
+      >
+        <Document
+          file={url}
+          onLoadSuccess={onDocumentLoadSuccess}
+          loading={<PDFLoadingState className="min-h-[400px]" />}
+          error={<div className="p-4 text-center text-destructive">Failed to load PDF</div>}
+        >
+          {pageNumbers.map((pageNumber) => (
+            <div key={`page_${pageNumber}`} className="mb-4">
+              <Page
+                pageNumber={pageNumber}
+                width={containerWidth > 0 ? containerWidth - 20 : 600}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </div>
+          ))}
+        </Document>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// SIMPLE IFRAME PREVIEW (fallback for single page)
 // =============================================================================
 
 interface PDFPreviewContentProps {
@@ -135,12 +170,10 @@ interface PDFPreviewContentProps {
 }
 
 function PDFPreviewContent({ url, className }: PDFPreviewContentProps) {
-  // Hide PDF viewer toolbar and navigation
-  const pdfUrl = `${url}#toolbar=0&navpanes=0`;
+  const pdfUrl = `${url}#toolbar=0&navpanes=0&view=FitH`;
 
   return (
     <div className={cn('relative w-full', className)}>
-      {/* A4 aspect ratio container */}
       <div className="aspect-[210/297] w-full overflow-hidden rounded-lg border bg-white shadow-sm">
         <iframe
           src={pdfUrl}
@@ -161,14 +194,14 @@ function PDFPreviewContent({ url, className }: PDFPreviewContentProps) {
  * ResumePDFPreview - A reusable component for rendering a live PDF preview.
  *
  * This component uses @react-pdf/renderer to generate a PDF document
- * from the provided resume data and displays it in an iframe.
+ * from the provided resume data and displays it using react-pdf viewer.
  *
  * Features:
  * - Live preview that updates when props change
+ * - Multi-page support with scrolling (when maxHeight is set)
  * - Loading state while PDF is generating
  * - Error handling with retry option
  * - Applies color palette to theme
- * - Debounced updates to prevent excessive re-renders
  *
  * Usage:
  * ```tsx
@@ -177,6 +210,7 @@ function PDFPreviewContent({ url, className }: PDFPreviewContentProps) {
  *   templateId="classic"
  *   palette={selectedPalette}
  *   className="max-w-lg mx-auto"
+ *   maxHeight="600px"
  * />
  * ```
  */
@@ -185,24 +219,40 @@ function ResumePDFPreview({
   templateId,
   palette,
   className,
+  maxHeight,
 }: ResumePDFPreviewProps): React.JSX.Element {
-  // Track error state for retry functionality
+  // Track key for forcing re-renders on retry
   const [retryKey, setRetryKey] = useState(0);
+
+  // HMR: Force full page reload when template files change
+  // React Fast Refresh caches component references, so we need a full reload
+  React.useEffect(() => {
+    if (!import.meta.hot) return;
+
+    const handleBeforeUpdate = (payload: { updates: Array<{ path: string }> }) => {
+      const hasTemplateUpdate = payload.updates.some((update) =>
+        update.path.includes('/pdf/templates/') && update.path.endsWith('Template.tsx')
+      );
+      if (hasTemplateUpdate) {
+        setTimeout(() => window.location.reload(), 100);
+      }
+    };
+
+    import.meta.hot.on('vite:beforeUpdate', handleBeforeUpdate);
+
+    return () => {
+      import.meta.hot?.off('vite:beforeUpdate', handleBeforeUpdate);
+    };
+  }, []);
 
   // Create theme from palette - memoized to prevent unnecessary re-renders
   const theme = useMemo(() => createThemeFromPalette(palette), [palette]);
 
-  // Get the appropriate template component based on templateId
-  const TemplateComponent = useMemo(
-    () => getTemplateComponent(templateId),
-    [templateId]
-  );
+  // Get the appropriate template component
+  const TemplateComponent = getTemplateComponent(templateId);
 
-  // Memoize the document to prevent unnecessary re-renders
-  const document = useMemo(
-    () => <TemplateComponent resume={resume} theme={theme} />,
-    [TemplateComponent, resume, theme]
-  );
+  // Create the document - not memoized to allow HMR updates
+  const document = <TemplateComponent resume={resume} theme={theme} />;
 
   // Retry handler
   const handleRetry = useCallback(() => {
@@ -225,6 +275,11 @@ function ResumePDFPreview({
 
           // Show PDF preview
           if (url && blob) {
+            // Use react-pdf viewer for multi-page support
+            if (maxHeight) {
+              return <PDFPagesViewer url={url} maxHeight={maxHeight} />;
+            }
+            // Use simple iframe for single page view
             return <PDFPreviewContent url={url} />;
           }
 

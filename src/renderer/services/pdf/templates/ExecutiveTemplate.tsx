@@ -276,7 +276,7 @@ export function ExecutiveTemplate({
 
   return (
     <Document>
-      <Page size="A4" style={styles.page} wrap={false}>
+      <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.name}>{personalInfo.name}</Text>
@@ -323,7 +323,7 @@ export function ExecutiveTemplate({
               <Text style={styles.sectionTitle}>Professional Experience</Text>
               <View style={styles.sectionLineFill} />
             </View>
-            {workExperience.slice(0, 3).map((job, i) => (
+            {workExperience.map((job, i) => (
               <View key={i} style={styles.item}>
                 <View style={styles.itemRow}>
                   <Text style={styles.itemTitle}>{job.title}</Text>

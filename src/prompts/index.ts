@@ -35,3 +35,9 @@ export {
   buildResumeExtractionPrompt,
   type ResumeExtractionOptions,
 } from './resume-extraction.prompt';
+
+// Job extraction prompt templates
+export {
+  buildJobExtractionPrompt,
+  type JobExtractionOptions,
+} from './job-extraction.prompt';

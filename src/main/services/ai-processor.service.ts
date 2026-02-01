@@ -22,6 +22,7 @@ import {
   type RefineResumeOptions,
   type GenerateCoverLetterOptions,
   type ExtractResumeOptions,
+  type ExtractJobPostingOptions,
   DEFAULT_AI_PROCESSOR_CONFIG,
   AIProcessorError,
   AIProcessorErrorCode,
@@ -30,8 +31,10 @@ import { ResumeSchema, type Resume } from '../../schemas/resume.schema';
 import {
   RefinedResumeSchema,
   GeneratedCoverLetterSchema,
+  ExtractedJobPostingSchema,
   type RefinedResume,
   type GeneratedCoverLetter,
+  type ExtractedJobPosting,
 } from '../../schemas/ai-output.schema';
 import {
   buildCombinedResumeRefinementPrompt,
@@ -39,12 +42,17 @@ import {
 } from '../../prompts/resume-refinement.prompt';
 import {
   buildCombinedCoverLetterPrompt,
+  buildShortenCoverLetterPrompt,
   type CoverLetterGenerationOptions,
 } from '../../prompts/cover-letter.prompt';
 import {
   buildResumeExtractionPrompt,
   type ResumeExtractionOptions,
 } from '../../prompts/resume-extraction.prompt';
+import {
+  buildJobExtractionPrompt,
+  type JobExtractionOptions,
+} from '../../prompts/job-extraction.prompt';
 import { sanitizeAIResponse } from '../../shared/sanitize';
 
 /**
@@ -312,6 +320,54 @@ export class AIProcessorService {
   }
 
   /**
+   * Shortens an existing cover letter to fit within a character limit.
+   *
+   * @param coverLetter - The existing cover letter to shorten
+   * @param currentCharCount - Current character count of the letter content
+   * @param targetCharCount - Target maximum character count
+   * @returns The shortened cover letter
+   * @throws AIProcessorError if processing fails
+   */
+  async shortenCoverLetter(
+    coverLetter: GeneratedCoverLetter,
+    currentCharCount: number,
+    targetCharCount: number
+  ): Promise<GeneratedCoverLetter> {
+    // Check provider availability
+    const isAvailable = await this.isAvailable();
+    if (!isAvailable) {
+      throw new AIProcessorError(
+        AIProcessorErrorCode.CLI_NOT_AVAILABLE,
+        `AI provider '${this.provider.type}' is not available.`
+      );
+    }
+
+    const prompt = buildShortenCoverLetterPrompt(
+      coverLetter,
+      currentCharCount,
+      targetCharCount
+    );
+
+    try {
+      const result = await this.executeAndValidate<GeneratedCoverLetter>(
+        prompt,
+        GeneratedCoverLetterSchema
+      );
+
+      // Sanitize output
+      return this.config.sanitizeOutput ? sanitizeAIResponse(result) : result;
+    } catch (error) {
+      if (error instanceof AIProcessorError) {
+        throw error;
+      }
+      throw new AIProcessorError(
+        AIProcessorErrorCode.UNKNOWN,
+        `Failed to shorten cover letter: ${String(error)}`
+      );
+    }
+  }
+
+  /**
    * Extracts structured resume data from document text.
    *
    * @param documentText - Raw text extracted from a resume document
@@ -390,6 +446,89 @@ export class AIProcessorService {
       new AIProcessorError(
         AIProcessorErrorCode.UNKNOWN,
         'Unknown error during resume extraction'
+      )
+    );
+  }
+
+  /**
+   * Extracts structured job posting data from raw job posting text.
+   *
+   * @param jobPostingText - Raw text of the job posting
+   * @param options - Optional configuration for the extraction
+   * @returns The extracted job posting data
+   * @throws AIProcessorError if processing fails
+   */
+  async extractJobPosting(
+    jobPostingText: string,
+    options: ExtractJobPostingOptions = {}
+  ): Promise<ExtractedJobPosting> {
+    // Check provider availability
+    const isAvailable = await this.isAvailable();
+    if (!isAvailable) {
+      throw new AIProcessorError(
+        AIProcessorErrorCode.CLI_NOT_AVAILABLE,
+        `AI provider '${this.provider.type}' is not available.`
+      );
+    }
+
+    // Build the prompt
+    const promptOptions: JobExtractionOptions = {
+      inferSalary: options.promptOptions?.inferSalary ?? false,
+    };
+
+    const prompt = buildJobExtractionPrompt(jobPostingText, promptOptions);
+
+    // Determine retry settings
+    const enableRetry =
+      options.retryOnValidationFailure ??
+      this.config.enableRetryOnValidationFailure;
+    const maxRetries =
+      options.maxValidationRetries ?? this.config.maxValidationRetries;
+
+    // Execute with validation retry loop
+    let lastError: Error | undefined;
+    const attempts = enableRetry ? maxRetries + 1 : 1;
+
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      try {
+        const result = await this.executeAndValidate<ExtractedJobPosting>(
+          prompt,
+          ExtractedJobPostingSchema,
+          options.timeout
+        );
+
+        // Sanitize output if enabled
+        const finalResult = this.config.sanitizeOutput
+          ? sanitizeAIResponse(result)
+          : result;
+
+        return finalResult;
+      } catch (error) {
+        lastError = error as Error;
+
+        // Only retry on validation failures
+        if (
+          !(error instanceof AIProcessorError) ||
+          error.code !== AIProcessorErrorCode.VALIDATION_FAILED
+        ) {
+          throw error;
+        }
+
+        // If this was the last attempt, throw
+        if (attempt >= attempts - 1) {
+          throw error;
+        }
+
+        // Otherwise, continue to next attempt
+      }
+    }
+
+    // Should not reach here, but throw the last error just in case
+    throw (
+      lastError ??
+      new AIProcessorError(
+        AIProcessorErrorCode.UNKNOWN,
+        'Unknown error during job posting extraction'
       )
     );
   }

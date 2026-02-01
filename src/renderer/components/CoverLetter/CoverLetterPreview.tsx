@@ -14,7 +14,7 @@ function CoverLetterPreview({
   coverLetter,
   className = '',
 }: CoverLetterPreviewProps): React.JSX.Element {
-  const formatDate = (dateStr?: string): string => {
+  const formatDate = (dateStr?: string | null): string => {
     if (!dateStr) {
       return new Date().toLocaleDateString('en-US', {
         year: 'numeric',

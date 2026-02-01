@@ -9,6 +9,7 @@ import {
   Terminal,
   RefreshCw,
   Circle,
+  Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import type { AIProvider, CLITool } from '@app-types/electron.d'
 
 /**
@@ -124,6 +136,7 @@ interface ProviderCardState {
   apiKey: string
   showKey: boolean
   isSaving: boolean
+  isDeleting: boolean
   hasSavedKey: boolean
   error: string | null
 }
@@ -155,6 +168,7 @@ export function ProviderSetupScreen({
       apiKey: '',
       showKey: false,
       isSaving: false,
+      isDeleting: false,
       hasSavedKey: false,
       error: null,
     },
@@ -163,6 +177,7 @@ export function ProviderSetupScreen({
       apiKey: '',
       showKey: false,
       isSaving: false,
+      isDeleting: false,
       hasSavedKey: false,
       error: null,
     },
@@ -171,6 +186,7 @@ export function ProviderSetupScreen({
       apiKey: '',
       showKey: false,
       isSaving: false,
+      isDeleting: false,
       hasSavedKey: false,
       error: null,
     },
@@ -288,6 +304,37 @@ export function ProviderSetupScreen({
       }
     },
     [providerStates, updateProviderState, selectedProvider]
+  )
+
+  /**
+   * Handle deleting an API key.
+   */
+  const handleDeleteKey = useCallback(
+    async (provider: AIProvider) => {
+      updateProviderState(provider, { isDeleting: true, error: null })
+
+      try {
+        await window.electronAPI.deleteAPIKey(provider)
+        updateProviderState(provider, {
+          isDeleting: false,
+          hasSavedKey: false,
+          apiKey: '',
+        })
+
+        // If this was the selected provider, clear selection
+        const apiConfig = API_PROVIDERS.find(p => p.id === provider)
+        if (apiConfig && selectedProvider === apiConfig.selectionId) {
+          setSelectedProvider(null)
+        }
+      } catch (error) {
+        console.error(`Failed to delete ${provider} API key:`, error)
+        updateProviderState(provider, {
+          isDeleting: false,
+          error: 'Failed to delete API key. Please try again.',
+        })
+      }
+    },
+    [updateProviderState, selectedProvider]
   )
 
   /**
@@ -553,6 +600,38 @@ export function ProviderSetupScreen({
                             'Save'
                           )}
                         </Button>
+                        {state.hasSavedKey && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={state.isDeleting}
+                              >
+                                {state.isDeleting ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="size-3.5" />
+                                )}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete API Key?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete your {provider.name} key from secure storage.
+                                  You'll need to enter it again to use this provider.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteKey(provider.id)}>
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                       {state.error && (
                         <p className="mt-2 text-xs text-destructive">

@@ -359,7 +359,7 @@ Your response must be a valid JSON object with the following structure:
 - opening: string (required) - The opening paragraph
 - body: array of strings (required, at least 1) - Body paragraphs
 - closing: string (required) - The closing paragraph
-- signature: string (required) - The signature line (e.g., "Sincerely, [Name]")
+- signature: string (required) - The signature line (e.g., "[Name]")
 
 ### Optional Fields:
 - recipientName: string - Name of the recipient

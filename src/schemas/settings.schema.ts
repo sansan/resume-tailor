@@ -85,6 +85,25 @@ export const CoverLetterPromptTemplateSettingsSchema = z.object({
 });
 
 /**
+ * Template ID schema.
+ */
+export const TemplateIdSchema = z.enum(['classic', 'modern', 'creative', 'executive']).default('classic');
+export type TemplateId = z.infer<typeof TemplateIdSchema>;
+
+/**
+ * Palette ID schema.
+ */
+export const PaletteIdSchema = z.enum([
+  'professional-blue',
+  'modern-teal',
+  'bold-red',
+  'classic-gray',
+  'forest-green',
+  'royal-purple',
+]).default('classic-gray');
+export type PaletteId = z.infer<typeof PaletteIdSchema>;
+
+/**
  * Main App Settings Schema
  *
  * Defines all user-configurable settings for the application.
@@ -101,6 +120,10 @@ export const AppSettingsSchema = z.object({
 
   // PDF theme customization
   pdfTheme: PDFThemeSettingsSchema,
+
+  // Template and palette selection
+  selectedTemplate: TemplateIdSchema,
+  selectedPalette: PaletteIdSchema,
 
   // Onboarding state
   onboardingComplete: z.boolean().default(false),
@@ -153,6 +176,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   },
   onboardingComplete: false,
   selectedProvider: null,
+  selectedTemplate: 'classic',
+  selectedPalette: 'classic-gray',
   pdfTheme: {
     colors: {
       pageBackground: '#FFFFFF',
