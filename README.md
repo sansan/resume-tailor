@@ -136,5 +136,51 @@ npm run build:electron
 - React 18
 - TypeScript
 - Vite
+- SQLite (better-sqlite3)
 - Zod (schema validation)
 - @react-pdf/renderer (PDF generation)
+
+## Roadmap
+
+Planned improvements and features:
+
+### Job Posting Parser
+
+- Improve URL/link extraction from job postings
+- Better handling of various job board formats (LinkedIn, Indeed, Greenhouse,
+  etc.)
+- Auto-detect company name, location, and salary from job descriptions
+
+### PDF Templates
+
+- Additional resume template layouts (modern, creative, academic, etc.)
+- Cover letter templates
+- Fine-tune existing template spacing and typography
+- Custom template builder
+
+### Testing & Quality
+
+- Comprehensive unit test coverage
+- End-to-end testing with Playwright
+- AI response validation and error handling improvements
+
+### User Experience
+
+- Resume import from LinkedIn profile
+- Batch application processing
+- Application analytics and insights
+- Dark/light theme improvements
+
+### Integrations
+
+- Direct job board integrations
+- Calendar integration for interview scheduling
+- Email tracking for application follow-ups
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+[MIT](LICENSE)
