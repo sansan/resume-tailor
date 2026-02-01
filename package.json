@@ -2,15 +2,18 @@
   "name": "resume-tailor",
   "version": "1.0.0",
   "description": "A desktop application for creating professional resumes and cover letters with AI",
-  "author": "Resume Tailor Contributors",
+  "author": {
+    "name": "Toms Veidemanis",
+    "email": "toms@veidemanis.lv"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/resume-tailor.git"
+    "url": "https://github.com/sansan/resume-tailor.git"
   },
-  "homepage": "https://github.com/your-username/resume-tailor",
+  "homepage": "https://github.com/sansan/resume-tailor",
   "bugs": {
-    "url": "https://github.com/your-username/resume-tailor/issues"
+    "url": "https://github.com/sansan/resume-tailor/issues"
   },
   "main": "dist-electron/src/main/main.js",
   "scripts": {
