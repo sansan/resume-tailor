@@ -3,14 +3,15 @@
  *
  * Manages secure storage of API keys using Electron's safeStorage API.
  * Also provides CLI detection functionality to identify installed AI tools.
+ * Uses SQLite for persistence.
  */
 
 import { safeStorage } from 'electron'
-import { app } from 'electron'
 import * as fs from 'fs'
 import * as path from 'path'
-import * as os from 'os'
-import { spawn } from 'child_process'
+import { app } from 'electron'
+import { detectCliPath } from './providers/shell-env'
+import { getDb } from './database.service'
 
 /**
  * Supported AI providers for API key storage.
@@ -28,9 +29,9 @@ export type CLITool = 'claude' | 'codex' | 'gemini'
 const CLI_TOOLS: CLITool[] = ['claude', 'codex', 'gemini']
 
 /**
- * File name for storing encrypted API keys.
+ * Legacy file name for migration.
  */
-const API_KEYS_FILE_NAME = 'api-keys.json'
+const LEGACY_API_KEYS_FILE_NAME = 'api-keys.json'
 
 /**
  * Error codes for API key operations.
@@ -42,6 +43,7 @@ export enum ApiKeyErrorCode {
   FILE_READ_ERROR = 'FILE_READ_ERROR',
   FILE_WRITE_ERROR = 'FILE_WRITE_ERROR',
   INVALID_PROVIDER = 'INVALID_PROVIDER',
+  DATABASE_ERROR = 'DATABASE_ERROR',
 }
 
 /**
@@ -59,10 +61,9 @@ export class ApiKeyError extends Error {
 }
 
 /**
- * Structure of the encrypted keys file.
- * Keys are stored as base64-encoded encrypted buffers.
+ * Structure of the legacy encrypted keys file.
  */
-interface EncryptedKeysStore {
+interface LegacyEncryptedKeysStore {
   claude?: string
   openai?: string
   google?: string
@@ -72,24 +73,22 @@ interface EncryptedKeysStore {
  * API Key Service class for managing secure API key storage and CLI detection.
  */
 export class ApiKeyService {
-  private keysFilePath: string
-  private cachedKeys: EncryptedKeysStore | null = null
+  private legacyKeysFilePath: string
+  private migrationChecked = false
 
   constructor() {
     const userDataPath = this.getUserDataPath()
-    this.keysFilePath = path.join(userDataPath, API_KEYS_FILE_NAME)
+    this.legacyKeysFilePath = path.join(userDataPath, LEGACY_API_KEYS_FILE_NAME)
   }
 
   /**
-   * Gets the user data path for storing the keys file.
-   * Falls back to a reasonable default if app is not available.
+   * Gets the user data path.
    */
   private getUserDataPath(): string {
     try {
       return app.getPath('userData')
     } catch {
-      // Fallback for non-Electron environments (e.g., testing)
-      const homeDir = os.homedir()
+      const homeDir = require('os').homedir()
       switch (process.platform) {
         case 'darwin':
           return path.join(homeDir, 'Library', 'Application Support', 'resume-creator')
@@ -113,55 +112,35 @@ export class ApiKeyService {
   }
 
   /**
-   * Loads the encrypted keys store from disk.
+   * Migrate from legacy JSON file to SQLite (one-time).
    */
-  private loadKeysStore(): EncryptedKeysStore {
-    if (this.cachedKeys) {
-      return this.cachedKeys
-    }
+  private migrateFromLegacyFile(): void {
+    if (this.migrationChecked) return
+    this.migrationChecked = true
 
     try {
-      if (!fs.existsSync(this.keysFilePath)) {
-        this.cachedKeys = {}
-        return {}
-      }
+      if (!fs.existsSync(this.legacyKeysFilePath)) return
 
-      const content = fs.readFileSync(this.keysFilePath, 'utf-8')
-      const parsed = JSON.parse(content) as EncryptedKeysStore
-      this.cachedKeys = parsed
-      return parsed
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        // Corrupted file, start fresh
-        this.cachedKeys = {}
-        return {}
-      }
-      throw new ApiKeyError(
-        ApiKeyErrorCode.FILE_READ_ERROR,
-        `Failed to read API keys file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { originalError: String(error) }
+      const content = fs.readFileSync(this.legacyKeysFilePath, 'utf-8')
+      const legacyStore = JSON.parse(content) as LegacyEncryptedKeysStore
+
+      const db = getDb()
+      const insertStmt = db.prepare(
+        'INSERT OR IGNORE INTO api_keys (provider, encrypted_key) VALUES (?, ?)'
       )
-    }
-  }
 
-  /**
-   * Saves the encrypted keys store to disk.
-   */
-  private saveKeysStore(store: EncryptedKeysStore): void {
-    try {
-      const dirPath = path.dirname(this.keysFilePath)
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true })
+      for (const provider of ['claude', 'openai', 'google'] as AIProvider[]) {
+        const encryptedKey = legacyStore[provider]
+        if (encryptedKey) {
+          insertStmt.run(provider, encryptedKey)
+        }
       }
 
-      fs.writeFileSync(this.keysFilePath, JSON.stringify(store, null, 2), 'utf-8')
-      this.cachedKeys = store
+      // Rename legacy file to .bak
+      fs.renameSync(this.legacyKeysFilePath, this.legacyKeysFilePath + '.bak')
+      console.log('Migrated API keys from JSON file to SQLite')
     } catch (error) {
-      throw new ApiKeyError(
-        ApiKeyErrorCode.FILE_WRITE_ERROR,
-        `Failed to write API keys file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { originalError: String(error) }
-      )
+      console.error('Failed to migrate legacy API keys file:', error)
     }
   }
 
@@ -183,6 +162,7 @@ export class ApiKeyService {
    */
   saveAPIKey(provider: AIProvider, key: string): void {
     this.validateProvider(provider)
+    this.migrateFromLegacyFile()
 
     if (!this.isEncryptionAvailable()) {
       throw new ApiKeyError(
@@ -195,9 +175,11 @@ export class ApiKeyService {
       const encrypted = safeStorage.encryptString(key)
       const base64Encrypted = encrypted.toString('base64')
 
-      const store = this.loadKeysStore()
-      store[provider] = base64Encrypted
-      this.saveKeysStore(store)
+      const db = getDb()
+      db.prepare('INSERT OR REPLACE INTO api_keys (provider, encrypted_key) VALUES (?, ?)').run(
+        provider,
+        base64Encrypted
+      )
     } catch (error) {
       if (error instanceof ApiKeyError) {
         throw error
@@ -215,10 +197,12 @@ export class ApiKeyService {
    */
   hasAPIKey(provider: AIProvider): boolean {
     this.validateProvider(provider)
+    this.migrateFromLegacyFile()
 
     try {
-      const store = this.loadKeysStore()
-      return Boolean(store[provider])
+      const db = getDb()
+      const row = db.prepare('SELECT 1 FROM api_keys WHERE provider = ?').get(provider)
+      return Boolean(row)
     } catch {
       return false
     }
@@ -230,6 +214,7 @@ export class ApiKeyService {
    */
   getAPIKey(provider: AIProvider): string | null {
     this.validateProvider(provider)
+    this.migrateFromLegacyFile()
 
     if (!this.isEncryptionAvailable()) {
       throw new ApiKeyError(
@@ -239,14 +224,16 @@ export class ApiKeyService {
     }
 
     try {
-      const store = this.loadKeysStore()
-      const encryptedBase64 = store[provider]
+      const db = getDb()
+      const row = db
+        .prepare('SELECT encrypted_key FROM api_keys WHERE provider = ?')
+        .get(provider) as { encrypted_key: string } | undefined
 
-      if (!encryptedBase64) {
+      if (!row) {
         return null
       }
 
-      const encryptedBuffer = Buffer.from(encryptedBase64, 'base64')
+      const encryptedBuffer = Buffer.from(row.encrypted_key, 'base64')
       return safeStorage.decryptString(encryptedBuffer)
     } catch (error) {
       if (error instanceof ApiKeyError) {
@@ -265,17 +252,17 @@ export class ApiKeyService {
    */
   deleteAPIKey(provider: AIProvider): void {
     this.validateProvider(provider)
+    this.migrateFromLegacyFile()
 
     try {
-      const store = this.loadKeysStore()
-      delete store[provider]
-      this.saveKeysStore(store)
+      const db = getDb()
+      db.prepare('DELETE FROM api_keys WHERE provider = ?').run(provider)
     } catch (error) {
       if (error instanceof ApiKeyError) {
         throw error
       }
       throw new ApiKeyError(
-        ApiKeyErrorCode.FILE_WRITE_ERROR,
+        ApiKeyErrorCode.DATABASE_ERROR,
         `Failed to delete API key: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -283,10 +270,10 @@ export class ApiKeyService {
   }
 
   /**
-   * Clears the cached keys, forcing a reload on next access.
+   * Clears the cached keys - no-op for SQLite version.
    */
   clearCache(): void {
-    this.cachedKeys = null
+    // No cache in SQLite version
   }
 
   /**
@@ -308,45 +295,11 @@ export class ApiKeyService {
   }
 
   /**
-   * Checks if a specific CLI tool exists in the system PATH.
+   * Checks if a specific CLI tool exists using direct file probing.
    */
-  private checkCLIExists(tool: CLITool): Promise<boolean> {
-    return new Promise(resolve => {
-      // Use 'which' on Unix-like systems, 'where' on Windows
-      const command = process.platform === 'win32' ? 'where' : 'which'
-
-      const child = spawn(command, [tool], {
-        stdio: ['ignore', 'pipe', 'pipe'],
-        // Don't show window on Windows
-        windowsHide: true,
-      })
-
-      let resolved = false
-
-      child.on('close', code => {
-        if (!resolved) {
-          resolved = true
-          // Exit code 0 means the command was found
-          resolve(code === 0)
-        }
-      })
-
-      child.on('error', () => {
-        if (!resolved) {
-          resolved = true
-          resolve(false)
-        }
-      })
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        if (!resolved) {
-          resolved = true
-          child.kill()
-          resolve(false)
-        }
-      }, 5000)
-    })
+  private async checkCLIExists(tool: CLITool): Promise<boolean> {
+    const cliPath = await detectCliPath(tool)
+    return cliPath !== null
   }
 }
 

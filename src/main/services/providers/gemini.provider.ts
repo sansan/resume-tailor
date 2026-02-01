@@ -9,6 +9,7 @@
 
 import { spawn, type ChildProcess } from 'child_process'
 import { BaseAIProvider } from './ai-provider.interface'
+import { getSpawnEnv, detectCliPath } from './shell-env'
 import {
   type CLIProviderConfig,
   type AIProviderRequest,
@@ -83,7 +84,7 @@ export class GeminiProvider extends BaseAIProvider {
       try {
         childProcess = spawn(this.config.cliPath, args, {
           stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env },
+          env: getSpawnEnv(),
         })
       } catch {
         resolve({
@@ -268,9 +269,22 @@ export class GeminiProvider extends BaseAIProvider {
   }
 
   async getStatus(): Promise<AIProviderStatus> {
+    // First, detect if CLI is installed using which/where
+    const cliPath = await detectCliPath('gemini')
+
+    if (!cliPath) {
+      return {
+        provider: 'gemini',
+        available: false,
+        error: `CLI not found. Install with: npm install -g @anthropic-ai/gemini-cli`,
+      }
+    }
+
+    // CLI found, try to get version
     return new Promise(resolve => {
-      const childProcess = spawn(this.config.cliPath, ['--version'], {
+      const childProcess = spawn(cliPath, ['--version'], {
         stdio: ['pipe', 'pipe', 'pipe'],
+        env: getSpawnEnv(),
       })
 
       let stdout = ''
@@ -283,8 +297,7 @@ export class GeminiProvider extends BaseAIProvider {
         resolve({
           provider: 'gemini',
           available: false,
-          error:
-            error.code === 'ENOENT' ? `CLI not found at '${this.config.cliPath}'` : error.message,
+          error: error.message,
         })
       })
 
@@ -296,10 +309,11 @@ export class GeminiProvider extends BaseAIProvider {
             version: stdout.trim() || `Model: ${this.config.model}`,
           })
         } else {
+          // CLI exists but version check failed - still mark as available
           resolve({
             provider: 'gemini',
-            available: false,
-            error: `CLI exited with code ${code}`,
+            available: true,
+            version: 'installed',
           })
         }
       })

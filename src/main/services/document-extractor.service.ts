@@ -4,6 +4,12 @@
  * Extracts text content from PDF, Word (.docx), and plain text files.
  */
 
+// Polyfill DOMMatrix for pdfjs-dist in Node.js environment
+// The dommatrix package exports CSSMatrix which is compatible with DOMMatrix
+import CSSMatrix from 'dommatrix'
+;(globalThis as Record<string, unknown>).DOMMatrix = CSSMatrix
+;(globalThis as Record<string, unknown>).CSSMatrix = CSSMatrix
+
 import * as fs from 'fs'
 import * as path from 'path'
 import { PDFParse } from 'pdf-parse'

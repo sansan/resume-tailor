@@ -1,6 +1,7 @@
 import { app, BrowserWindow, nativeImage } from 'electron'
 import * as path from 'path'
 import { registerIPCHandlers } from './ipc-handlers'
+import { databaseService } from './services/database.service'
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -63,6 +64,9 @@ app.whenReady().then(() => {
     }
   }
 
+  // Initialize the database
+  databaseService.init()
+
   // Register IPC handlers before creating the window
   registerIPCHandlers()
 
@@ -81,4 +85,9 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Close database connection on quit
+app.on('quit', () => {
+  databaseService.close()
 })

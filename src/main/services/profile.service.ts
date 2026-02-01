@@ -1,8 +1,7 @@
 /**
  * Profile Service
  *
- * Manages user profile persistence using JSON file in app data directory.
- * Follows the same pattern as SettingsService.
+ * Manages user profile persistence using SQLite.
  */
 
 import { app } from 'electron'
@@ -16,11 +15,12 @@ import {
   type UserProfile,
   type Resume,
 } from '../../schemas/resume.schema'
+import { getDb } from './database.service'
 
 /**
- * Profile file name.
+ * Legacy profile file name (for migration).
  */
-const PROFILE_FILE_NAME = 'profile.json'
+const LEGACY_PROFILE_FILE_NAME = 'profile.json'
 
 /**
  * Error codes for profile operations.
@@ -30,6 +30,7 @@ export enum ProfileErrorCode {
   FILE_WRITE_ERROR = 'FILE_WRITE_ERROR',
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   PROFILE_NOT_FOUND = 'PROFILE_NOT_FOUND',
+  DATABASE_ERROR = 'DATABASE_ERROR',
 }
 
 /**
@@ -50,12 +51,13 @@ export class ProfileError extends Error {
  * Service for managing user profile persistence.
  */
 export class ProfileService {
-  private profilePath: string
+  private legacyProfilePath: string
   private cachedProfile: UserProfile | null = null
+  private migrationChecked = false
 
   constructor() {
     const userDataPath = this.getUserDataPath()
-    this.profilePath = path.join(userDataPath, PROFILE_FILE_NAME)
+    this.legacyProfilePath = path.join(userDataPath, LEGACY_PROFILE_FILE_NAME)
   }
 
   /**
@@ -78,21 +80,59 @@ export class ProfileService {
   }
 
   /**
-   * Gets the profile file path.
+   * Migrate from legacy JSON file to SQLite (one-time).
    */
-  getProfileFilePath(): string {
-    return this.profilePath
+  private migrateFromLegacyFile(): void {
+    if (this.migrationChecked) return
+    this.migrationChecked = true
+
+    try {
+      if (!fs.existsSync(this.legacyProfilePath)) return
+
+      const content = fs.readFileSync(this.legacyProfilePath, 'utf-8')
+      const rawProfile = JSON.parse(content)
+      const profile = UserProfileSchema.parse(rawProfile)
+
+      // Save to database
+      const db = getDb()
+      const existing = db.prepare('SELECT id FROM profile WHERE id = 1').get()
+
+      if (!existing) {
+        db.prepare(
+          'INSERT INTO profile (id, resume_json, imported_at, source_file, last_modified_at) VALUES (1, ?, ?, ?, ?)'
+        ).run(
+          JSON.stringify(profile.resume),
+          profile.importedAt ?? null,
+          profile.sourceFile ?? null,
+          profile.lastModifiedAt ?? null
+        )
+      }
+
+      // Rename legacy file to .bak
+      fs.renameSync(this.legacyProfilePath, this.legacyProfilePath + '.bak')
+      console.log('Migrated profile from JSON file to SQLite')
+    } catch (error) {
+      console.error('Failed to migrate legacy profile file:', error)
+    }
   }
 
   /**
    * Checks if a profile exists.
    */
   hasProfile(): boolean {
-    return fs.existsSync(this.profilePath)
+    this.migrateFromLegacyFile()
+
+    try {
+      const db = getDb()
+      const row = db.prepare('SELECT 1 FROM profile WHERE id = 1').get()
+      return Boolean(row)
+    } catch {
+      return false
+    }
   }
 
   /**
-   * Loads the user profile from disk.
+   * Loads the user profile from database.
    * Returns null if no profile exists.
    */
   async loadProfile(): Promise<UserProfile | null> {
@@ -100,64 +140,94 @@ export class ProfileService {
       return { ...this.cachedProfile }
     }
 
-    if (!fs.existsSync(this.profilePath)) {
-      return null
-    }
+    this.migrateFromLegacyFile()
 
     try {
-      const content = fs.readFileSync(this.profilePath, 'utf-8')
-      const rawProfile = JSON.parse(content) as unknown
-      const profile = UserProfileSchema.parse(rawProfile)
+      const db = getDb()
+      const row = db
+        .prepare(
+          'SELECT resume_json, imported_at, source_file, last_modified_at FROM profile WHERE id = 1'
+        )
+        .get() as
+        | {
+            resume_json: string
+            imported_at: string | null
+            source_file: string | null
+            last_modified_at: string | null
+          }
+        | undefined
+
+      if (!row) {
+        return null
+      }
+
+      const resume = ResumeSchema.parse(JSON.parse(row.resume_json))
+      const profile: UserProfile = {
+        resume,
+        importedAt: row.imported_at ?? undefined,
+        sourceFile: row.source_file ?? undefined,
+        lastModifiedAt: row.last_modified_at ?? undefined,
+      }
+
       this.cachedProfile = profile
       return { ...profile }
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new ProfileError(
-          ProfileErrorCode.FILE_READ_ERROR,
-          'Profile file contains invalid JSON',
+          ProfileErrorCode.DATABASE_ERROR,
+          'Profile in database contains invalid JSON',
           { originalError: error.message }
         )
       }
       if (error instanceof ZodError) {
         throw new ProfileError(
           ProfileErrorCode.VALIDATION_ERROR,
-          'Profile file contains invalid data',
+          'Profile in database contains invalid data',
           { validationErrors: error.errors }
         )
       }
       throw new ProfileError(
-        ProfileErrorCode.FILE_READ_ERROR,
+        ProfileErrorCode.DATABASE_ERROR,
         `Failed to load profile: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
     }
   }
 
   /**
-   * Saves the user profile to disk.
+   * Saves the user profile to database.
    */
   async saveProfile(resume: Resume, sourceFile?: string): Promise<UserProfile> {
+    this.migrateFromLegacyFile()
+
     try {
       // Validate resume data
       const validatedResume = ResumeSchema.parse(resume)
 
       const now = new Date().toISOString()
+      const importedAt = this.cachedProfile?.importedAt ?? now
+      const finalSourceFile = sourceFile ?? this.cachedProfile?.sourceFile
+
+      const db = getDb()
+      const existing = db.prepare('SELECT id FROM profile WHERE id = 1').get()
+
+      if (existing) {
+        db.prepare(
+          'UPDATE profile SET resume_json = ?, imported_at = ?, source_file = ?, last_modified_at = ? WHERE id = 1'
+        ).run(JSON.stringify(validatedResume), importedAt, finalSourceFile ?? null, now)
+      } else {
+        db.prepare(
+          'INSERT INTO profile (id, resume_json, imported_at, source_file, last_modified_at) VALUES (1, ?, ?, ?, ?)'
+        ).run(JSON.stringify(validatedResume), importedAt, finalSourceFile ?? null, now)
+      }
+
       const profile: UserProfile = {
         resume: validatedResume,
-        importedAt: this.cachedProfile?.importedAt ?? now,
-        sourceFile: sourceFile ?? this.cachedProfile?.sourceFile,
+        importedAt,
+        sourceFile: finalSourceFile,
         lastModifiedAt: now,
       }
 
-      // Ensure directory exists
-      const profileDir = path.dirname(this.profilePath)
-      if (!fs.existsSync(profileDir)) {
-        fs.mkdirSync(profileDir, { recursive: true })
-      }
-
-      // Write profile
-      fs.writeFileSync(this.profilePath, JSON.stringify(profile, null, 2), 'utf-8')
       this.cachedProfile = profile
-
       return { ...profile }
     } catch (error) {
       if (error instanceof ZodError) {
@@ -166,7 +236,7 @@ export class ProfileService {
         })
       }
       throw new ProfileError(
-        ProfileErrorCode.FILE_WRITE_ERROR,
+        ProfileErrorCode.DATABASE_ERROR,
         `Failed to save profile: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
     }
@@ -203,12 +273,13 @@ export class ProfileService {
   }
 
   /**
-   * Clears the profile (deletes the file).
+   * Clears the profile (deletes from database).
    */
   async clearProfile(): Promise<void> {
-    if (fs.existsSync(this.profilePath)) {
-      fs.unlinkSync(this.profilePath)
-    }
+    this.migrateFromLegacyFile()
+
+    const db = getDb()
+    db.prepare('DELETE FROM profile WHERE id = 1').run()
     this.cachedProfile = null
   }
 

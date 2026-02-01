@@ -1,9 +1,7 @@
 /**
  * Applications Service
  *
- * Manages job application tracking persistence using a JSON file stored in
- * the user's app data directory. Provides storing, retrieving, updating,
- * and deleting job applications with status tracking.
+ * Manages job application tracking persistence using SQLite.
  */
 
 import { app } from 'electron'
@@ -12,24 +10,17 @@ import * as path from 'path'
 import * as os from 'os'
 import { ZodError } from 'zod'
 import {
-  ApplicationsDataSchema,
   JobApplicationSchema,
-  DEFAULT_APPLICATIONS_DATA,
-  type ApplicationsData,
   type JobApplication,
   type ApplicationStatistics,
   type StatusHistoryEntry,
 } from '../../schemas/applications.schema'
+import { getDb } from './database.service'
 
 /**
- * Applications file name.
+ * Legacy applications file name (for migration).
  */
-const APPLICATIONS_FILE_NAME = 'applications.json'
-
-/**
- * Current applications schema version.
- */
-const CURRENT_SCHEMA_VERSION = 1
+const LEGACY_APPLICATIONS_FILE_NAME = 'applications.json'
 
 /**
  * Error codes for applications operations.
@@ -39,6 +30,7 @@ export enum ApplicationsErrorCode {
   FILE_WRITE_ERROR = 'FILE_WRITE_ERROR',
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   APPLICATION_NOT_FOUND = 'APPLICATION_NOT_FOUND',
+  DATABASE_ERROR = 'DATABASE_ERROR',
 }
 
 /**
@@ -56,20 +48,41 @@ export class ApplicationsError extends Error {
 }
 
 /**
+ * Database row type for applications.
+ */
+interface ApplicationRow {
+  id: string
+  company_name: string
+  job_title: string
+  job_description: string | null
+  job_url: string | null
+  location: string | null
+  employment_type: string | null
+  salary_range: string | null
+  current_status_id: string
+  status_history_json: string
+  resume_path: string | null
+  cover_letter_path: string | null
+  folder_path: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+/**
  * Applications Service class for managing job application tracking.
  */
 export class ApplicationsService {
-  private applicationsPath: string
-  private cachedData: ApplicationsData | null = null
+  private legacyApplicationsPath: string
+  private migrationChecked = false
 
   constructor() {
     const userDataPath = this.getUserDataPath()
-    this.applicationsPath = path.join(userDataPath, APPLICATIONS_FILE_NAME)
+    this.legacyApplicationsPath = path.join(userDataPath, LEGACY_APPLICATIONS_FILE_NAME)
   }
 
   /**
-   * Gets the user data path for storing applications.
-   * Falls back to a reasonable default if app is not available.
+   * Gets the user data path.
    */
   private getUserDataPath(): string {
     try {
@@ -88,59 +101,78 @@ export class ApplicationsService {
   }
 
   /**
-   * Gets the applications file path.
+   * Migrate from legacy JSON file to SQLite (one-time).
    */
-  getApplicationsFilePath(): string {
-    return this.applicationsPath
+  private migrateFromLegacyFile(): void {
+    if (this.migrationChecked) return
+    this.migrationChecked = true
+
+    try {
+      if (!fs.existsSync(this.legacyApplicationsPath)) return
+
+      const content = fs.readFileSync(this.legacyApplicationsPath, 'utf-8')
+      const rawData = JSON.parse(content)
+      const applications = rawData.applications as JobApplication[]
+
+      if (!Array.isArray(applications)) return
+
+      const db = getDb()
+      const insertStmt = db.prepare(`
+        INSERT OR IGNORE INTO applications
+        (id, company_name, job_title, job_description, job_url, location, employment_type, salary_range, current_status_id, status_history_json, resume_path, cover_letter_path, folder_path, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+
+      for (const app of applications) {
+        insertStmt.run(
+          app.id,
+          app.companyName,
+          app.jobTitle,
+          app.jobDescription ?? null,
+          app.jobUrl ?? null,
+          app.location ?? null,
+          app.employmentType ?? null,
+          app.salaryRange ?? null,
+          app.currentStatusId,
+          JSON.stringify(app.statusHistory),
+          app.resumePath ?? null,
+          app.coverLetterPath ?? null,
+          app.folderPath ?? null,
+          app.notes ?? null,
+          app.createdAt,
+          app.updatedAt
+        )
+      }
+
+      // Rename legacy file to .bak
+      fs.renameSync(this.legacyApplicationsPath, this.legacyApplicationsPath + '.bak')
+      console.log('Migrated applications from JSON file to SQLite')
+    } catch (error) {
+      console.error('Failed to migrate legacy applications file:', error)
+    }
   }
 
   /**
-   * Loads applications data from the JSON file.
-   * Returns empty data if file doesn't exist.
+   * Convert database row to JobApplication.
    */
-  async loadApplications(): Promise<ApplicationsData> {
-    if (this.cachedData) {
-      return { ...this.cachedData, applications: [...this.cachedData.applications] }
-    }
-
-    try {
-      if (!fs.existsSync(this.applicationsPath)) {
-        const defaultData = { ...DEFAULT_APPLICATIONS_DATA }
-        this.cachedData = defaultData
-        return { ...defaultData, applications: [] }
-      }
-
-      const content = fs.readFileSync(this.applicationsPath, 'utf-8')
-      const rawData = JSON.parse(content)
-
-      const migratedData = this.migrateData(rawData)
-      const validatedData = ApplicationsDataSchema.parse(migratedData)
-
-      this.cachedData = validatedData
-      return { ...validatedData, applications: [...validatedData.applications] }
-    } catch (error) {
-      if (error instanceof SyntaxError) {
-        throw new ApplicationsError(
-          ApplicationsErrorCode.FILE_READ_ERROR,
-          'Applications file contains invalid JSON',
-          { originalError: error.message }
-        )
-      }
-      if (error instanceof ZodError) {
-        throw new ApplicationsError(
-          ApplicationsErrorCode.VALIDATION_ERROR,
-          `Invalid applications data: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')}`,
-          { validationErrors: error.errors }
-        )
-      }
-      if (error instanceof ApplicationsError) {
-        throw error
-      }
-      throw new ApplicationsError(
-        ApplicationsErrorCode.FILE_READ_ERROR,
-        `Failed to load applications: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { originalError: String(error) }
-      )
+  private rowToApplication(row: ApplicationRow): JobApplication {
+    return {
+      id: row.id,
+      companyName: row.company_name,
+      jobTitle: row.job_title,
+      jobDescription: row.job_description ?? undefined,
+      jobUrl: row.job_url ?? undefined,
+      location: row.location ?? undefined,
+      employmentType: row.employment_type ?? undefined,
+      salaryRange: row.salary_range ?? undefined,
+      currentStatusId: row.current_status_id,
+      statusHistory: JSON.parse(row.status_history_json) as StatusHistoryEntry[],
+      resumePath: row.resume_path ?? undefined,
+      coverLetterPath: row.cover_letter_path ?? undefined,
+      folderPath: row.folder_path ?? undefined,
+      notes: row.notes ?? undefined,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     }
   }
 
@@ -148,33 +180,81 @@ export class ApplicationsService {
    * Retrieves all applications.
    */
   async getAllApplications(): Promise<JobApplication[]> {
-    const data = await this.loadApplications()
-    return data.applications
+    this.migrateFromLegacyFile()
+
+    try {
+      const db = getDb()
+      const rows = db
+        .prepare('SELECT * FROM applications ORDER BY created_at DESC')
+        .all() as ApplicationRow[]
+
+      return rows.map(row => this.rowToApplication(row))
+    } catch (error) {
+      throw new ApplicationsError(
+        ApplicationsErrorCode.DATABASE_ERROR,
+        `Failed to load applications: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { originalError: String(error) }
+      )
+    }
   }
 
   /**
    * Retrieves a specific application by ID.
    */
   async getApplication(applicationId: string): Promise<JobApplication | null> {
-    const data = await this.loadApplications()
-    return data.applications.find(a => a.id === applicationId) || null
+    this.migrateFromLegacyFile()
+
+    try {
+      const db = getDb()
+      const row = db.prepare('SELECT * FROM applications WHERE id = ?').get(applicationId) as
+        | ApplicationRow
+        | undefined
+
+      return row ? this.rowToApplication(row) : null
+    } catch (error) {
+      throw new ApplicationsError(
+        ApplicationsErrorCode.DATABASE_ERROR,
+        `Failed to get application: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { originalError: String(error) }
+      )
+    }
   }
 
   /**
    * Adds a new application.
-   * Applications are added to the front (most recent first).
    */
   async addApplication(application: JobApplication): Promise<void> {
+    this.migrateFromLegacyFile()
+
     try {
       // Validate the application
       JobApplicationSchema.parse(application)
 
-      const data = await this.loadApplications()
-
-      // Add new application at the beginning
-      data.applications.unshift(application)
-
-      await this.saveApplications(data)
+      const db = getDb()
+      db.prepare(
+        `
+        INSERT INTO applications
+        (id, company_name, job_title, job_description, job_url, location, employment_type, salary_range, current_status_id, status_history_json, resume_path, cover_letter_path, folder_path, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
+      ).run(
+        application.id,
+        application.companyName,
+        application.jobTitle,
+        application.jobDescription ?? null,
+        application.jobUrl ?? null,
+        application.location ?? null,
+        application.employmentType ?? null,
+        application.salaryRange ?? null,
+        application.currentStatusId,
+        JSON.stringify(application.statusHistory),
+        application.resumePath ?? null,
+        application.coverLetterPath ?? null,
+        application.folderPath ?? null,
+        application.notes ?? null,
+        application.createdAt,
+        application.updatedAt
+      )
     } catch (error) {
       if (error instanceof ZodError) {
         throw new ApplicationsError(
@@ -183,11 +263,8 @@ export class ApplicationsService {
           { validationErrors: error.errors }
         )
       }
-      if (error instanceof ApplicationsError) {
-        throw error
-      }
       throw new ApplicationsError(
-        ApplicationsErrorCode.FILE_WRITE_ERROR,
+        ApplicationsErrorCode.DATABASE_ERROR,
         `Failed to add application: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -201,19 +278,11 @@ export class ApplicationsService {
     applicationId: string,
     updates: Partial<JobApplication>
   ): Promise<JobApplication> {
+    this.migrateFromLegacyFile()
+
     try {
-      const data = await this.loadApplications()
-
-      const index = data.applications.findIndex(a => a.id === applicationId)
-      if (index === -1) {
-        throw new ApplicationsError(
-          ApplicationsErrorCode.APPLICATION_NOT_FOUND,
-          `Application with id "${applicationId}" not found`
-        )
-      }
-
-      const existingApplication = data.applications[index]
-      if (!existingApplication) {
+      const existing = await this.getApplication(applicationId)
+      if (!existing) {
         throw new ApplicationsError(
           ApplicationsErrorCode.APPLICATION_NOT_FOUND,
           `Application with id "${applicationId}" not found`
@@ -221,7 +290,7 @@ export class ApplicationsService {
       }
 
       const updatedApplication: JobApplication = {
-        ...existingApplication,
+        ...existing,
         ...updates,
         id: applicationId, // Ensure ID cannot be changed
         updatedAt: new Date().toISOString(),
@@ -230,8 +299,33 @@ export class ApplicationsService {
       // Validate the updated application
       JobApplicationSchema.parse(updatedApplication)
 
-      data.applications[index] = updatedApplication
-      await this.saveApplications(data)
+      const db = getDb()
+      db.prepare(
+        `
+        UPDATE applications SET
+          company_name = ?, job_title = ?, job_description = ?, job_url = ?,
+          location = ?, employment_type = ?, salary_range = ?, current_status_id = ?,
+          status_history_json = ?, resume_path = ?, cover_letter_path = ?,
+          folder_path = ?, notes = ?, updated_at = ?
+        WHERE id = ?
+      `
+      ).run(
+        updatedApplication.companyName,
+        updatedApplication.jobTitle,
+        updatedApplication.jobDescription ?? null,
+        updatedApplication.jobUrl ?? null,
+        updatedApplication.location ?? null,
+        updatedApplication.employmentType ?? null,
+        updatedApplication.salaryRange ?? null,
+        updatedApplication.currentStatusId,
+        JSON.stringify(updatedApplication.statusHistory),
+        updatedApplication.resumePath ?? null,
+        updatedApplication.coverLetterPath ?? null,
+        updatedApplication.folderPath ?? null,
+        updatedApplication.notes ?? null,
+        updatedApplication.updatedAt,
+        applicationId
+      )
 
       return updatedApplication
     } catch (error) {
@@ -246,7 +340,7 @@ export class ApplicationsService {
         )
       }
       throw new ApplicationsError(
-        ApplicationsErrorCode.FILE_WRITE_ERROR,
+        ApplicationsErrorCode.DATABASE_ERROR,
         `Failed to update application: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -261,19 +355,11 @@ export class ApplicationsService {
     statusId: string,
     note?: string
   ): Promise<JobApplication> {
+    this.migrateFromLegacyFile()
+
     try {
-      const data = await this.loadApplications()
-
-      const index = data.applications.findIndex(a => a.id === applicationId)
-      if (index === -1) {
-        throw new ApplicationsError(
-          ApplicationsErrorCode.APPLICATION_NOT_FOUND,
-          `Application with id "${applicationId}" not found`
-        )
-      }
-
-      const existingApplication = data.applications[index]
-      if (!existingApplication) {
+      const existing = await this.getApplication(applicationId)
+      if (!existing) {
         throw new ApplicationsError(
           ApplicationsErrorCode.APPLICATION_NOT_FOUND,
           `Application with id "${applicationId}" not found`
@@ -282,7 +368,6 @@ export class ApplicationsService {
 
       const now = new Date().toISOString()
 
-      // Create status history entry
       const historyEntry: StatusHistoryEntry = {
         statusId,
         changedAt: now,
@@ -290,14 +375,20 @@ export class ApplicationsService {
       }
 
       const updatedApplication: JobApplication = {
-        ...existingApplication,
+        ...existing,
         currentStatusId: statusId,
-        statusHistory: [...existingApplication.statusHistory, historyEntry],
+        statusHistory: [...existing.statusHistory, historyEntry],
         updatedAt: now,
       }
 
-      data.applications[index] = updatedApplication
-      await this.saveApplications(data)
+      const db = getDb()
+      db.prepare(
+        `
+        UPDATE applications SET
+          current_status_id = ?, status_history_json = ?, updated_at = ?
+        WHERE id = ?
+      `
+      ).run(statusId, JSON.stringify(updatedApplication.statusHistory), now, applicationId)
 
       return updatedApplication
     } catch (error) {
@@ -305,7 +396,7 @@ export class ApplicationsService {
         throw error
       }
       throw new ApplicationsError(
-        ApplicationsErrorCode.FILE_WRITE_ERROR,
+        ApplicationsErrorCode.DATABASE_ERROR,
         `Failed to update status: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -316,25 +407,24 @@ export class ApplicationsService {
    * Deletes a specific application by ID.
    */
   async deleteApplication(applicationId: string): Promise<void> {
-    try {
-      const data = await this.loadApplications()
+    this.migrateFromLegacyFile()
 
-      const index = data.applications.findIndex(a => a.id === applicationId)
-      if (index === -1) {
+    try {
+      const db = getDb()
+      const result = db.prepare('DELETE FROM applications WHERE id = ?').run(applicationId)
+
+      if (result.changes === 0) {
         throw new ApplicationsError(
           ApplicationsErrorCode.APPLICATION_NOT_FOUND,
           `Application with id "${applicationId}" not found`
         )
       }
-
-      data.applications.splice(index, 1)
-      await this.saveApplications(data)
     } catch (error) {
       if (error instanceof ApplicationsError) {
         throw error
       }
       throw new ApplicationsError(
-        ApplicationsErrorCode.FILE_WRITE_ERROR,
+        ApplicationsErrorCode.DATABASE_ERROR,
         `Failed to delete application: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -345,27 +435,46 @@ export class ApplicationsService {
    * Gets statistics about applications.
    */
   async getStatistics(): Promise<ApplicationStatistics> {
-    const data = await this.loadApplications()
-    const applications = data.applications
+    this.migrateFromLegacyFile()
 
-    // Calculate this month's applications
-    const now = new Date()
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const thisMonthCount = applications.filter(a => {
-      const createdAt = new Date(a.createdAt)
-      return createdAt >= startOfMonth
-    }).length
+    try {
+      const db = getDb()
 
-    // Calculate by status
-    const byStatus: Record<string, number> = {}
-    for (const app of applications) {
-      byStatus[app.currentStatusId] = (byStatus[app.currentStatusId] || 0) + 1
-    }
+      // Total count
+      const totalRow = db.prepare('SELECT COUNT(*) as count FROM applications').get() as {
+        count: number
+      }
 
-    return {
-      total: applications.length,
-      thisMonth: thisMonthCount,
-      byStatus,
+      // This month count
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const thisMonthRow = db
+        .prepare('SELECT COUNT(*) as count FROM applications WHERE created_at >= ?')
+        .get(startOfMonth) as { count: number }
+
+      // By status
+      const statusRows = db
+        .prepare(
+          'SELECT current_status_id, COUNT(*) as count FROM applications GROUP BY current_status_id'
+        )
+        .all() as Array<{ current_status_id: string; count: number }>
+
+      const byStatus: Record<string, number> = {}
+      for (const row of statusRows) {
+        byStatus[row.current_status_id] = row.count
+      }
+
+      return {
+        total: totalRow.count,
+        thisMonth: thisMonthRow.count,
+        byStatus,
+      }
+    } catch (error) {
+      throw new ApplicationsError(
+        ApplicationsErrorCode.DATABASE_ERROR,
+        `Failed to get statistics: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { originalError: String(error) }
+      )
     }
   }
 
@@ -373,18 +482,14 @@ export class ApplicationsService {
    * Clears all applications.
    */
   async clearApplications(): Promise<void> {
+    this.migrateFromLegacyFile()
+
     try {
-      const emptyData: ApplicationsData = {
-        ...DEFAULT_APPLICATIONS_DATA,
-        applications: [],
-      }
-      await this.saveApplications(emptyData)
+      const db = getDb()
+      db.prepare('DELETE FROM applications').run()
     } catch (error) {
-      if (error instanceof ApplicationsError) {
-        throw error
-      }
       throw new ApplicationsError(
-        ApplicationsErrorCode.FILE_WRITE_ERROR,
+        ApplicationsErrorCode.DATABASE_ERROR,
         `Failed to clear applications: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -392,55 +497,10 @@ export class ApplicationsService {
   }
 
   /**
-   * Clears the applications cache, forcing a reload on next access.
+   * Clears the applications cache - no-op for SQLite version.
    */
   clearCache(): void {
-    this.cachedData = null
-  }
-
-  /**
-   * Saves applications data to the JSON file.
-   */
-  private async saveApplications(data: ApplicationsData): Promise<void> {
-    try {
-      // Ensure the directory exists
-      const applicationsDir = path.dirname(this.applicationsPath)
-      if (!fs.existsSync(applicationsDir)) {
-        fs.mkdirSync(applicationsDir, { recursive: true })
-      }
-
-      // Write applications to file
-      fs.writeFileSync(this.applicationsPath, JSON.stringify(data, null, 2), 'utf-8')
-
-      // Update cache
-      this.cachedData = data
-    } catch (error) {
-      throw new ApplicationsError(
-        ApplicationsErrorCode.FILE_WRITE_ERROR,
-        `Failed to save applications: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { originalError: String(error) }
-      )
-    }
-  }
-
-  /**
-   * Migrates applications data from older schema versions.
-   */
-  private migrateData(rawData: unknown): unknown {
-    if (typeof rawData !== 'object' || rawData === null) {
-      return rawData
-    }
-
-    const data = rawData as Record<string, unknown>
-    const version = typeof data.version === 'number' ? data.version : 0
-
-    if (version >= CURRENT_SCHEMA_VERSION) {
-      return data
-    }
-
-    // Future migrations would go here
-    data.version = CURRENT_SCHEMA_VERSION
-    return data
+    // No cache in SQLite version
   }
 }
 

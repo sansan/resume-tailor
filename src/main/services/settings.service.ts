@@ -1,9 +1,8 @@
 /**
  * Settings Service
  *
- * Manages application settings persistence using a JSON file stored in
- * the user's app data directory. Provides loading, saving, validation,
- * and migration support.
+ * Manages application settings persistence using SQLite.
+ * Provides loading, saving, validation, and migration support.
  */
 
 import { app } from 'electron'
@@ -22,6 +21,7 @@ import {
   validateSettings as validateSettingsData,
   SettingsValidationErrorCode,
 } from '../../shared/settings-validation'
+import { getDb } from './database.service'
 
 /**
  * Current settings schema version.
@@ -30,9 +30,9 @@ import {
 const CURRENT_SCHEMA_VERSION = 1
 
 /**
- * Settings file name.
+ * Legacy settings file name (for migration).
  */
-const SETTINGS_FILE_NAME = 'settings.json'
+const LEGACY_SETTINGS_FILE_NAME = 'settings.json'
 
 /**
  * Default export folder name (relative to user's Documents folder).
@@ -48,6 +48,7 @@ export enum SettingsErrorCode {
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   MIGRATION_ERROR = 'MIGRATION_ERROR',
   FOLDER_VALIDATION_ERROR = 'FOLDER_VALIDATION_ERROR',
+  DATABASE_ERROR = 'DATABASE_ERROR',
 }
 
 /**
@@ -96,14 +97,15 @@ export interface FolderValidationResult {
  * Settings Service class for managing application settings.
  */
 export class SettingsService {
-  private settingsPath: string
   private cachedSettings: AppSettings | null = null
   private defaultExportFolderPath: string
+  private legacySettingsPath: string
+  private migrationChecked = false
 
   constructor() {
-    // Determine the settings file path based on platform
+    // Set up legacy file path for migration
     const userDataPath = this.getUserDataPath()
-    this.settingsPath = path.join(userDataPath, SETTINGS_FILE_NAME)
+    this.legacySettingsPath = path.join(userDataPath, LEGACY_SETTINGS_FILE_NAME)
 
     // Set up default export folder path
     const documentsPath = this.getDocumentsPath()
@@ -116,10 +118,8 @@ export class SettingsService {
    */
   private getUserDataPath(): string {
     try {
-      // Use Electron's app.getPath when available
       return app.getPath('userData')
     } catch {
-      // Fallback for non-Electron environments (e.g., testing)
       const homeDir = os.homedir()
       switch (process.platform) {
         case 'darwin':
@@ -139,16 +139,8 @@ export class SettingsService {
     try {
       return app.getPath('documents')
     } catch {
-      // Fallback for non-Electron environments
       const homeDir = os.homedir()
-      switch (process.platform) {
-        case 'darwin':
-          return path.join(homeDir, 'Documents')
-        case 'win32':
-          return path.join(homeDir, 'Documents')
-        default:
-          return path.join(homeDir, 'Documents')
-      }
+      return path.join(homeDir, 'Documents')
     }
   }
 
@@ -160,15 +152,43 @@ export class SettingsService {
   }
 
   /**
-   * Gets the settings file path.
+   * Migrate from legacy JSON file to SQLite (one-time).
    */
-  getSettingsFilePath(): string {
-    return this.settingsPath
+  private migrateFromLegacyFile(): void {
+    if (this.migrationChecked) return
+    this.migrationChecked = true
+
+    try {
+      if (!fs.existsSync(this.legacySettingsPath)) return
+
+      // Read legacy file
+      const content = fs.readFileSync(this.legacySettingsPath, 'utf-8')
+      const rawSettings = JSON.parse(content)
+      const migratedSettings = this.migrateSettings(rawSettings)
+      const validatedSettings = this.validateAndMerge(migratedSettings)
+
+      // Save to database
+      const db = getDb()
+      const existing = db.prepare('SELECT id FROM settings WHERE id = 1').get()
+
+      if (!existing) {
+        db.prepare('INSERT INTO settings (id, settings_json) VALUES (1, ?)').run(
+          JSON.stringify(validatedSettings)
+        )
+      }
+
+      // Rename legacy file to .bak
+      fs.renameSync(this.legacySettingsPath, this.legacySettingsPath + '.bak')
+      console.log('Migrated settings from JSON file to SQLite')
+    } catch (error) {
+      console.error('Failed to migrate legacy settings file:', error)
+      // Continue without migration - will use defaults
+    }
   }
 
   /**
-   * Loads settings from the JSON file.
-   * Returns default settings if file doesn't exist.
+   * Loads settings from the database.
+   * Returns default settings if none exist.
    */
   async loadSettings(): Promise<AppSettings> {
     // Return cached settings if available
@@ -176,30 +196,37 @@ export class SettingsService {
       return { ...this.cachedSettings }
     }
 
+    // Check for legacy file migration
+    this.migrateFromLegacyFile()
+
     try {
-      // Check if settings file exists
-      if (!fs.existsSync(this.settingsPath)) {
+      const db = getDb()
+      const row = db.prepare('SELECT settings_json FROM settings WHERE id = 1').get() as
+        | { settings_json: string }
+        | undefined
+
+      if (!row) {
+        // No settings in database, create defaults
         const defaultSettings = this.createDefaultSettings()
+        db.prepare('INSERT INTO settings (id, settings_json) VALUES (1, ?)').run(
+          JSON.stringify(defaultSettings)
+        )
         this.cachedSettings = defaultSettings
         return { ...defaultSettings }
       }
 
-      // Read and parse settings file
-      const content = fs.readFileSync(this.settingsPath, 'utf-8')
-      const rawSettings = JSON.parse(content)
-
-      // Check for schema version and migrate if needed
+      // Parse and validate settings
+      const rawSettings = JSON.parse(row.settings_json)
       const migratedSettings = this.migrateSettings(rawSettings)
-
-      // Validate and merge with defaults
       const validatedSettings = this.validateAndMerge(migratedSettings)
+
       this.cachedSettings = validatedSettings
       return { ...validatedSettings }
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new SettingsError(
-          SettingsErrorCode.FILE_READ_ERROR,
-          'Settings file contains invalid JSON',
+          SettingsErrorCode.DATABASE_ERROR,
+          'Settings in database contains invalid JSON',
           { originalError: error.message }
         )
       }
@@ -207,7 +234,7 @@ export class SettingsService {
         throw error
       }
       throw new SettingsError(
-        SettingsErrorCode.FILE_READ_ERROR,
+        SettingsErrorCode.DATABASE_ERROR,
         `Failed to load settings: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -215,7 +242,7 @@ export class SettingsService {
   }
 
   /**
-   * Saves settings to the JSON file.
+   * Saves settings to the database.
    *
    * Performs full validation before saving and rejects invalid settings.
    */
@@ -243,14 +270,11 @@ export class SettingsService {
       // Validate the merged settings with Zod schema
       const validatedSettings = AppSettingsSchema.parse(mergedSettings)
 
-      // Ensure the directory exists
-      const settingsDir = path.dirname(this.settingsPath)
-      if (!fs.existsSync(settingsDir)) {
-        fs.mkdirSync(settingsDir, { recursive: true })
-      }
-
-      // Write settings to file
-      fs.writeFileSync(this.settingsPath, JSON.stringify(validatedSettings, null, 2), 'utf-8')
+      // Save to database
+      const db = getDb()
+      db.prepare('UPDATE settings SET settings_json = ? WHERE id = 1').run(
+        JSON.stringify(validatedSettings)
+      )
 
       // Update cache
       this.cachedSettings = validatedSettings
@@ -268,7 +292,7 @@ export class SettingsService {
         throw error
       }
       throw new SettingsError(
-        SettingsErrorCode.FILE_WRITE_ERROR,
+        SettingsErrorCode.DATABASE_ERROR,
         `Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
       )
@@ -280,18 +304,18 @@ export class SettingsService {
    */
   async resetSettings(): Promise<AppSettings> {
     const defaultSettings = this.createDefaultSettings()
-    return this.saveSettings(defaultSettings)
+
+    const db = getDb()
+    db.prepare('UPDATE settings SET settings_json = ? WHERE id = 1').run(
+      JSON.stringify(defaultSettings)
+    )
+
+    this.cachedSettings = defaultSettings
+    return { ...defaultSettings }
   }
 
   /**
    * Validates settings without saving.
-   *
-   * Performs comprehensive validation including:
-   * - Zod schema validation
-   * - Output folder existence and writability checks
-   * - File naming pattern validation
-   * - PDF theme value range validation
-   * - Prompt template validation
    */
   validateSettings(settings: unknown): SettingsValidationResult {
     const errors: string[] = []
@@ -375,8 +399,6 @@ export class SettingsService {
 
   /**
    * Validates that a folder path exists and is writable.
-   *
-   * @deprecated Use validateOutputFolder() for detailed error information.
    */
   isValidOutputFolder(folderPath: string): boolean {
     return this.validateOutputFolder(folderPath).isValid
@@ -384,23 +406,14 @@ export class SettingsService {
 
   /**
    * Validates a folder path and returns detailed validation result.
-   *
-   * Checks:
-   * - Path is not empty or uses default
-   * - Path exists (or parent is writable for creation)
-   * - Path is a directory, not a file
-   * - Path is writable
    */
   validateOutputFolder(folderPath: string): FolderValidationResult {
-    // If empty, will use default which we'll create
     if (!folderPath) {
       return { isValid: true }
     }
 
     try {
-      // Check if path exists
       if (!fs.existsSync(folderPath)) {
-        // Try to check if parent exists and is writable
         const parentPath = path.dirname(folderPath)
 
         if (!fs.existsSync(parentPath)) {
@@ -413,10 +426,8 @@ export class SettingsService {
           }
         }
 
-        // Check if we can write to parent
         try {
           fs.accessSync(parentPath, fs.constants.W_OK)
-          // Parent is writable, folder can be created
           return { isValid: true }
         } catch {
           return {
@@ -429,7 +440,6 @@ export class SettingsService {
         }
       }
 
-      // Check if it's a directory
       const stats = fs.statSync(folderPath)
       if (!stats.isDirectory()) {
         return {
@@ -441,7 +451,6 @@ export class SettingsService {
         }
       }
 
-      // Check if writable
       try {
         fs.accessSync(folderPath, fs.constants.W_OK)
         return { isValid: true }
@@ -506,7 +515,7 @@ export class SettingsService {
   private createDefaultSettings(): AppSettings {
     return {
       ...DEFAULT_APP_SETTINGS,
-      outputFolderPath: '', // Empty means use default
+      outputFolderPath: '',
     }
   }
 
@@ -515,10 +524,7 @@ export class SettingsService {
    */
   private validateAndMerge(rawSettings: unknown): AppSettings {
     try {
-      // First, try to parse as partial settings
       const partialSettings = PartialAppSettingsSchema.parse(rawSettings)
-
-      // Deep merge with defaults
       return AppSettingsSchema.parse(
         this.deepMerge(DEFAULT_APP_SETTINGS, partialSettings as Record<string, unknown>)
       )
@@ -527,7 +533,7 @@ export class SettingsService {
         const validationErrors = error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
         throw new SettingsError(
           SettingsErrorCode.VALIDATION_ERROR,
-          `Invalid settings in file: ${validationErrors.join('; ')}`,
+          `Invalid settings: ${validationErrors.join('; ')}`,
           { validationErrors }
         )
       }
@@ -546,18 +552,10 @@ export class SettingsService {
     const settings = rawSettings as Record<string, unknown>
     const version = typeof settings.version === 'number' ? settings.version : 0
 
-    // No migrations needed for version 1
     if (version >= CURRENT_SCHEMA_VERSION) {
       return settings
     }
 
-    // Future migrations would go here
-    // Example:
-    // if (version < 2) {
-    //   settings = this.migrateV1ToV2(settings);
-    // }
-
-    // Update version
     settings.version = CURRENT_SCHEMA_VERSION
     return settings
   }
@@ -581,13 +579,11 @@ export class SettingsService {
         targetValue !== null &&
         !Array.isArray(targetValue)
       ) {
-        // Recursively merge objects
         result[key] = this.deepMerge(
           targetValue as Record<string, unknown>,
           sourceValue as Record<string, unknown>
         ) as T[keyof T]
       } else if (sourceValue !== undefined) {
-        // Direct assignment for non-object values
         result[key] = sourceValue as T[keyof T]
       }
     }

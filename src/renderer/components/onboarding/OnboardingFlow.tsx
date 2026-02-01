@@ -51,15 +51,24 @@ export function OnboardingFlow({ onComplete }: Readonly<OnboardingFlowProps>): R
   // Store resume data loaded after upload
   const [resume, setResume] = useState<Resume | null>(null)
   const [isLoadingResume, setIsLoadingResume] = useState(false)
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false)
 
   /**
    * Load the user's profile/resume after they complete the upload step.
    * This data is used for the template preview on the final step.
+   * Includes a 10 second timeout to prevent hanging.
    */
   const loadResumeData = useCallback(async () => {
     setIsLoadingResume(true)
+    setHasAttemptedLoad(true)
     try {
-      const profile = await window.electronAPI.loadProfile()
+      // Add timeout to prevent infinite hanging
+      const timeoutPromise = new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error('Profile load timeout')), 10000)
+      )
+
+      const profile = await Promise.race([window.electronAPI.loadProfile(), timeoutPromise])
+
       if (profile?.resume) {
         setResume(profile.resume)
       }
@@ -73,12 +82,13 @@ export function OnboardingFlow({ onComplete }: Readonly<OnboardingFlowProps>): R
 
   /**
    * Load resume data when entering the template step.
+   * Only attempt once to prevent infinite loop when no profile exists.
    */
   useEffect(() => {
-    if (step === 'template' && resume === null && !isLoadingResume) {
+    if (step === 'template' && resume === null && !isLoadingResume && !hasAttemptedLoad) {
       loadResumeData()
     }
-  }, [step, resume, isLoadingResume, loadResumeData])
+  }, [step, resume, isLoadingResume, hasAttemptedLoad, loadResumeData])
 
   /**
    * Handle provider setup completion.
