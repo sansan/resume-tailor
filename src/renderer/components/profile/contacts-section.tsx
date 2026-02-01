@@ -11,10 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { Contact, ContactType } from '@schemas/resume.schema'
-import {
-  CONTACT_TYPE_LABELS,
-  CONTACT_TYPE_PLACEHOLDERS,
-} from '@schemas/resume.schema'
+import { CONTACT_TYPE_LABELS, CONTACT_TYPE_PLACEHOLDERS } from '@schemas/resume.schema'
 
 interface ContactsSectionProps {
   contacts: Contact[]
@@ -36,13 +33,10 @@ const CONTACT_TYPES: ContactType[] = [
 export function ContactsSection({ contacts, onChange }: ContactsSectionProps) {
   const handleAdd = useCallback(() => {
     // Find a type that's not yet used, default to 'other' if all are used
-    const usedTypes = new Set(contacts.map((c) => c.type))
-    const availableType = CONTACT_TYPES.find((t) => !usedTypes.has(t)) ?? 'other'
+    const usedTypes = new Set(contacts.map(c => c.type))
+    const availableType = CONTACT_TYPES.find(t => !usedTypes.has(t)) ?? 'other'
 
-    onChange([
-      ...contacts,
-      { type: availableType, value: '' },
-    ])
+    onChange([...contacts, { type: availableType, value: '' }])
   }, [contacts, onChange])
 
   const handleRemove = useCallback(
@@ -99,32 +93,29 @@ export function ContactsSection({ contacts, onChange }: ContactsSectionProps) {
       </div>
 
       {contacts.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">
+        <p className="text-muted-foreground py-4 text-center text-sm">
           No contact information added. Click "Add" to add your first contact.
         </p>
       ) : (
         <div className="space-y-3">
           {contacts.map((contact, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-3 p-3 rounded-lg border bg-card"
-            >
-              <div className="flex items-center justify-center h-9 text-muted-foreground cursor-grab">
+            <div key={index} className="bg-card flex items-start gap-3 rounded-lg border p-3">
+              <div className="text-muted-foreground flex h-9 cursor-grab items-center justify-center">
                 <GripVertical className="h-4 w-4" />
               </div>
 
-              <div className="flex-1 grid gap-3 sm:grid-cols-[180px_1fr]">
+              <div className="grid flex-1 gap-3 sm:grid-cols-[180px_1fr]">
                 <div>
                   <Label className="sr-only">Type</Label>
                   <Select
                     value={contact.type}
-                    onValueChange={(value) => handleTypeChange(index, value as ContactType)}
+                    onValueChange={value => handleTypeChange(index, value as ContactType)}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {CONTACT_TYPES.map((type) => (
+                      {CONTACT_TYPES.map(type => (
                         <SelectItem key={type} value={type}>
                           {CONTACT_TYPE_LABELS[type]}
                         </SelectItem>
@@ -137,19 +128,19 @@ export function ContactsSection({ contacts, onChange }: ContactsSectionProps) {
                   <Label className="sr-only">Value</Label>
                   <Input
                     value={contact.value}
-                    onChange={(e) => handleValueChange(index, e.target.value)}
+                    onChange={e => handleValueChange(index, e.target.value)}
                     placeholder={CONTACT_TYPE_PLACEHOLDERS[contact.type]}
                   />
                 </div>
 
                 {contact.type === 'other' && (
                   <div className="sm:col-span-2">
-                    <Label className="text-xs text-muted-foreground mb-1 block">
+                    <Label className="text-muted-foreground mb-1 block text-xs">
                       Custom Label (optional)
                     </Label>
                     <Input
                       value={contact.label ?? ''}
-                      onChange={(e) => handleLabelChange(index, e.target.value)}
+                      onChange={e => handleLabelChange(index, e.target.value)}
                       placeholder="e.g., Discord, Telegram..."
                     />
                   </div>

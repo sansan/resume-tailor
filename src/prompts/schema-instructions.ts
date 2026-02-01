@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 /**
  * Generates a human-readable description of a Zod schema for use in AI prompts.
@@ -6,14 +6,14 @@ import { z } from 'zod';
  */
 
 type ZodTypeInfo = {
-  type: string;
-  optional: boolean;
-  description?: string;
-  enumValues?: string[];
-  arrayItemType?: string;
-  objectFields?: Record<string, ZodTypeInfo>;
-  constraints?: string[];
-};
+  type: string
+  optional: boolean
+  description?: string
+  enumValues?: string[]
+  arrayItemType?: string
+  objectFields?: Record<string, ZodTypeInfo>
+  constraints?: string[]
+}
 
 /**
  * Extracts type information from a Zod schema
@@ -23,164 +23,161 @@ function extractTypeInfo(schema: z.ZodTypeAny): ZodTypeInfo {
     type: 'unknown',
     optional: false,
     constraints: [],
-  };
+  }
 
   // Handle optional/nullable wrappers
   if (schema instanceof z.ZodOptional) {
-    const innerInfo = extractTypeInfo(schema.unwrap());
-    return { ...innerInfo, optional: true };
+    const innerInfo = extractTypeInfo(schema.unwrap())
+    return { ...innerInfo, optional: true }
   }
 
   if (schema instanceof z.ZodNullable) {
-    const innerInfo = extractTypeInfo(schema.unwrap());
-    innerInfo.constraints = [...(innerInfo.constraints || []), 'can be null'];
-    return innerInfo;
+    const innerInfo = extractTypeInfo(schema.unwrap())
+    innerInfo.constraints = [...(innerInfo.constraints || []), 'can be null']
+    return innerInfo
   }
 
   if (schema instanceof z.ZodDefault) {
-    const innerInfo = extractTypeInfo(schema._def.innerType);
-    return { ...innerInfo, optional: true };
+    const innerInfo = extractTypeInfo(schema._def.innerType)
+    return { ...innerInfo, optional: true }
   }
 
   // Handle primitive types
   if (schema instanceof z.ZodString) {
-    info.type = 'string';
-    const checks = schema._def.checks || [];
+    info.type = 'string'
+    const checks = schema._def.checks || []
     for (const check of checks) {
       if (check.kind === 'min') {
-        info.constraints?.push(`minimum ${check.value} characters`);
+        info.constraints?.push(`minimum ${check.value} characters`)
       }
       if (check.kind === 'max') {
-        info.constraints?.push(`maximum ${check.value} characters`);
+        info.constraints?.push(`maximum ${check.value} characters`)
       }
       if (check.kind === 'email') {
-        info.constraints?.push('must be a valid email');
+        info.constraints?.push('must be a valid email')
       }
       if (check.kind === 'url') {
-        info.constraints?.push('must be a valid URL');
+        info.constraints?.push('must be a valid URL')
       }
     }
-    return info;
+    return info
   }
 
   if (schema instanceof z.ZodNumber) {
-    info.type = 'number';
-    const checks = schema._def.checks || [];
+    info.type = 'number'
+    const checks = schema._def.checks || []
     for (const check of checks) {
       if (check.kind === 'min') {
-        info.constraints?.push(`minimum value: ${check.value}`);
+        info.constraints?.push(`minimum value: ${check.value}`)
       }
       if (check.kind === 'max') {
-        info.constraints?.push(`maximum value: ${check.value}`);
+        info.constraints?.push(`maximum value: ${check.value}`)
       }
       if (check.kind === 'int') {
-        info.constraints?.push('must be an integer');
+        info.constraints?.push('must be an integer')
       }
     }
-    return info;
+    return info
   }
 
   if (schema instanceof z.ZodBoolean) {
-    info.type = 'boolean';
-    return info;
+    info.type = 'boolean'
+    return info
   }
 
   // Handle enum
   if (schema instanceof z.ZodEnum) {
-    info.type = 'enum';
-    info.enumValues = schema._def.values;
-    return info;
+    info.type = 'enum'
+    info.enumValues = schema._def.values
+    return info
   }
 
   if (schema instanceof z.ZodLiteral) {
-    info.type = 'literal';
-    info.constraints = [`must be exactly: ${JSON.stringify(schema._def.value)}`];
-    return info;
+    info.type = 'literal'
+    info.constraints = [`must be exactly: ${JSON.stringify(schema._def.value)}`]
+    return info
   }
 
   // Handle arrays
   if (schema instanceof z.ZodArray) {
-    info.type = 'array';
-    const itemInfo = extractTypeInfo(schema._def.type);
-    info.arrayItemType = itemInfo.type;
+    info.type = 'array'
+    const itemInfo = extractTypeInfo(schema._def.type)
+    info.arrayItemType = itemInfo.type
     if (itemInfo.type === 'object' && itemInfo.objectFields) {
-      info.objectFields = itemInfo.objectFields;
+      info.objectFields = itemInfo.objectFields
     }
-    return info;
+    return info
   }
 
   // Handle objects
   if (schema instanceof z.ZodObject) {
-    info.type = 'object';
-    info.objectFields = {};
-    const shape = schema.shape;
+    info.type = 'object'
+    info.objectFields = {}
+    const shape = schema.shape
     for (const [key, value] of Object.entries(shape)) {
-      info.objectFields[key] = extractTypeInfo(value as z.ZodTypeAny);
+      info.objectFields[key] = extractTypeInfo(value as z.ZodTypeAny)
     }
-    return info;
+    return info
   }
 
   // Handle union/discriminated union
   if (schema instanceof z.ZodUnion || schema instanceof z.ZodDiscriminatedUnion) {
-    info.type = 'union';
-    info.constraints = ['one of multiple possible types'];
-    return info;
+    info.type = 'union'
+    info.constraints = ['one of multiple possible types']
+    return info
   }
 
-  return info;
+  return info
 }
 
 /**
  * Converts type info to a human-readable string with proper indentation
  */
 function typeInfoToString(info: ZodTypeInfo, indent: number = 0): string {
-  const prefix = '  '.repeat(indent);
-  const lines: string[] = [];
+  const prefix = '  '.repeat(indent)
+  const lines: string[] = []
 
-  let typeStr = info.type;
+  let typeStr = info.type
   if (info.optional) {
-    typeStr += ' (optional)';
+    typeStr += ' (optional)'
   }
 
   if (info.enumValues) {
-    typeStr += `: one of [${info.enumValues.map(v => `"${v}"`).join(', ')}]`;
+    typeStr += `: one of [${info.enumValues.map(v => `"${v}"`).join(', ')}]`
   }
 
   if (info.arrayItemType) {
     if (info.objectFields) {
-      typeStr = `array of objects:`;
+      typeStr = `array of objects:`
     } else {
-      typeStr = `array of ${info.arrayItemType}`;
+      typeStr = `array of ${info.arrayItemType}`
     }
   }
 
   if (info.constraints && info.constraints.length > 0) {
-    typeStr += ` (${info.constraints.join(', ')})`;
+    typeStr += ` (${info.constraints.join(', ')})`
   }
 
-  lines.push(`${prefix}${typeStr}`);
+  lines.push(`${prefix}${typeStr}`)
 
   if (info.objectFields) {
     for (const [key, fieldInfo] of Object.entries(info.objectFields)) {
-      const fieldStr = typeInfoToString(fieldInfo, indent + 1);
-      lines.push(`${prefix}  - ${key}: ${fieldStr.trim()}`);
+      const fieldStr = typeInfoToString(fieldInfo, indent + 1)
+      lines.push(`${prefix}  - ${key}: ${fieldStr.trim()}`)
     }
   }
 
-  return lines.join('\n');
+  return lines.join('\n')
 }
 
 /**
  * Generates a human-readable schema description for use in prompts
  */
-export function schemaToPromptDescription(
-  schema: z.ZodTypeAny,
-  name: string = 'Output'
-): string {
-  const info = extractTypeInfo(schema);
-  const description = typeInfoToString(info);
+export function schemaToPromptDescription(schema: z.ZodTypeAny, name: string = 'Output'): string {
+  const info = extractTypeInfo(schema)
+  const description = typeInfoToString(info)
 
-  return `## ${name} Schema\n\n${description}`;
+  return `## ${name} Schema\n\n${description}`
 }
 
 /**
@@ -189,70 +186,74 @@ export function schemaToPromptDescription(
 function generateExampleValue(info: ZodTypeInfo): unknown {
   if (info.optional) {
     // For optional fields in examples, sometimes include them
-    return generateExampleValue({ ...info, optional: false });
+    return generateExampleValue({ ...info, optional: false })
   }
 
   switch (info.type) {
     case 'string':
       if (info.constraints?.some(c => c.includes('email'))) {
-        return 'example@email.com';
+        return 'example@email.com'
       }
       if (info.constraints?.some(c => c.includes('URL'))) {
-        return 'https://example.com';
+        return 'https://example.com'
       }
-      return 'example string';
+      return 'example string'
 
     case 'number':
-      if (info.constraints?.some(c => c.includes('minimum value: 0') && c.includes('maximum value: 1'))) {
-        return 0.85;
+      if (
+        info.constraints?.some(
+          c => c.includes('minimum value: 0') && c.includes('maximum value: 1')
+        )
+      ) {
+        return 0.85
       }
-      return 42;
+      return 42
 
     case 'boolean':
-      return true;
+      return true
 
     case 'enum':
-      return info.enumValues?.[0] || 'value';
+      return info.enumValues?.[0] || 'value'
 
     case 'literal':
       // Extract the literal value from constraints
-      const match = info.constraints?.[0]?.match(/must be exactly: (.+)/);
+      const match = info.constraints?.[0]?.match(/must be exactly: (.+)/)
       if (match && match[1]) {
         try {
-          return JSON.parse(match[1]);
+          return JSON.parse(match[1])
         } catch {
-          return match[1];
+          return match[1]
         }
       }
-      return 'literal';
+      return 'literal'
 
     case 'array':
       if (info.objectFields) {
         // Array of objects
-        const exampleObj: Record<string, unknown> = {};
+        const exampleObj: Record<string, unknown> = {}
         for (const [key, fieldInfo] of Object.entries(info.objectFields)) {
           if (!fieldInfo.optional) {
-            exampleObj[key] = generateExampleValue(fieldInfo);
+            exampleObj[key] = generateExampleValue(fieldInfo)
           }
         }
-        return [exampleObj];
+        return [exampleObj]
       }
-      return ['example item'];
+      return ['example item']
 
     case 'object':
-      const obj: Record<string, unknown> = {};
+      const obj: Record<string, unknown> = {}
       if (info.objectFields) {
         for (const [key, fieldInfo] of Object.entries(info.objectFields)) {
           // Include required fields and some optional ones
           if (!fieldInfo.optional) {
-            obj[key] = generateExampleValue(fieldInfo);
+            obj[key] = generateExampleValue(fieldInfo)
           }
         }
       }
-      return obj;
+      return obj
 
     default:
-      return null;
+      return null
   }
 }
 
@@ -260,9 +261,9 @@ function generateExampleValue(info: ZodTypeInfo): unknown {
  * Generates a JSON example from a Zod schema
  */
 export function schemaToJsonExample(schema: z.ZodTypeAny): string {
-  const info = extractTypeInfo(schema);
-  const example = generateExampleValue(info);
-  return JSON.stringify(example, null, 2);
+  const info = extractTypeInfo(schema)
+  const example = generateExampleValue(info)
+  return JSON.stringify(example, null, 2)
 }
 
 /**
@@ -273,17 +274,17 @@ export function generateSchemaInstructions(
   name: string,
   additionalNotes?: string[]
 ): string {
-  const description = schemaToPromptDescription(schema, name);
-  const example = schemaToJsonExample(schema);
+  const description = schemaToPromptDescription(schema, name)
+  const example = schemaToJsonExample(schema)
 
-  let instructions = `${description}\n\n### Example ${name} Structure\n\n\`\`\`json\n${example}\n\`\`\``;
+  let instructions = `${description}\n\n### Example ${name} Structure\n\n\`\`\`json\n${example}\n\`\`\``
 
   if (additionalNotes && additionalNotes.length > 0) {
-    instructions += '\n\n### Important Notes\n\n';
-    instructions += additionalNotes.map(note => `- ${note}`).join('\n');
+    instructions += '\n\n### Important Notes\n\n'
+    instructions += additionalNotes.map(note => `- ${note}`).join('\n')
   }
 
-  return instructions;
+  return instructions
 }
 
 /**
@@ -343,7 +344,7 @@ Your response must be a valid JSON object with the following structure:
 ### Optional Metadata (refinementMetadata):
 - targetedKeywords: array of strings - keywords from the job posting that were addressed
 - changesSummary: string - brief summary of refinements made
-- confidenceScore: number between 0 and 1 - confidence in the refinement quality`;
+- confidenceScore: number between 0 and 1 - confidence in the refinement quality`
 }
 
 /**
@@ -369,5 +370,5 @@ Your response must be a valid JSON object with the following structure:
 
 ### Optional Metadata:
 - highlightedExperiences: array of strings - Key experiences from the resume that were highlighted
-- tone: one of ["formal", "conversational", "enthusiastic"]`;
+- tone: one of ["formal", "conversational", "enthusiastic"]`
 }

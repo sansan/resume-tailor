@@ -1,27 +1,24 @@
-import React from 'react';
-import {
-  FILE_NAMING_VARIABLES,
-  type AppSettings,
-} from '@schemas/settings.schema';
+import React from 'react'
+import { FILE_NAMING_VARIABLES, type AppSettings } from '@schemas/settings.schema'
 
 /**
  * Props for the OutputFolderSettings component.
  */
 export interface OutputFolderSettingsProps {
   /** Current application settings */
-  settings: AppSettings;
+  settings: AppSettings
   /** Default folder path (shown when outputFolderPath is empty) */
-  defaultFolderPath: string;
+  defaultFolderPath: string
   /** Field validation errors */
-  errors: Record<string, string>;
+  errors: Record<string, string>
   /** Whether the section is expanded */
-  isExpanded: boolean;
+  isExpanded: boolean
   /** Toggle section expansion */
-  onToggle: () => void;
+  onToggle: () => void
   /** Update settings callback */
-  onUpdateSettings: (updates: Partial<AppSettings>) => void;
+  onUpdateSettings: (updates: Partial<AppSettings>) => void
   /** Open folder selection dialog */
-  onSelectFolder: () => Promise<void>;
+  onSelectFolder: () => Promise<void>
 }
 
 /**
@@ -43,7 +40,7 @@ function OutputFolderSettings({
   onUpdateSettings,
   onSelectFolder,
 }: OutputFolderSettingsProps): React.JSX.Element {
-  const displayOutputPath = settings.outputFolderPath || defaultFolderPath;
+  const displayOutputPath = settings.outputFolderPath || defaultFolderPath
 
   return (
     <section className="settings-view__section">
@@ -61,10 +58,7 @@ function OutputFolderSettings({
       </button>
 
       {isExpanded && (
-        <div
-          id="output-folder-settings-content"
-          className="settings-view__section-content"
-        >
+        <div id="output-folder-settings-content" className="settings-view__section-content">
           {/* Output Folder Path */}
           <div className="settings-view__field">
             <label htmlFor="output-folder" className="settings-view__label">
@@ -110,14 +104,14 @@ function OutputFolderSettings({
               <input
                 type="checkbox"
                 checked={settings.createCompanySubfolders}
-                onChange={(e) => onUpdateSettings({ createCompanySubfolders: e.target.checked })}
+                onChange={e => onUpdateSettings({ createCompanySubfolders: e.target.checked })}
                 aria-describedby="company-subfolders-help"
               />
               <span>Create company subfolders</span>
             </label>
             <p id="company-subfolders-help" className="settings-view__help">
-              When enabled, exports will be organized into folders named after the company.
-              For example: <code>cv-rebu-exports/Acme-Corp/resume.pdf</code>
+              When enabled, exports will be organized into folders named after the company. For
+              example: <code>cv-rebu-exports/Acme-Corp/resume.pdf</code>
             </p>
           </div>
 
@@ -132,7 +126,7 @@ function OutputFolderSettings({
 
             {/* Available Variables */}
             <div className="settings-view__variables" aria-label="Available file naming variables">
-              {FILE_NAMING_VARIABLES.map((v) => (
+              {FILE_NAMING_VARIABLES.map(v => (
                 <span key={v.variable} className="settings-view__variable">
                   <code>{v.variable}</code> - {v.description}
                 </span>
@@ -144,7 +138,7 @@ function OutputFolderSettings({
               type="text"
               className="settings-view__text-input"
               value={settings.fileNamingPattern}
-              onChange={(e) => onUpdateSettings({ fileNamingPattern: e.target.value })}
+              onChange={e => onUpdateSettings({ fileNamingPattern: e.target.value })}
               placeholder="{company}-resume-{date}"
               aria-describedby="file-naming-preview"
             />
@@ -162,7 +156,7 @@ function OutputFolderSettings({
         </div>
       )}
     </section>
-  );
+  )
 }
 
 /**
@@ -172,12 +166,12 @@ function OutputFolderSettings({
  * the user what their file names will look like.
  */
 function previewFileName(pattern: string): string {
-  const today = new Date().toISOString().split('T')[0] ?? '';
+  const today = new Date().toISOString().split('T')[0] ?? ''
   return pattern
     .replace(/{company}/g, 'Acme-Corp')
     .replace(/{date}/g, today)
     .replace(/{title}/g, 'Software-Engineer')
-    .replace(/{name}/g, 'John-Doe');
+    .replace(/{name}/g, 'John-Doe')
 }
 
-export default OutputFolderSettings;
+export default OutputFolderSettings

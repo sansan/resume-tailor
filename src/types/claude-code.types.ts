@@ -8,11 +8,11 @@
  */
 export interface ClaudeCodeConfig {
   /** Timeout in milliseconds for CLI execution. Default: 120000 (2 minutes) */
-  timeout: number;
+  timeout: number
   /** Maximum number of retry attempts on transient failures. Default: 0 */
-  maxRetries: number;
+  maxRetries: number
   /** Path to the Claude Code CLI executable. Default: 'claude' */
-  cliPath: string;
+  cliPath: string
 }
 
 /**
@@ -22,44 +22,44 @@ export const DEFAULT_CLAUDE_CODE_CONFIG: ClaudeCodeConfig = {
   timeout: 120000,
   maxRetries: 0,
   cliPath: 'claude',
-};
+}
 
 /**
  * Request payload for Claude Code CLI invocation.
  */
 export interface ClaudeCodeRequest {
   /** The prompt to send to Claude */
-  prompt: string;
+  prompt: string
   /** Optional system prompt for context */
-  systemPrompt?: string;
+  systemPrompt?: string
   /** Optional output format specification */
-  outputFormat?: 'json' | 'text';
+  outputFormat?: 'json' | 'text'
 }
 
 /**
  * Successful response from Claude Code CLI.
  */
 export interface ClaudeCodeSuccessResponse {
-  success: true;
+  success: true
   /** The raw text response from Claude */
-  rawResponse: string;
+  rawResponse: string
   /** Parsed JSON data if outputFormat was 'json' and response was valid JSON */
-  data?: unknown;
+  data?: unknown
 }
 
 /**
  * Error response from Claude Code CLI.
  */
 export interface ClaudeCodeErrorResponse {
-  success: false;
+  success: false
   /** The error that occurred */
-  error: ClaudeCodeError;
+  error: ClaudeCodeError
 }
 
 /**
  * Union type for all possible Claude Code responses.
  */
-export type ClaudeCodeResponse = ClaudeCodeSuccessResponse | ClaudeCodeErrorResponse;
+export type ClaudeCodeResponse = ClaudeCodeSuccessResponse | ClaudeCodeErrorResponse
 
 /**
  * Error codes for Claude Code CLI failures.
@@ -85,14 +85,14 @@ export enum ClaudeCodeErrorCode {
  * Base error class for Claude Code CLI errors.
  */
 export class ClaudeCodeError extends Error {
-  readonly code: ClaudeCodeErrorCode;
-  readonly details: Record<string, unknown> | undefined;
+  readonly code: ClaudeCodeErrorCode
+  readonly details: Record<string, unknown> | undefined
 
   constructor(code: ClaudeCodeErrorCode, message: string, details?: Record<string, unknown>) {
-    super(message);
-    this.name = 'ClaudeCodeError';
-    this.code = code;
-    this.details = details;
+    super(message)
+    this.name = 'ClaudeCodeError'
+    this.code = code
+    this.details = details
   }
 }
 
@@ -105,8 +105,8 @@ export class CLINotFoundError extends ClaudeCodeError {
       ClaudeCodeErrorCode.CLI_NOT_FOUND,
       `Claude Code CLI not found at '${cliPath}'. Ensure Claude Code is installed and accessible in PATH.`,
       { cliPath }
-    );
-    this.name = 'CLINotFoundError';
+    )
+    this.name = 'CLINotFoundError'
   }
 }
 
@@ -115,12 +115,10 @@ export class CLINotFoundError extends ClaudeCodeError {
  */
 export class TimeoutError extends ClaudeCodeError {
   constructor(timeoutMs: number) {
-    super(
-      ClaudeCodeErrorCode.TIMEOUT,
-      `Claude Code CLI execution timed out after ${timeoutMs}ms`,
-      { timeoutMs }
-    );
-    this.name = 'TimeoutError';
+    super(ClaudeCodeErrorCode.TIMEOUT, `Claude Code CLI execution timed out after ${timeoutMs}ms`, {
+      timeoutMs,
+    })
+    this.name = 'TimeoutError'
   }
 }
 
@@ -133,8 +131,8 @@ export class ProcessKilledError extends ClaudeCodeError {
       ClaudeCodeErrorCode.PROCESS_KILLED,
       `Claude Code CLI process was killed by signal: ${signal}`,
       { signal }
-    );
-    this.name = 'ProcessKilledError';
+    )
+    this.name = 'ProcessKilledError'
   }
 }
 
@@ -147,8 +145,8 @@ export class CLIError extends ClaudeCodeError {
       ClaudeCodeErrorCode.CLI_ERROR,
       `Claude Code CLI exited with code ${exitCode}: ${stderr}`,
       { exitCode, stderr }
-    );
-    this.name = 'CLIError';
+    )
+    this.name = 'CLIError'
   }
 }
 
@@ -161,8 +159,8 @@ export class InvalidJSONError extends ClaudeCodeError {
       ClaudeCodeErrorCode.INVALID_JSON,
       `Failed to parse Claude Code response as JSON: ${parseError}`,
       { rawResponse: rawResponse.substring(0, 500), parseError }
-    );
-    this.name = 'InvalidJSONError';
+    )
+    this.name = 'InvalidJSONError'
   }
 }
 
@@ -175,7 +173,7 @@ export class SchemaValidationError extends ClaudeCodeError {
       ClaudeCodeErrorCode.SCHEMA_VALIDATION_FAILED,
       `Claude Code response failed schema validation: ${validationErrors.join(', ')}`,
       { validationErrors }
-    );
-    this.name = 'SchemaValidationError';
+    )
+    this.name = 'SchemaValidationError'
   }
 }

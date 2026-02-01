@@ -1,17 +1,17 @@
-import React, { useState, useCallback } from 'react';
-import type { Resume, WorkExperience, Project } from '@schemas/resume.schema';
-import { getContactByType } from '@schemas/resume.schema';
-import type { RefinedResume } from '@schemas/ai-output.schema';
-import ResumeSection from '../Resume/ResumeSection';
+import React, { useState, useCallback } from 'react'
+import type { Resume, WorkExperience, Project } from '@schemas/resume.schema'
+import { getContactByType } from '@schemas/resume.schema'
+import type { RefinedResume } from '@schemas/ai-output.schema'
+import ResumeSection from '../Resume/ResumeSection'
 
-type ViewMode = 'sideBySide' | 'original' | 'refined';
+type ViewMode = 'sideBySide' | 'original' | 'refined'
 
 interface RefinedResumeReviewProps {
-  originalResume: Resume;
-  refinedResume: RefinedResume;
-  onAccept: () => void;
-  onRegenerate: () => void;
-  onUpdateRefinedResume: (resume: RefinedResume) => void;
+  originalResume: Resume
+  refinedResume: RefinedResume
+  onAccept: () => void
+  onRegenerate: () => void
+  onUpdateRefinedResume: (resume: RefinedResume) => void
 }
 
 /**
@@ -25,8 +25,8 @@ function RefinedResumeReview({
   onRegenerate,
   onUpdateRefinedResume,
 }: RefinedResumeReviewProps): React.JSX.Element {
-  const [viewMode, setViewMode] = useState<ViewMode>('sideBySide');
-  const [editingField, setEditingField] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('sideBySide')
+  const [editingField, setEditingField] = useState<string | null>(null)
 
   const handleSummaryChange = useCallback(
     (newSummary: string) => {
@@ -36,61 +36,57 @@ function RefinedResumeReview({
           ...refinedResume.personalInfo,
           summary: newSummary,
         },
-      });
+      })
     },
     [refinedResume, onUpdateRefinedResume]
-  );
+  )
 
   const handleWorkExperienceHighlightChange = useCallback(
     (itemIndex: number, highlightIndex: number, newValue: string) => {
-      const updatedItems: WorkExperience[] = refinedResume.workExperience.map(
-        (item, index) => {
-          if (index === itemIndex) {
-            const updatedHighlights = item.highlights.map((h, hIdx) =>
-              hIdx === highlightIndex ? newValue : h
-            );
-            return { ...item, highlights: updatedHighlights };
-          }
-          return item;
+      const updatedItems: WorkExperience[] = refinedResume.workExperience.map((item, index) => {
+        if (index === itemIndex) {
+          const updatedHighlights = item.highlights.map((h, hIdx) =>
+            hIdx === highlightIndex ? newValue : h
+          )
+          return { ...item, highlights: updatedHighlights }
         }
-      );
+        return item
+      })
 
       onUpdateRefinedResume({
         ...refinedResume,
         workExperience: updatedItems,
-      });
+      })
     },
     [refinedResume, onUpdateRefinedResume]
-  );
+  )
 
   const handleProjectHighlightChange = useCallback(
     (itemIndex: number, highlightIndex: number, newValue: string) => {
-      const updatedItems: Project[] = refinedResume.projects.map(
-        (item, index) => {
-          if (index === itemIndex) {
-            const updatedHighlights = item.highlights.map((h, hIdx) =>
-              hIdx === highlightIndex ? newValue : h
-            );
-            return { ...item, highlights: updatedHighlights };
-          }
-          return item;
+      const updatedItems: Project[] = refinedResume.projects.map((item, index) => {
+        if (index === itemIndex) {
+          const updatedHighlights = item.highlights.map((h, hIdx) =>
+            hIdx === highlightIndex ? newValue : h
+          )
+          return { ...item, highlights: updatedHighlights }
         }
-      );
+        return item
+      })
 
       onUpdateRefinedResume({
         ...refinedResume,
         projects: updatedItems,
-      });
+      })
     },
     [refinedResume, onUpdateRefinedResume]
-  );
+  )
 
   const renderSummaryComparison = () => {
-    const originalSummary = originalResume.personalInfo.summary || '';
-    const refinedSummary = refinedResume.personalInfo.summary || '';
-    const isEditing = editingField === 'summary';
+    const originalSummary = originalResume.personalInfo.summary || ''
+    const refinedSummary = refinedResume.personalInfo.summary || ''
+    const isEditing = editingField === 'summary'
 
-    if (!originalSummary && !refinedSummary) return null;
+    if (!originalSummary && !refinedSummary) return null
 
     return (
       <div className="refined-resume-review__comparison">
@@ -113,7 +109,7 @@ function RefinedResumeReview({
                 <textarea
                   className="refined-resume-review__edit-textarea"
                   value={refinedSummary}
-                  onChange={(e) => handleSummaryChange(e.target.value)}
+                  onChange={e => handleSummaryChange(e.target.value)}
                   onBlur={() => setEditingField(null)}
                   autoFocus
                   rows={4}
@@ -131,22 +127,19 @@ function RefinedResumeReview({
           )}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const renderWorkExperienceComparison = () => {
-    if (
-      originalResume.workExperience.length === 0 &&
-      refinedResume.workExperience.length === 0
-    ) {
-      return null;
+    if (originalResume.workExperience.length === 0 && refinedResume.workExperience.length === 0) {
+      return null
     }
 
     return (
       <div className="refined-resume-review__comparison">
         <h4 className="refined-resume-review__comparison-title">Work Experience</h4>
         {refinedResume.workExperience.map((job, jobIndex) => {
-          const originalJob = originalResume.workExperience[jobIndex];
+          const originalJob = originalResume.workExperience[jobIndex]
 
           return (
             <div key={jobIndex} className="refined-resume-review__item">
@@ -176,8 +169,8 @@ function RefinedResumeReview({
                     )}
                     <ul className="refined-resume-review__highlights">
                       {job.highlights.map((highlight, hIndex) => {
-                        const fieldKey = `work-${jobIndex}-${hIndex}`;
-                        const isEditing = editingField === fieldKey;
+                        const fieldKey = `work-${jobIndex}-${hIndex}`
+                        const isEditing = editingField === fieldKey
 
                         return (
                           <li key={hIndex}>
@@ -186,7 +179,7 @@ function RefinedResumeReview({
                                 type="text"
                                 className="refined-resume-review__edit-input"
                                 value={highlight}
-                                onChange={(e) =>
+                                onChange={e =>
                                   handleWorkExperienceHighlightChange(
                                     jobIndex,
                                     hIndex,
@@ -206,40 +199,37 @@ function RefinedResumeReview({
                               </span>
                             )}
                           </li>
-                        );
+                        )
                       })}
                     </ul>
                   </div>
                 )}
               </div>
             </div>
-          );
+          )
         })}
       </div>
-    );
-  };
+    )
+  }
 
   const renderSkillsComparison = () => {
-    if (
-      originalResume.skills.length === 0 &&
-      refinedResume.skills.length === 0
-    ) {
-      return null;
+    if (originalResume.skills.length === 0 && refinedResume.skills.length === 0) {
+      return null
     }
 
     const groupByCategory = (skills: typeof originalResume.skills) => {
       return skills.reduce<Record<string, typeof skills>>((acc, skill) => {
-        const category = skill.category || 'Other';
+        const category = skill.category || 'Other'
         if (!acc[category]) {
-          acc[category] = [];
+          acc[category] = []
         }
-        acc[category].push(skill);
-        return acc;
-      }, {});
-    };
+        acc[category].push(skill)
+        return acc
+      }, {})
+    }
 
-    const originalGrouped = groupByCategory(originalResume.skills);
-    const refinedGrouped = groupByCategory(refinedResume.skills);
+    const originalGrouped = groupByCategory(originalResume.skills)
+    const refinedGrouped = groupByCategory(refinedResume.skills)
 
     return (
       <div className="refined-resume-review__comparison">
@@ -252,8 +242,7 @@ function RefinedResumeReview({
               )}
               {Object.entries(originalGrouped).map(([category, skills]) => (
                 <div key={category} className="refined-resume-review__skill-group">
-                  <strong>{category}:</strong>{' '}
-                  {skills.map((s) => s.name).join(', ')}
+                  <strong>{category}:</strong> {skills.map(s => s.name).join(', ')}
                 </div>
               ))}
             </div>
@@ -265,30 +254,26 @@ function RefinedResumeReview({
               )}
               {Object.entries(refinedGrouped).map(([category, skills]) => (
                 <div key={category} className="refined-resume-review__skill-group">
-                  <strong>{category}:</strong>{' '}
-                  {skills.map((s) => s.name).join(', ')}
+                  <strong>{category}:</strong> {skills.map(s => s.name).join(', ')}
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const renderProjectsComparison = () => {
-    if (
-      originalResume.projects.length === 0 &&
-      refinedResume.projects.length === 0
-    ) {
-      return null;
+    if (originalResume.projects.length === 0 && refinedResume.projects.length === 0) {
+      return null
     }
 
     return (
       <div className="refined-resume-review__comparison">
         <h4 className="refined-resume-review__comparison-title">Projects</h4>
         {refinedResume.projects.map((project, projectIndex) => {
-          const originalProject = originalResume.projects[projectIndex];
+          const originalProject = originalResume.projects[projectIndex]
 
           return (
             <div key={projectIndex} className="refined-resume-review__item">
@@ -324,14 +309,12 @@ function RefinedResumeReview({
                       <span className="refined-resume-review__column-label">Refined</span>
                     )}
                     {project.description && (
-                      <p className="refined-resume-review__description">
-                        {project.description}
-                      </p>
+                      <p className="refined-resume-review__description">{project.description}</p>
                     )}
                     <ul className="refined-resume-review__highlights">
                       {project.highlights.map((highlight, hIndex) => {
-                        const fieldKey = `project-${projectIndex}-${hIndex}`;
-                        const isEditing = editingField === fieldKey;
+                        const fieldKey = `project-${projectIndex}-${hIndex}`
+                        const isEditing = editingField === fieldKey
 
                         return (
                           <li key={hIndex}>
@@ -340,12 +323,8 @@ function RefinedResumeReview({
                                 type="text"
                                 className="refined-resume-review__edit-input"
                                 value={highlight}
-                                onChange={(e) =>
-                                  handleProjectHighlightChange(
-                                    projectIndex,
-                                    hIndex,
-                                    e.target.value
-                                  )
+                                onChange={e =>
+                                  handleProjectHighlightChange(projectIndex, hIndex, e.target.value)
                                 }
                                 onBlur={() => setEditingField(null)}
                                 autoFocus
@@ -360,22 +339,22 @@ function RefinedResumeReview({
                               </span>
                             )}
                           </li>
-                        );
+                        )
                       })}
                     </ul>
                   </div>
                 )}
               </div>
             </div>
-          );
+          )
         })}
       </div>
-    );
-  };
+    )
+  }
 
   const renderMetadata = () => {
-    const metadata = refinedResume.refinementMetadata;
-    if (!metadata) return null;
+    const metadata = refinedResume.refinementMetadata
+    if (!metadata) return null
 
     return (
       <div className="refined-resume-review__metadata">
@@ -414,8 +393,8 @@ function RefinedResumeReview({
           </div>
         )}
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <div className="refined-resume-review">
@@ -489,7 +468,7 @@ function RefinedResumeReview({
         </button>
       </div>
     </div>
-  );
+  )
 }
 
-export default RefinedResumeReview;
+export default RefinedResumeReview

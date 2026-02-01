@@ -16,11 +16,7 @@ interface TemplateCarouselProps {
  * Horizontal scrolling carousel for template selection.
  * Features snap-to-center behavior and arrow navigation.
  */
-export function TemplateCarousel({
-  templates,
-  selectedId,
-  onSelect,
-}: TemplateCarouselProps) {
+export function TemplateCarousel({ templates, selectedId, onSelect }: TemplateCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -65,7 +61,7 @@ export function TemplateCarousel({
   // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      const currentIndex = templates.findIndex((t) => t.id === selectedId)
+      const currentIndex = templates.findIndex(t => t.id === selectedId)
 
       if (e.key === 'ArrowLeft' && currentIndex > 0) {
         e.preventDefault()
@@ -85,15 +81,15 @@ export function TemplateCarousel({
   )
 
   return (
-    <div className="relative group" role="listbox" aria-label="Template selection">
+    <div className="group relative" role="listbox" aria-label="Template selection">
       {/* Left arrow */}
       <Button
         variant="outline"
         size="icon"
         className={cn(
-          'absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur-sm shadow-md',
+          'bg-background/80 absolute top-1/2 left-0 z-10 -translate-y-1/2 shadow-md backdrop-blur-sm',
           'transition-opacity duration-200',
-          canScrollLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          canScrollLeft ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={() => scroll('left')}
         aria-label="Scroll left"
@@ -105,7 +101,7 @@ export function TemplateCarousel({
       {/* Scrollable container */}
       <div
         ref={scrollContainerRef}
-        className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory px-8 py-2 scrollbar-hide"
+        className="scrollbar-hide flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-8 py-2"
         onScroll={updateScrollButtons}
         onKeyDown={handleKeyDown}
         tabIndex={0}
@@ -115,7 +111,7 @@ export function TemplateCarousel({
           msOverflowStyle: 'none',
         }}
       >
-        {templates.map((template) => {
+        {templates.map(template => {
           const isSelected = template.id === selectedId
 
           return (
@@ -125,16 +121,13 @@ export function TemplateCarousel({
               aria-selected={isSelected}
               tabIndex={isSelected ? 0 : -1}
               className={cn(
-                'flex-shrink-0 w-44 cursor-pointer transition-all duration-200 snap-center',
-                'hover:ring-2 hover:ring-primary/50 hover:shadow-lg',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                isSelected && [
-                  'ring-2 ring-primary shadow-lg',
-                  'scale-105 transform',
-                ]
+                'w-44 flex-shrink-0 cursor-pointer snap-center transition-all duration-200',
+                'hover:ring-primary/50 hover:shadow-lg hover:ring-2',
+                'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+                isSelected && ['ring-primary shadow-lg ring-2', 'scale-105 transform']
               )}
               onClick={() => onSelect(template.id)}
-              onKeyDown={(e) => {
+              onKeyDown={e => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
                   onSelect(template.id)
@@ -147,17 +140,15 @@ export function TemplateCarousel({
                   <AspectRatio ratio={3 / 4}>
                     <div
                       className={cn(
-                        'h-full w-full rounded-md flex items-center justify-center',
-                        'bg-gradient-to-br from-muted to-muted/50',
+                        'flex h-full w-full items-center justify-center rounded-md',
+                        'from-muted to-muted/50 bg-gradient-to-br',
                         isSelected && 'from-primary/10 to-primary/5'
                       )}
                     >
                       <span
                         className={cn(
                           'text-3xl font-bold',
-                          isSelected
-                            ? 'text-primary/40'
-                            : 'text-muted-foreground/30'
+                          isSelected ? 'text-primary/40' : 'text-muted-foreground/30'
                         )}
                       >
                         CV
@@ -168,22 +159,17 @@ export function TemplateCarousel({
                   {/* Selected checkmark overlay */}
                   {isSelected && (
                     <div className="absolute top-1.5 right-1.5">
-                      <CheckCircle2 className="h-5 w-5 text-primary fill-background" />
+                      <CheckCircle2 className="text-primary fill-background h-5 w-5" />
                     </div>
                   )}
                 </div>
 
                 {/* Template info */}
                 <div className="space-y-1">
-                  <h3
-                    className={cn(
-                      'font-medium text-sm truncate',
-                      isSelected && 'text-primary'
-                    )}
-                  >
+                  <h3 className={cn('truncate text-sm font-medium', isSelected && 'text-primary')}>
                     {template.name}
                   </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  <p className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
                     {template.description}
                   </p>
                 </div>
@@ -198,9 +184,9 @@ export function TemplateCarousel({
         variant="outline"
         size="icon"
         className={cn(
-          'absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-background/80 backdrop-blur-sm shadow-md',
+          'bg-background/80 absolute top-1/2 right-0 z-10 -translate-y-1/2 shadow-md backdrop-blur-sm',
           'transition-opacity duration-200',
-          canScrollRight ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          canScrollRight ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={() => scroll('right')}
         aria-label="Scroll right"

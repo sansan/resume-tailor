@@ -9,7 +9,7 @@
  */
 export interface JobExtractionOptions {
   /** Include salary inference if not explicitly stated */
-  inferSalary?: boolean;
+  inferSalary?: boolean
 }
 
 /**
@@ -38,7 +38,7 @@ Return a JSON object with the following structure:
 }
 
 All array fields should contain individual items as separate strings.
-Use null for fields where information is not available.`;
+Use null for fields where information is not available.`
 }
 
 /**
@@ -52,11 +52,11 @@ export function buildJobExtractionPrompt(
   jobPostingText: string,
   options: JobExtractionOptions = {}
 ): string {
-  const schemaInstructions = getJobPostingSchemaInstructions();
+  const schemaInstructions = getJobPostingSchemaInstructions()
 
   const salaryInstruction = options.inferSalary
     ? 'If salary is not explicitly mentioned but can be inferred from context (e.g., "competitive salary for senior role"), note it.'
-    : 'Only include salary if explicitly mentioned in the posting.';
+    : 'Only include salary if explicitly mentioned in the posting.'
 
   return `You are a job posting analysis assistant. Extract structured data from the following job posting.
 
@@ -86,5 +86,5 @@ ${jobPostingText}
 </job_posting>
 
 ## Output Format
-Return ONLY valid JSON matching the schema above. Do not include any explanation, markdown formatting, or code blocks around the JSON. Return raw JSON only.`;
+Return ONLY valid JSON matching the schema above. Do not include any explanation, markdown formatting, or code blocks around the JSON. Return raw JSON only.`
 }

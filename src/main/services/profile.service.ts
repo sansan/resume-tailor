@@ -5,22 +5,22 @@
  * Follows the same pattern as SettingsService.
  */
 
-import { app } from 'electron';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { ZodError } from 'zod';
+import { app } from 'electron'
+import * as fs from 'fs'
+import * as path from 'path'
+import * as os from 'os'
+import { ZodError } from 'zod'
 import {
   UserProfileSchema,
   ResumeSchema,
   type UserProfile,
   type Resume,
-} from '../../schemas/resume.schema';
+} from '../../schemas/resume.schema'
 
 /**
  * Profile file name.
  */
-const PROFILE_FILE_NAME = 'profile.json';
+const PROFILE_FILE_NAME = 'profile.json'
 
 /**
  * Error codes for profile operations.
@@ -41,8 +41,8 @@ export class ProfileError extends Error {
     message: string,
     public readonly details?: Record<string, unknown>
   ) {
-    super(message);
-    this.name = 'ProfileError';
+    super(message)
+    this.name = 'ProfileError'
   }
 }
 
@@ -50,12 +50,12 @@ export class ProfileError extends Error {
  * Service for managing user profile persistence.
  */
 export class ProfileService {
-  private profilePath: string;
-  private cachedProfile: UserProfile | null = null;
+  private profilePath: string
+  private cachedProfile: UserProfile | null = null
 
   constructor() {
-    const userDataPath = this.getUserDataPath();
-    this.profilePath = path.join(userDataPath, PROFILE_FILE_NAME);
+    const userDataPath = this.getUserDataPath()
+    this.profilePath = path.join(userDataPath, PROFILE_FILE_NAME)
   }
 
   /**
@@ -63,16 +63,16 @@ export class ProfileService {
    */
   private getUserDataPath(): string {
     try {
-      return app.getPath('userData');
+      return app.getPath('userData')
     } catch {
-      const homeDir = os.homedir();
+      const homeDir = os.homedir()
       switch (process.platform) {
         case 'darwin':
-          return path.join(homeDir, 'Library', 'Application Support', 'resume-creator');
+          return path.join(homeDir, 'Library', 'Application Support', 'resume-creator')
         case 'win32':
-          return path.join(homeDir, 'AppData', 'Roaming', 'resume-creator');
+          return path.join(homeDir, 'AppData', 'Roaming', 'resume-creator')
         default:
-          return path.join(homeDir, '.config', 'resume-creator');
+          return path.join(homeDir, '.config', 'resume-creator')
       }
     }
   }
@@ -81,14 +81,14 @@ export class ProfileService {
    * Gets the profile file path.
    */
   getProfileFilePath(): string {
-    return this.profilePath;
+    return this.profilePath
   }
 
   /**
    * Checks if a profile exists.
    */
   hasProfile(): boolean {
-    return fs.existsSync(this.profilePath);
+    return fs.existsSync(this.profilePath)
   }
 
   /**
@@ -97,38 +97,38 @@ export class ProfileService {
    */
   async loadProfile(): Promise<UserProfile | null> {
     if (this.cachedProfile) {
-      return { ...this.cachedProfile };
+      return { ...this.cachedProfile }
     }
 
     if (!fs.existsSync(this.profilePath)) {
-      return null;
+      return null
     }
 
     try {
-      const content = fs.readFileSync(this.profilePath, 'utf-8');
-      const rawProfile = JSON.parse(content) as unknown;
-      const profile = UserProfileSchema.parse(rawProfile);
-      this.cachedProfile = profile;
-      return { ...profile };
+      const content = fs.readFileSync(this.profilePath, 'utf-8')
+      const rawProfile = JSON.parse(content) as unknown
+      const profile = UserProfileSchema.parse(rawProfile)
+      this.cachedProfile = profile
+      return { ...profile }
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new ProfileError(
           ProfileErrorCode.FILE_READ_ERROR,
           'Profile file contains invalid JSON',
           { originalError: error.message }
-        );
+        )
       }
       if (error instanceof ZodError) {
         throw new ProfileError(
           ProfileErrorCode.VALIDATION_ERROR,
           'Profile file contains invalid data',
           { validationErrors: error.errors }
-        );
+        )
       }
       throw new ProfileError(
         ProfileErrorCode.FILE_READ_ERROR,
         `Failed to load profile: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      )
     }
   }
 
@@ -138,39 +138,37 @@ export class ProfileService {
   async saveProfile(resume: Resume, sourceFile?: string): Promise<UserProfile> {
     try {
       // Validate resume data
-      const validatedResume = ResumeSchema.parse(resume);
+      const validatedResume = ResumeSchema.parse(resume)
 
-      const now = new Date().toISOString();
+      const now = new Date().toISOString()
       const profile: UserProfile = {
         resume: validatedResume,
         importedAt: this.cachedProfile?.importedAt ?? now,
         sourceFile: sourceFile ?? this.cachedProfile?.sourceFile,
         lastModifiedAt: now,
-      };
+      }
 
       // Ensure directory exists
-      const profileDir = path.dirname(this.profilePath);
+      const profileDir = path.dirname(this.profilePath)
       if (!fs.existsSync(profileDir)) {
-        fs.mkdirSync(profileDir, { recursive: true });
+        fs.mkdirSync(profileDir, { recursive: true })
       }
 
       // Write profile
-      fs.writeFileSync(this.profilePath, JSON.stringify(profile, null, 2), 'utf-8');
-      this.cachedProfile = profile;
+      fs.writeFileSync(this.profilePath, JSON.stringify(profile, null, 2), 'utf-8')
+      this.cachedProfile = profile
 
-      return { ...profile };
+      return { ...profile }
     } catch (error) {
       if (error instanceof ZodError) {
-        throw new ProfileError(
-          ProfileErrorCode.VALIDATION_ERROR,
-          'Invalid resume data',
-          { validationErrors: error.errors }
-        );
+        throw new ProfileError(ProfileErrorCode.VALIDATION_ERROR, 'Invalid resume data', {
+          validationErrors: error.errors,
+        })
       }
       throw new ProfileError(
         ProfileErrorCode.FILE_WRITE_ERROR,
         `Failed to save profile: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      )
     }
   }
 
@@ -178,7 +176,7 @@ export class ProfileService {
    * Updates the profile with partial resume data.
    */
   async updateProfile(partialResume: Partial<Resume>): Promise<UserProfile> {
-    const currentProfile = await this.loadProfile();
+    const currentProfile = await this.loadProfile()
     const currentResume = currentProfile?.resume ?? {
       personalInfo: { name: '', contacts: [] },
       workExperience: [],
@@ -186,22 +184,22 @@ export class ProfileService {
       skills: [],
       projects: [],
       certifications: [],
-    };
+    }
 
     const mergedResume: Resume = {
       ...currentResume,
       ...partialResume,
-    };
+    }
 
-    return this.saveProfile(mergedResume);
+    return this.saveProfile(mergedResume)
   }
 
   /**
    * Gets just the resume data from the profile.
    */
   async getResume(): Promise<Resume | null> {
-    const profile = await this.loadProfile();
-    return profile?.resume ?? null;
+    const profile = await this.loadProfile()
+    return profile?.resume ?? null
   }
 
   /**
@@ -209,18 +207,18 @@ export class ProfileService {
    */
   async clearProfile(): Promise<void> {
     if (fs.existsSync(this.profilePath)) {
-      fs.unlinkSync(this.profilePath);
+      fs.unlinkSync(this.profilePath)
     }
-    this.cachedProfile = null;
+    this.cachedProfile = null
   }
 
   /**
    * Clears the cache.
    */
   clearCache(): void {
-    this.cachedProfile = null;
+    this.cachedProfile = null
   }
 }
 
 // Export singleton instance
-export const profileService = new ProfileService();
+export const profileService = new ProfileService()

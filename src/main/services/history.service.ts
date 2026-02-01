@@ -6,11 +6,11 @@
  * and clearing export history entries.
  */
 
-import { app } from 'electron';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { ZodError } from 'zod';
+import { app } from 'electron'
+import * as fs from 'fs'
+import * as path from 'path'
+import * as os from 'os'
+import { ZodError } from 'zod'
 import {
   ExportHistorySchema,
   HistoryEntrySchema,
@@ -18,17 +18,17 @@ import {
   MAX_HISTORY_ENTRIES,
   type ExportHistory,
   type HistoryEntry,
-} from '../../schemas/history.schema';
+} from '../../schemas/history.schema'
 
 /**
  * History file name.
  */
-const HISTORY_FILE_NAME = 'export-history.json';
+const HISTORY_FILE_NAME = 'export-history.json'
 
 /**
  * Current history schema version.
  */
-const CURRENT_SCHEMA_VERSION = 1;
+const CURRENT_SCHEMA_VERSION = 1
 
 /**
  * Error codes for history operations.
@@ -49,8 +49,8 @@ export class HistoryError extends Error {
     message: string,
     public readonly details?: Record<string, unknown>
   ) {
-    super(message);
-    this.name = 'HistoryError';
+    super(message)
+    this.name = 'HistoryError'
   }
 }
 
@@ -58,12 +58,12 @@ export class HistoryError extends Error {
  * History Service class for managing export history.
  */
 export class HistoryService {
-  private historyPath: string;
-  private cachedHistory: ExportHistory | null = null;
+  private historyPath: string
+  private cachedHistory: ExportHistory | null = null
 
   constructor() {
-    const userDataPath = this.getUserDataPath();
-    this.historyPath = path.join(userDataPath, HISTORY_FILE_NAME);
+    const userDataPath = this.getUserDataPath()
+    this.historyPath = path.join(userDataPath, HISTORY_FILE_NAME)
   }
 
   /**
@@ -72,16 +72,16 @@ export class HistoryService {
    */
   private getUserDataPath(): string {
     try {
-      return app.getPath('userData');
+      return app.getPath('userData')
     } catch {
-      const homeDir = os.homedir();
+      const homeDir = os.homedir()
       switch (process.platform) {
         case 'darwin':
-          return path.join(homeDir, 'Library', 'Application Support', 'resume-creator');
+          return path.join(homeDir, 'Library', 'Application Support', 'resume-creator')
         case 'win32':
-          return path.join(homeDir, 'AppData', 'Roaming', 'resume-creator');
+          return path.join(homeDir, 'AppData', 'Roaming', 'resume-creator')
         default:
-          return path.join(homeDir, '.config', 'resume-creator');
+          return path.join(homeDir, '.config', 'resume-creator')
       }
     }
   }
@@ -90,7 +90,7 @@ export class HistoryService {
    * Gets the history file path.
    */
   getHistoryFilePath(): string {
-    return this.historyPath;
+    return this.historyPath
   }
 
   /**
@@ -99,47 +99,47 @@ export class HistoryService {
    */
   async loadHistory(): Promise<ExportHistory> {
     if (this.cachedHistory) {
-      return { ...this.cachedHistory, entries: [...this.cachedHistory.entries] };
+      return { ...this.cachedHistory, entries: [...this.cachedHistory.entries] }
     }
 
     try {
       if (!fs.existsSync(this.historyPath)) {
-        const defaultHistory = { ...DEFAULT_EXPORT_HISTORY };
-        this.cachedHistory = defaultHistory;
-        return { ...defaultHistory, entries: [] };
+        const defaultHistory = { ...DEFAULT_EXPORT_HISTORY }
+        this.cachedHistory = defaultHistory
+        return { ...defaultHistory, entries: [] }
       }
 
-      const content = fs.readFileSync(this.historyPath, 'utf-8');
-      const rawHistory = JSON.parse(content);
+      const content = fs.readFileSync(this.historyPath, 'utf-8')
+      const rawHistory = JSON.parse(content)
 
-      const migratedHistory = this.migrateHistory(rawHistory);
-      const validatedHistory = ExportHistorySchema.parse(migratedHistory);
+      const migratedHistory = this.migrateHistory(rawHistory)
+      const validatedHistory = ExportHistorySchema.parse(migratedHistory)
 
-      this.cachedHistory = validatedHistory;
-      return { ...validatedHistory, entries: [...validatedHistory.entries] };
+      this.cachedHistory = validatedHistory
+      return { ...validatedHistory, entries: [...validatedHistory.entries] }
     } catch (error) {
       if (error instanceof SyntaxError) {
         throw new HistoryError(
           HistoryErrorCode.FILE_READ_ERROR,
           'History file contains invalid JSON',
           { originalError: error.message }
-        );
+        )
       }
       if (error instanceof ZodError) {
         throw new HistoryError(
           HistoryErrorCode.VALIDATION_ERROR,
           `Invalid history data: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')}`,
           { validationErrors: error.errors }
-        );
+        )
       }
       if (error instanceof HistoryError) {
-        throw error;
+        throw error
       }
       throw new HistoryError(
         HistoryErrorCode.FILE_READ_ERROR,
         `Failed to load history: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
-      );
+      )
     }
   }
 
@@ -147,9 +147,9 @@ export class HistoryService {
    * Retrieves recent history entries (up to MAX_HISTORY_ENTRIES).
    */
   async getRecentEntries(limit?: number): Promise<HistoryEntry[]> {
-    const history = await this.loadHistory();
-    const effectiveLimit = limit ?? MAX_HISTORY_ENTRIES;
-    return history.entries.slice(0, effectiveLimit);
+    const history = await this.loadHistory()
+    const effectiveLimit = limit ?? MAX_HISTORY_ENTRIES
+    return history.entries.slice(0, effectiveLimit)
   }
 
   /**
@@ -160,35 +160,35 @@ export class HistoryService {
   async addEntry(entry: HistoryEntry): Promise<void> {
     try {
       // Validate the entry
-      HistoryEntrySchema.parse(entry);
+      HistoryEntrySchema.parse(entry)
 
-      const history = await this.loadHistory();
+      const history = await this.loadHistory()
 
       // Add new entry at the beginning
-      history.entries.unshift(entry);
+      history.entries.unshift(entry)
 
       // Trim to max entries
       if (history.entries.length > MAX_HISTORY_ENTRIES) {
-        history.entries = history.entries.slice(0, MAX_HISTORY_ENTRIES);
+        history.entries = history.entries.slice(0, MAX_HISTORY_ENTRIES)
       }
 
-      await this.saveHistory(history);
+      await this.saveHistory(history)
     } catch (error) {
       if (error instanceof ZodError) {
         throw new HistoryError(
           HistoryErrorCode.VALIDATION_ERROR,
           `Invalid history entry: ${error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')}`,
           { validationErrors: error.errors }
-        );
+        )
       }
       if (error instanceof HistoryError) {
-        throw error;
+        throw error
       }
       throw new HistoryError(
         HistoryErrorCode.FILE_WRITE_ERROR,
         `Failed to add history entry: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
-      );
+      )
     }
   }
 
@@ -197,27 +197,27 @@ export class HistoryService {
    */
   async deleteEntry(entryId: string): Promise<void> {
     try {
-      const history = await this.loadHistory();
+      const history = await this.loadHistory()
 
-      const index = history.entries.findIndex(e => e.id === entryId);
+      const index = history.entries.findIndex(e => e.id === entryId)
       if (index === -1) {
         throw new HistoryError(
           HistoryErrorCode.ENTRY_NOT_FOUND,
           `History entry with id "${entryId}" not found`
-        );
+        )
       }
 
-      history.entries.splice(index, 1);
-      await this.saveHistory(history);
+      history.entries.splice(index, 1)
+      await this.saveHistory(history)
     } catch (error) {
       if (error instanceof HistoryError) {
-        throw error;
+        throw error
       }
       throw new HistoryError(
         HistoryErrorCode.FILE_WRITE_ERROR,
         `Failed to delete history entry: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
-      );
+      )
     }
   }
 
@@ -229,17 +229,17 @@ export class HistoryService {
       const emptyHistory: ExportHistory = {
         ...DEFAULT_EXPORT_HISTORY,
         entries: [],
-      };
-      await this.saveHistory(emptyHistory);
+      }
+      await this.saveHistory(emptyHistory)
     } catch (error) {
       if (error instanceof HistoryError) {
-        throw error;
+        throw error
       }
       throw new HistoryError(
         HistoryErrorCode.FILE_WRITE_ERROR,
         `Failed to clear history: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
-      );
+      )
     }
   }
 
@@ -247,7 +247,7 @@ export class HistoryService {
    * Clears the history cache, forcing a reload on next access.
    */
   clearCache(): void {
-    this.cachedHistory = null;
+    this.cachedHistory = null
   }
 
   /**
@@ -256,26 +256,22 @@ export class HistoryService {
   private async saveHistory(history: ExportHistory): Promise<void> {
     try {
       // Ensure the directory exists
-      const historyDir = path.dirname(this.historyPath);
+      const historyDir = path.dirname(this.historyPath)
       if (!fs.existsSync(historyDir)) {
-        fs.mkdirSync(historyDir, { recursive: true });
+        fs.mkdirSync(historyDir, { recursive: true })
       }
 
       // Write history to file
-      fs.writeFileSync(
-        this.historyPath,
-        JSON.stringify(history, null, 2),
-        'utf-8'
-      );
+      fs.writeFileSync(this.historyPath, JSON.stringify(history, null, 2), 'utf-8')
 
       // Update cache
-      this.cachedHistory = history;
+      this.cachedHistory = history
     } catch (error) {
       throw new HistoryError(
         HistoryErrorCode.FILE_WRITE_ERROR,
         `Failed to save history: ${error instanceof Error ? error.message : 'Unknown error'}`,
         { originalError: String(error) }
-      );
+      )
     }
   }
 
@@ -284,21 +280,21 @@ export class HistoryService {
    */
   private migrateHistory(rawHistory: unknown): unknown {
     if (typeof rawHistory !== 'object' || rawHistory === null) {
-      return rawHistory;
+      return rawHistory
     }
 
-    const history = rawHistory as Record<string, unknown>;
-    const version = typeof history.version === 'number' ? history.version : 0;
+    const history = rawHistory as Record<string, unknown>
+    const version = typeof history.version === 'number' ? history.version : 0
 
     if (version >= CURRENT_SCHEMA_VERSION) {
-      return history;
+      return history
     }
 
     // Future migrations would go here
-    history.version = CURRENT_SCHEMA_VERSION;
-    return history;
+    history.version = CURRENT_SCHEMA_VERSION
+    return history
   }
 }
 
 // Export a singleton instance
-export const historyService = new HistoryService();
+export const historyService = new HistoryService()

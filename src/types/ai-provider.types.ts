@@ -8,16 +8,16 @@
 /**
  * Supported AI provider identifiers.
  */
-export type AIProviderType = 'claude' | 'codex' | 'gemini' | 'openai';
+export type AIProviderType = 'claude' | 'codex' | 'gemini' | 'openai'
 
 /**
  * Common configuration for all AI providers.
  */
 export interface AIProviderConfig {
   /** Timeout in milliseconds. Default: 120000 (2 minutes) */
-  timeout: number;
+  timeout: number
   /** Maximum retry attempts on transient failures. Default: 0 */
-  maxRetries: number;
+  maxRetries: number
 }
 
 /**
@@ -25,7 +25,7 @@ export interface AIProviderConfig {
  */
 export interface CLIProviderConfig extends AIProviderConfig {
   /** Path to the CLI executable */
-  cliPath: string;
+  cliPath: string
 }
 
 /**
@@ -33,11 +33,11 @@ export interface CLIProviderConfig extends AIProviderConfig {
  */
 export interface APIProviderConfig extends AIProviderConfig {
   /** API key for authentication */
-  apiKey: string;
+  apiKey: string
   /** API base URL (optional, for custom endpoints) */
-  baseUrl?: string;
+  baseUrl?: string
   /** Model identifier */
-  model?: string;
+  model?: string
 }
 
 /**
@@ -45,37 +45,37 @@ export interface APIProviderConfig extends AIProviderConfig {
  */
 export interface AIProviderRequest {
   /** The prompt to send */
-  prompt: string;
+  prompt: string
   /** Optional system prompt for context */
-  systemPrompt?: string;
+  systemPrompt?: string
   /** Expected output format */
-  outputFormat?: 'json' | 'text';
+  outputFormat?: 'json' | 'text'
 }
 
 /**
  * Successful response from an AI provider.
  */
 export interface AIProviderSuccessResponse {
-  success: true;
+  success: true
   /** The raw text response */
-  rawResponse: string;
+  rawResponse: string
   /** Parsed JSON data if outputFormat was 'json' */
-  data?: unknown;
+  data?: unknown
 }
 
 /**
  * Error response from an AI provider.
  */
 export interface AIProviderErrorResponse {
-  success: false;
+  success: false
   /** The error that occurred */
-  error: AIProviderError;
+  error: AIProviderError
 }
 
 /**
  * Union type for all AI provider responses.
  */
-export type AIProviderResponse = AIProviderSuccessResponse | AIProviderErrorResponse;
+export type AIProviderResponse = AIProviderSuccessResponse | AIProviderErrorResponse
 
 /**
  * Error codes for AI provider failures.
@@ -103,9 +103,9 @@ export enum AIProviderErrorCode {
  * Base error class for AI provider errors.
  */
 export class AIProviderError extends Error {
-  readonly code: AIProviderErrorCode;
-  readonly provider: AIProviderType;
-  readonly details: Record<string, unknown> | undefined;
+  readonly code: AIProviderErrorCode
+  readonly provider: AIProviderType
+  readonly details: Record<string, unknown> | undefined
 
   constructor(
     code: AIProviderErrorCode,
@@ -113,11 +113,11 @@ export class AIProviderError extends Error {
     message: string,
     details?: Record<string, unknown>
   ) {
-    super(message);
-    this.name = 'AIProviderError';
-    this.code = code;
-    this.provider = provider;
-    this.details = details;
+    super(message)
+    this.name = 'AIProviderError'
+    this.code = code
+    this.provider = provider
+    this.details = details
   }
 }
 
@@ -125,10 +125,10 @@ export class AIProviderError extends Error {
  * Provider availability status.
  */
 export interface AIProviderStatus {
-  provider: AIProviderType;
-  available: boolean;
-  version?: string;
-  error?: string;
+  provider: AIProviderType
+  available: boolean
+  version?: string
+  error?: string
 }
 
 /**
@@ -151,4 +151,4 @@ export const DEFAULT_PROVIDER_CONFIGS: Record<AIProviderType, AIProviderConfig> 
     timeout: 60000,
     maxRetries: 1,
   },
-};
+}

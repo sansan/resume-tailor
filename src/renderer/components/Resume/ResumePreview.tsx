@@ -1,66 +1,66 @@
-import React, { useState, useCallback } from 'react';
-import type { Resume } from '@schemas/resume.schema';
-import { getContactByType } from '@schemas/resume.schema';
-import { saveResumePDF } from '../../services/pdf';
+import React, { useState, useCallback } from 'react'
+import type { Resume } from '@schemas/resume.schema'
+import { getContactByType } from '@schemas/resume.schema'
+import { saveResumePDF } from '../../services/pdf'
 
 interface ResumePreviewProps {
-  resume: Resume;
+  resume: Resume
 }
 
-type ExportStatus = 'idle' | 'exporting' | 'success' | 'error';
+type ExportStatus = 'idle' | 'exporting' | 'success' | 'error'
 
 function ResumePreview({ resume }: ResumePreviewProps): React.JSX.Element {
-  const { personalInfo, workExperience, education, skills, projects, certifications } = resume;
-  const [exportStatus, setExportStatus] = useState<ExportStatus>('idle');
-  const [exportError, setExportError] = useState<string | null>(null);
+  const { personalInfo, workExperience, education, skills, projects, certifications } = resume
+  const [exportStatus, setExportStatus] = useState<ExportStatus>('idle')
+  const [exportError, setExportError] = useState<string | null>(null)
 
   // Group skills by category
   const skillsByCategory = skills.reduce<Record<string, typeof skills>>((acc, skill) => {
-    const category = skill.category || 'Other';
+    const category = skill.category || 'Other'
     if (!acc[category]) {
-      acc[category] = [];
+      acc[category] = []
     }
-    acc[category].push(skill);
-    return acc;
-  }, {});
+    acc[category].push(skill)
+    return acc
+  }, {})
 
   const handleExportPDF = useCallback(async () => {
-    setExportStatus('exporting');
-    setExportError(null);
+    setExportStatus('exporting')
+    setExportError(null)
 
     try {
-      const savedPath = await saveResumePDF(resume);
+      const savedPath = await saveResumePDF(resume)
       if (savedPath) {
-        setExportStatus('success');
+        setExportStatus('success')
         // Reset status after a short delay
-        setTimeout(() => setExportStatus('idle'), 3000);
+        setTimeout(() => setExportStatus('idle'), 3000)
       } else {
         // User cancelled the save dialog
-        setExportStatus('idle');
+        setExportStatus('idle')
       }
     } catch (error) {
-      setExportStatus('error');
-      setExportError(error instanceof Error ? error.message : 'Failed to export PDF');
+      setExportStatus('error')
+      setExportError(error instanceof Error ? error.message : 'Failed to export PDF')
       // Reset status after a longer delay for error messages
       setTimeout(() => {
-        setExportStatus('idle');
-        setExportError(null);
-      }, 5000);
+        setExportStatus('idle')
+        setExportError(null)
+      }, 5000)
     }
-  }, [resume]);
+  }, [resume])
 
   const getExportButtonText = (): string => {
     switch (exportStatus) {
       case 'exporting':
-        return 'Exporting...';
+        return 'Exporting...'
       case 'success':
-        return 'Exported!';
+        return 'Exported!'
       case 'error':
-        return 'Export Failed';
+        return 'Export Failed'
       default:
-        return 'Export PDF';
+        return 'Export PDF'
     }
-  };
+  }
 
   return (
     <div className="resume-preview">
@@ -74,9 +74,7 @@ function ResumePreview({ resume }: ResumePreviewProps): React.JSX.Element {
         >
           {getExportButtonText()}
         </button>
-        {exportError && (
-          <span className="resume-preview__export-error">{exportError}</span>
-        )}
+        {exportError && <span className="resume-preview__export-error">{exportError}</span>}
       </div>
 
       {/* Personal Info Header */}
@@ -100,14 +98,22 @@ function ResumePreview({ resume }: ResumePreviewProps): React.JSX.Element {
           )}
           {getContactByType(personalInfo.contacts, 'linkedin') && (
             <span className="resume-preview__contact-item">
-              <a href={getContactByType(personalInfo.contacts, 'linkedin')} target="_blank" rel="noopener noreferrer">
+              <a
+                href={getContactByType(personalInfo.contacts, 'linkedin')}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 LinkedIn
               </a>
             </span>
           )}
           {getContactByType(personalInfo.contacts, 'website') && (
             <span className="resume-preview__contact-item">
-              <a href={getContactByType(personalInfo.contacts, 'website')} target="_blank" rel="noopener noreferrer">
+              <a
+                href={getContactByType(personalInfo.contacts, 'website')}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Website
               </a>
             </span>
@@ -281,7 +287,7 @@ function ResumePreview({ resume }: ResumePreviewProps): React.JSX.Element {
         </section>
       )}
     </div>
-  );
+  )
 }
 
-export default ResumePreview;
+export default ResumePreview

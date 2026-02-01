@@ -5,18 +5,11 @@
  * serif typography, refined spacing, and understated styling.
  */
 
-import React, { useMemo } from 'react';
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Link,
-} from '@react-pdf/renderer';
-import { getContactByType } from '@schemas/resume.schema';
-import type { TemplateProps } from './template-factory';
-import type { PDFTheme } from '@app-types/pdf-theme.types';
+import React, { useMemo } from 'react'
+import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer'
+import { getContactByType } from '@schemas/resume.schema'
+import type { TemplateProps } from './template-factory'
+import type { PDFTheme } from '@app-types/pdf-theme.types'
 
 // =============================================================================
 // STYLE FACTORY
@@ -246,14 +239,14 @@ function createStyles(theme: PDFTheme) {
       fontFamily: theme.fonts.primary,
       color: theme.colors.muted,
     },
-  });
+  })
 }
 
 // =============================================================================
 // HELPERS
 // =============================================================================
 function formatDateRange(start: string, end?: string | null): string {
-  return `${start} – ${end || 'Present'}`;
+  return `${start} – ${end || 'Present'}`
 }
 
 // =============================================================================
@@ -264,15 +257,15 @@ export function ExecutiveTemplate({
   theme,
   targetJobTitle,
 }: TemplateProps): React.JSX.Element {
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const { personalInfo, education, skills, certifications, workExperience } = resume;
+  const styles = useMemo(() => createStyles(theme), [theme])
+  const { personalInfo, education, skills, certifications, workExperience } = resume
 
-  const displayTitle = targetJobTitle || workExperience[0]?.title || '';
-  const about = personalInfo.summary?.trim() || '';
+  const displayTitle = targetJobTitle || workExperience[0]?.title || ''
+  const about = personalInfo.summary?.trim() || ''
 
-  const email = getContactByType(personalInfo.contacts, 'email');
-  const phone = getContactByType(personalInfo.contacts, 'phone');
-  const linkedin = getContactByType(personalInfo.contacts, 'linkedin');
+  const email = getContactByType(personalInfo.contacts, 'email')
+  const phone = getContactByType(personalInfo.contacts, 'phone')
+  const linkedin = getContactByType(personalInfo.contacts, 'linkedin')
 
   return (
     <Document>
@@ -327,9 +320,7 @@ export function ExecutiveTemplate({
               <View key={i} style={styles.item}>
                 <View style={styles.itemRow}>
                   <Text style={styles.itemTitle}>{job.title}</Text>
-                  <Text style={styles.itemDate}>
-                    {formatDateRange(job.startDate, job.endDate)}
-                  </Text>
+                  <Text style={styles.itemDate}>{formatDateRange(job.startDate, job.endDate)}</Text>
                 </View>
                 <Text style={styles.itemCompany}>
                   {job.company}
@@ -415,5 +406,5 @@ export function ExecutiveTemplate({
         </View>
       </Page>
     </Document>
-  );
+  )
 }

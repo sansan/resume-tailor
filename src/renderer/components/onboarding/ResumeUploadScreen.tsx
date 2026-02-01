@@ -107,16 +107,11 @@ export function ResumeUploadScreen({
    * In a real implementation, this would be driven by actual progress events.
    */
   const simulateProcessingPhases = useCallback(async () => {
-    const phases: ProcessingPhase[] = [
-      'reading',
-      'extracting',
-      'organizing',
-      'finalizing',
-    ]
+    const phases: ProcessingPhase[] = ['reading', 'extracting', 'organizing', 'finalizing']
 
     for (const phase of phases) {
       setProcessingPhase(phase)
-      await new Promise((resolve) => setTimeout(resolve, MIN_PHASE_DURATION))
+      await new Promise(resolve => setTimeout(resolve, MIN_PHASE_DURATION))
     }
   }, [setProcessingPhase])
 
@@ -146,10 +141,7 @@ export function ResumeUploadScreen({
         }
 
         // Send to main process for extraction and AI processing
-        const result = await window.electronAPI.importResumeFromText(
-          content,
-          file.name
-        )
+        const result = await window.electronAPI.importResumeFromText(content, file.name)
 
         // Wait for phase simulation to complete
         await phaseSimulation
@@ -162,8 +154,7 @@ export function ResumeUploadScreen({
           setError(message)
         }
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Unknown error occurred'
+        const message = err instanceof Error ? err.message : 'Unknown error occurred'
         setProcessingPhase('idle')
         setError(message)
       }
@@ -223,9 +214,7 @@ export function ResumeUploadScreen({
       const file = e.target.files?.[0]
       if (file) {
         if (!isValidFileType(file)) {
-          setError(
-            'Unsupported file type. Please use PDF, DOCX, or TXT files.'
-          )
+          setError('Unsupported file type. Please use PDF, DOCX, or TXT files.')
           return
         }
         await processFile(file)
@@ -267,8 +256,7 @@ export function ResumeUploadScreen({
     setError(null)
   }, [])
 
-  const isProcessing =
-    processingPhase !== 'idle' && processingPhase !== 'complete'
+  const isProcessing = processingPhase !== 'idle' && processingPhase !== 'complete'
   const showDropZone = processingPhase === 'idle' && !error
   const showProgress = processingPhase !== 'idle'
   const showError = error !== null
@@ -284,7 +272,7 @@ export function ResumeUploadScreen({
               ? 'Processing your resume'
               : 'Upload your resume'}
         </h1>
-        <p className="mt-2 text-lg text-muted-foreground">
+        <p className="text-muted-foreground mt-2 text-lg">
           {processingPhase === 'complete'
             ? 'Your information has been extracted successfully'
             : processingPhase !== 'idle'
@@ -299,7 +287,7 @@ export function ResumeUploadScreen({
         {showDropZone && (
           <div
             className={cn(
-              'relative flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'focus:ring-ring relative flex h-64 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none',
               isDragOver
                 ? 'border-primary bg-primary/5'
                 : 'border-muted-foreground/25 hover:border-muted-foreground/50'
@@ -324,23 +312,15 @@ export function ResumeUploadScreen({
 
             {isDragOver ? (
               <>
-                <FileText className="mb-4 size-12 text-primary" />
-                <p className="text-lg font-medium text-primary">
-                  Drop to upload
-                </p>
+                <FileText className="text-primary mb-4 size-12" />
+                <p className="text-primary text-lg font-medium">Drop to upload</p>
               </>
             ) : (
               <>
-                <Upload className="mb-4 size-12 text-muted-foreground" />
-                <p className="mb-2 text-lg font-medium">
-                  Drop your resume here
-                </p>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  or click to browse
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  PDF, Word (.docx), or plain text
-                </p>
+                <Upload className="text-muted-foreground mb-4 size-12" />
+                <p className="mb-2 text-lg font-medium">Drop your resume here</p>
+                <p className="text-muted-foreground mb-4 text-sm">or click to browse</p>
+                <p className="text-muted-foreground text-xs">PDF, Word (.docx), or plain text</p>
               </>
             )}
           </div>
@@ -356,15 +336,11 @@ export function ResumeUploadScreen({
         {/* Error state */}
         {showError && (
           <div className="flex w-full flex-col items-center py-8">
-            <div className="mb-6 flex size-16 items-center justify-center rounded-full bg-destructive/10">
-              <XCircle className="size-8 text-destructive" />
+            <div className="bg-destructive/10 mb-6 flex size-16 items-center justify-center rounded-full">
+              <XCircle className="text-destructive size-8" />
             </div>
-            <h2 className="mb-2 text-lg font-medium text-destructive">
-              Import failed
-            </h2>
-            <p className="mb-6 max-w-xs text-center text-sm text-muted-foreground">
-              {error}
-            </p>
+            <h2 className="text-destructive mb-2 text-lg font-medium">Import failed</h2>
+            <p className="text-muted-foreground mb-6 max-w-xs text-center text-sm">{error}</p>
             <Button onClick={handleDismissError} variant="outline">
               Try again
             </Button>
@@ -376,14 +352,9 @@ export function ResumeUploadScreen({
       <div className="h-24" />
 
       {/* Footer Actions - fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed right-0 bottom-0 left-0 z-10 border-t backdrop-blur">
         <div className="mx-auto flex max-w-lg items-center justify-between px-6 py-4">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            disabled={isProcessing}
-            className="gap-1"
-          >
+          <Button variant="ghost" onClick={onBack} disabled={isProcessing} className="gap-1">
             <ChevronLeft className="size-4" />
             Back
           </Button>

@@ -1,30 +1,23 @@
-import React, { useMemo } from 'react';
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Link,
-} from '@react-pdf/renderer';
-import type { Resume, Skill, WorkExperience, Project } from '@schemas/resume.schema';
-import { getContactByType } from '@schemas/resume.schema';
-import { defaultPDFTheme, type PDFTheme } from './theme';
+import React, { useMemo } from 'react'
+import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer'
+import type { Resume, Skill, WorkExperience, Project } from '@schemas/resume.schema'
+import { getContactByType } from '@schemas/resume.schema'
+import { defaultPDFTheme, type PDFTheme } from './theme'
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
 interface RelevantItem {
-  type: 'job' | 'project';
-  data: WorkExperience | Project;
+  type: 'job' | 'project'
+  data: WorkExperience | Project
 }
 
 // =============================================================================
 // LAYOUT CONSTANTS (points)
 // =============================================================================
-const A4_HEIGHT = 842; // A4 page height in points
-const HEADER_MARGIN_BOTTOM = 18;
+const A4_HEIGHT = 842 // A4 page height in points
+const HEADER_MARGIN_BOTTOM = 18
 
 const LAYOUT = {
   padTop: 40,
@@ -43,7 +36,7 @@ const LAYOUT = {
   bulletGap: 4,
   // Calculated: A4 height minus page padding, header height, and header margin
   rowHeight: A4_HEIGHT - 40 - 40 - 70 - HEADER_MARGIN_BOTTOM, // 674
-};
+}
 
 // =============================================================================
 // STYLE FACTORY
@@ -310,7 +303,7 @@ function createStyles(theme: PDFTheme) {
       color: theme.colors.body,
       lineHeight: 1.45,
     },
-  });
+  })
 }
 
 // =============================================================================
@@ -318,70 +311,70 @@ function createStyles(theme: PDFTheme) {
 // =============================================================================
 function groupSkillsByCategory(skills: Skill[]): Record<string, Skill[]> {
   return skills.reduce<Record<string, Skill[]>>((acc, skill) => {
-    const category = skill.category || 'Other';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(skill);
-    return acc;
-  }, {});
+    const category = skill.category || 'Other'
+    if (!acc[category]) acc[category] = []
+    acc[category].push(skill)
+    return acc
+  }, {})
 }
 
 function formatDateRange(start: string, end?: string | null): string {
-  return `${start} – ${end || 'Present'}`;
+  return `${start} – ${end || 'Present'}`
 }
 
 // =============================================================================
 // PAGINATION HELPERS
 // =============================================================================
 function estimateExperienceUnits(job: WorkExperience): number {
-  let units = 4;
-  units += (job.highlights?.length || 0) * 2;
+  let units = 4
+  units += (job.highlights?.length || 0) * 2
   for (const h of job.highlights || []) {
-    units += Math.max(0, Math.min(3, Math.ceil(h.length / 90) - 1));
+    units += Math.max(0, Math.min(3, Math.ceil(h.length / 90) - 1))
   }
-  return units;
+  return units
 }
 
 function estimateProjectUnits(proj: Project): number {
-  let units = 4;
-  if (proj.technologies?.length) units += 1;
-  if (proj.description) units += Math.max(1, Math.min(4, Math.ceil(proj.description.length / 95)));
-  units += (proj.highlights?.length || 0) * 2;
+  let units = 4
+  if (proj.technologies?.length) units += 1
+  if (proj.description) units += Math.max(1, Math.min(4, Math.ceil(proj.description.length / 95)))
+  units += (proj.highlights?.length || 0) * 2
   for (const h of proj.highlights || []) {
-    units += Math.max(0, Math.min(3, Math.ceil(h.length / 95) - 1));
+    units += Math.max(0, Math.min(3, Math.ceil(h.length / 95) - 1))
   }
-  return units;
+  return units
 }
 
 function paginateItems<T>(items: T[], estimateFn: (item: T) => number, maxUnits: number): T[][] {
-  const pages: T[][] = [];
-  let current: T[] = [];
-  let used = 0;
+  const pages: T[][] = []
+  let current: T[] = []
+  let used = 0
 
   for (const item of items) {
-    const cost = estimateFn(item);
+    const cost = estimateFn(item)
     if (current.length > 0 && used + cost > maxUnits) {
-      pages.push(current);
-      current = [];
-      used = 0;
+      pages.push(current)
+      current = []
+      used = 0
     }
-    current.push(item);
-    used += cost;
+    current.push(item)
+    used += cost
   }
-  if (current.length) pages.push(current);
-  return pages;
+  if (current.length) pages.push(current)
+  return pages
 }
 
 // =============================================================================
 // COMPONENT PROPS
 // =============================================================================
 export interface ResumePDFDocumentProps {
-  resume: Resume;
+  resume: Resume
   /** Job title to display in header (e.g., position applying for) */
-  targetJobTitle?: string;
+  targetJobTitle?: string
   /** Top 3 most relevant items (jobs/projects) - AI-scored */
-  relevantItems?: RelevantItem[];
+  relevantItems?: RelevantItem[]
   /** Optional theme override */
-  theme?: PDFTheme | undefined;
+  theme?: PDFTheme | undefined
 }
 
 // =============================================================================
@@ -393,70 +386,71 @@ function ResumePDFDocument({
   relevantItems,
   theme,
 }: ResumePDFDocumentProps): React.JSX.Element {
-  const styles = useMemo(() => createStyles(theme ?? defaultPDFTheme), [theme]);
-  const { personalInfo, education, skills, certifications, workExperience, projects } = resume;
+  const styles = useMemo(() => createStyles(theme ?? defaultPDFTheme), [theme])
+  const { personalInfo, education, skills, certifications, workExperience, projects } = resume
 
   // Determine job title to show
-  const displayTitle = targetJobTitle || workExperience[0]?.title || '';
+  const displayTitle = targetJobTitle || workExperience[0]?.title || ''
 
   // Group skills by category
-  const skillsByCategory = groupSkillsByCategory(skills);
+  const skillsByCategory = groupSkillsByCategory(skills)
 
   // About text
-  const about = personalInfo.summary?.trim() || '';
+  const about = personalInfo.summary?.trim() || ''
 
   // Determine relevant vs other items
-  const relevantJobs: WorkExperience[] = [];
-  const relevantProjects: Project[] = [];
-  const otherJobs: WorkExperience[] = [];
-  const otherProjects: Project[] = [];
+  const relevantJobs: WorkExperience[] = []
+  const relevantProjects: Project[] = []
+  const otherJobs: WorkExperience[] = []
+  const otherProjects: Project[] = []
 
   if (relevantItems && relevantItems.length > 0) {
     // Use AI-scored relevant items (top 3)
     for (const item of relevantItems.slice(0, 3)) {
       if (item.type === 'job') {
-        relevantJobs.push(item.data as WorkExperience);
+        relevantJobs.push(item.data as WorkExperience)
       } else {
-        relevantProjects.push(item.data as Project);
+        relevantProjects.push(item.data as Project)
       }
     }
 
     // Everything else goes to "Other Experience"
-    const relevantJobIds = new Set(relevantJobs.map(j => `${j.company}-${j.title}-${j.startDate}`));
-    const relevantProjIds = new Set(relevantProjects.map(p => p.name));
+    const relevantJobIds = new Set(relevantJobs.map(j => `${j.company}-${j.title}-${j.startDate}`))
+    const relevantProjIds = new Set(relevantProjects.map(p => p.name))
 
     for (const job of workExperience) {
       if (!relevantJobIds.has(`${job.company}-${job.title}-${job.startDate}`)) {
-        otherJobs.push(job);
+        otherJobs.push(job)
       }
     }
     for (const proj of projects) {
       if (!relevantProjIds.has(proj.name)) {
-        otherProjects.push(proj);
+        otherProjects.push(proj)
       }
     }
   } else {
     // No AI scoring - use first 3 jobs as relevant
-    relevantJobs.push(...workExperience.slice(0, 3));
-    otherJobs.push(...workExperience.slice(3));
-    otherProjects.push(...projects);
+    relevantJobs.push(...workExperience.slice(0, 3))
+    otherJobs.push(...workExperience.slice(3))
+    otherProjects.push(...projects)
   }
 
   // Combine other items and limit to 5+ based on space
   const otherItems: RelevantItem[] = [
     ...otherJobs.map(j => ({ type: 'job' as const, data: j })),
     ...otherProjects.map(p => ({ type: 'project' as const, data: p })),
-  ].slice(0, 8); // Allow up to 8
+  ].slice(0, 8) // Allow up to 8
 
   // Paginate other items for page 2+
-  const PAGE2_MAX_UNITS = 62;
+  const PAGE2_MAX_UNITS = 62
   const otherItemPages = paginateItems(
     otherItems,
-    (item) => item.type === 'job'
-      ? estimateExperienceUnits(item.data as WorkExperience)
-      : estimateProjectUnits(item.data as Project),
+    item =>
+      item.type === 'job'
+        ? estimateExperienceUnits(item.data as WorkExperience)
+        : estimateProjectUnits(item.data as Project),
     PAGE2_MAX_UNITS
-  );
+  )
 
   return (
     <Document>
@@ -484,22 +478,39 @@ function ResumePDFDocument({
                 <Text style={styles.contactBarText}>Contact & Info</Text>
               </View>
               {getContactByType(personalInfo.contacts, 'phone') && (
-                <Text style={styles.sidebarText}>{getContactByType(personalInfo.contacts, 'phone')}</Text>
+                <Text style={styles.sidebarText}>
+                  {getContactByType(personalInfo.contacts, 'phone')}
+                </Text>
               )}
               {getContactByType(personalInfo.contacts, 'email') && (
-                <Link style={styles.sidebarLink} src={`mailto:${getContactByType(personalInfo.contacts, 'email')}`}>
+                <Link
+                  style={styles.sidebarLink}
+                  src={`mailto:${getContactByType(personalInfo.contacts, 'email')}`}
+                >
                   {getContactByType(personalInfo.contacts, 'email')}
                 </Link>
               )}
-              {personalInfo.location && <Text style={styles.sidebarText}>{personalInfo.location}</Text>}
+              {personalInfo.location && (
+                <Text style={styles.sidebarText}>{personalInfo.location}</Text>
+              )}
               {getContactByType(personalInfo.contacts, 'linkedin') && (
-                <Link style={styles.sidebarLink} src={getContactByType(personalInfo.contacts, 'linkedin')!}>
-                  {getContactByType(personalInfo.contacts, 'linkedin')!.replace('https://', '').replace('www.', '')}
+                <Link
+                  style={styles.sidebarLink}
+                  src={getContactByType(personalInfo.contacts, 'linkedin')!}
+                >
+                  {getContactByType(personalInfo.contacts, 'linkedin')!
+                    .replace('https://', '')
+                    .replace('www.', '')}
                 </Link>
               )}
               {getContactByType(personalInfo.contacts, 'website') && (
-                <Link style={styles.sidebarLink} src={getContactByType(personalInfo.contacts, 'website')!}>
-                  {getContactByType(personalInfo.contacts, 'website')!.replace('https://', '').replace('www.', '')}
+                <Link
+                  style={styles.sidebarLink}
+                  src={getContactByType(personalInfo.contacts, 'website')!}
+                >
+                  {getContactByType(personalInfo.contacts, 'website')!
+                    .replace('https://', '')
+                    .replace('www.', '')}
                 </Link>
               )}
             </View>
@@ -512,12 +523,14 @@ function ResumePDFDocument({
                   <View key={i} style={styles.eduItem}>
                     <View style={styles.eduTitleWrap}>
                       <Text style={styles.eduTitle}>
-                        {edu.degree}{edu.field ? ` in ${edu.field}` : ''}
+                        {edu.degree}
+                        {edu.field ? ` in ${edu.field}` : ''}
                       </Text>
                     </View>
                     <View>
                       <Text style={styles.eduMeta}>
-                        {edu.institution}{edu.graduationDate ? ` / ${edu.graduationDate}` : ''}
+                        {edu.institution}
+                        {edu.graduationDate ? ` / ${edu.graduationDate}` : ''}
                       </Text>
                     </View>
                   </View>
@@ -554,7 +567,8 @@ function ResumePDFDocument({
                     </View>
                     <View>
                       <Text style={styles.certMeta}>
-                        {cert.issuer}{cert.date ? ` / ${cert.date}` : ''}
+                        {cert.issuer}
+                        {cert.date ? ` / ${cert.date}` : ''}
                       </Text>
                     </View>
                   </View>
@@ -582,7 +596,9 @@ function ResumePDFDocument({
                   <View key={`job-${i}`} style={styles.item}>
                     <Text style={styles.itemTitle}>{job.title}</Text>
                     <Text style={styles.itemMeta}>
-                      {job.company}{job.location ? ` / ${job.location}` : ''} / {formatDateRange(job.startDate, job.endDate)}
+                      {job.company}
+                      {job.location ? ` / ${job.location}` : ''} /{' '}
+                      {formatDateRange(job.startDate, job.endDate)}
                     </Text>
                     {job.highlights && job.highlights.length > 0 && (
                       <View>
@@ -603,9 +619,7 @@ function ResumePDFDocument({
                     {proj.technologies && proj.technologies.length > 0 && (
                       <Text style={styles.itemMeta}>{proj.technologies.join(' • ')}</Text>
                     )}
-                    {proj.description && (
-                      <Text style={styles.itemDesc}>{proj.description}</Text>
-                    )}
+                    {proj.description && <Text style={styles.itemDesc}>{proj.description}</Text>}
                     {proj.highlights && proj.highlights.length > 0 && (
                       <View>
                         {proj.highlights.map((h, hi) => (
@@ -645,12 +659,14 @@ function ResumePDFDocument({
               <Text style={styles.sectionHeading}>Other Experience</Text>
               {pageItems.map((item, i) => {
                 if (item.type === 'job') {
-                  const job = item.data as WorkExperience;
+                  const job = item.data as WorkExperience
                   return (
                     <View key={`other-job-${i}`} style={styles.item}>
                       <Text style={styles.itemTitle}>{job.title}</Text>
                       <Text style={styles.itemMeta}>
-                        {job.company}{job.location ? ` / ${job.location}` : ''} / {formatDateRange(job.startDate, job.endDate)}
+                        {job.company}
+                        {job.location ? ` / ${job.location}` : ''} /{' '}
+                        {formatDateRange(job.startDate, job.endDate)}
                       </Text>
                       {job.highlights && job.highlights.length > 0 && (
                         <View>
@@ -663,18 +679,16 @@ function ResumePDFDocument({
                         </View>
                       )}
                     </View>
-                  );
+                  )
                 } else {
-                  const proj = item.data as Project;
+                  const proj = item.data as Project
                   return (
                     <View key={`other-proj-${i}`} style={styles.item}>
                       <Text style={styles.itemTitle}>{proj.name}</Text>
                       {proj.technologies && proj.technologies.length > 0 && (
                         <Text style={styles.itemMeta}>{proj.technologies.join(' • ')}</Text>
                       )}
-                      {proj.description && (
-                        <Text style={styles.itemDesc}>{proj.description}</Text>
-                      )}
+                      {proj.description && <Text style={styles.itemDesc}>{proj.description}</Text>}
                       {proj.highlights && proj.highlights.length > 0 && (
                         <View>
                           {proj.highlights.map((h, hi) => (
@@ -686,7 +700,7 @@ function ResumePDFDocument({
                         </View>
                       )}
                     </View>
-                  );
+                  )
                 }
               })}
             </View>
@@ -694,7 +708,7 @@ function ResumePDFDocument({
         </Page>
       ))}
     </Document>
-  );
+  )
 }
 
-export default ResumePDFDocument;
+export default ResumePDFDocument

@@ -6,17 +6,13 @@
  * (Claude CLI, Codex CLI, Gemini API, etc.)
  */
 
-import { ZodError } from 'zod';
-import {
-  type IAIProvider,
-  providerRegistry,
-  getProvider,
-} from './providers';
+import { ZodError } from 'zod'
+import { type IAIProvider, providerRegistry, getProvider } from './providers'
 import {
   type AIProviderType,
   type AIProviderConfig,
   AIProviderErrorCode,
-} from '../../types/ai-provider.types';
+} from '../../types/ai-provider.types'
 import {
   type AIProcessorConfig,
   type RefineResumeOptions,
@@ -26,8 +22,8 @@ import {
   DEFAULT_AI_PROCESSOR_CONFIG,
   AIProcessorError,
   AIProcessorErrorCode,
-} from '../../types/ai-processor.types';
-import { ResumeSchema, type Resume } from '../../schemas/resume.schema';
+} from '../../types/ai-processor.types'
+import { ResumeSchema, type Resume } from '../../schemas/resume.schema'
 import {
   RefinedResumeSchema,
   GeneratedCoverLetterSchema,
@@ -35,59 +31,59 @@ import {
   type RefinedResume,
   type GeneratedCoverLetter,
   type ExtractedJobPosting,
-} from '../../schemas/ai-output.schema';
+} from '../../schemas/ai-output.schema'
 import {
   buildCombinedResumeRefinementPrompt,
   type ResumeRefinementOptions,
-} from '../../prompts/resume-refinement.prompt';
+} from '../../prompts/resume-refinement.prompt'
 import {
   buildCombinedCoverLetterPrompt,
   buildShortenCoverLetterPrompt,
   type CoverLetterGenerationOptions,
-} from '../../prompts/cover-letter.prompt';
+} from '../../prompts/cover-letter.prompt'
 import {
   buildResumeExtractionPrompt,
   type ResumeExtractionOptions,
-} from '../../prompts/resume-extraction.prompt';
+} from '../../prompts/resume-extraction.prompt'
 import {
   buildJobExtractionPrompt,
   type JobExtractionOptions,
-} from '../../prompts/job-extraction.prompt';
-import { sanitizeAIResponse } from '../../shared/sanitize';
+} from '../../prompts/job-extraction.prompt'
+import { sanitizeAIResponse } from '../../shared/sanitize'
 
 /**
  * Extended configuration with provider selection.
  */
 export interface AIProcessorServiceConfig extends AIProcessorConfig {
   /** Which AI provider to use */
-  provider?: AIProviderType;
+  provider?: AIProviderType
 }
 
 /**
  * Service for processing AI-based resume refinement and cover letter generation.
  */
 export class AIProcessorService {
-  private config: AIProcessorServiceConfig;
-  private provider: IAIProvider;
+  private config: AIProcessorServiceConfig
+  private provider: IAIProvider
 
   constructor(config: Partial<AIProcessorServiceConfig> = {}) {
-    this.config = { ...DEFAULT_AI_PROCESSOR_CONFIG, ...config };
+    this.config = { ...DEFAULT_AI_PROCESSOR_CONFIG, ...config }
 
     // Get the specified provider or default
     this.provider = config.provider
       ? getProvider(config.provider)
-      : providerRegistry.getDefaultProvider();
+      : providerRegistry.getDefaultProvider()
   }
 
   /**
    * Updates the service configuration.
    */
   updateConfig(config: Partial<AIProcessorServiceConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
 
     // Switch provider if specified
     if (config.provider) {
-      this.provider = getProvider(config.provider);
+      this.provider = getProvider(config.provider)
     }
   }
 
@@ -95,22 +91,22 @@ export class AIProcessorService {
    * Gets the current configuration.
    */
   getConfig(): AIProcessorServiceConfig {
-    return { ...this.config };
+    return { ...this.config }
   }
 
   /**
    * Gets the current provider type.
    */
   getProviderType(): AIProviderType {
-    return this.provider.type;
+    return this.provider.type
   }
 
   /**
    * Sets the AI provider to use.
    */
   setProvider(type: AIProviderType): void {
-    this.provider = getProvider(type);
-    this.config.provider = type;
+    this.provider = getProvider(type)
+    this.config.provider = type
   }
 
   /**
@@ -118,24 +114,22 @@ export class AIProcessorService {
    * Accepts provider-specific config properties (e.g., cliPath, model).
    */
   updateProviderConfig(config: Partial<AIProviderConfig> & Record<string, unknown>): void {
-    this.provider.updateConfig(config);
+    this.provider.updateConfig(config)
   }
 
   /**
    * Checks if the current AI provider is available.
    */
   async isAvailable(): Promise<boolean> {
-    return this.provider.isAvailable();
+    return this.provider.isAvailable()
   }
 
   /**
    * Gets all available providers.
    */
   async getAvailableProviders(): Promise<AIProviderType[]> {
-    const statuses = await providerRegistry.checkAllAvailability();
-    return statuses
-      .filter((s) => s.available)
-      .map((s) => s.provider);
+    const statuses = await providerRegistry.checkAllAvailability()
+    return statuses.filter(s => s.available).map(s => s.provider)
   }
 
   /**
@@ -153,36 +147,30 @@ export class AIProcessorService {
     options: RefineResumeOptions = {}
   ): Promise<RefinedResume> {
     // Check provider availability
-    const isAvailable = await this.isAvailable();
+    const isAvailable = await this.isAvailable()
     if (!isAvailable) {
       throw new AIProcessorError(
         AIProcessorErrorCode.CLI_NOT_AVAILABLE,
         `AI provider '${this.provider.type}' is not available.`
-      );
+      )
     }
 
     // Build the prompt
     const promptOptions: ResumeRefinementOptions = {
       includeMetadata: this.config.includeMetadata,
       ...options.promptOptions,
-    };
+    }
 
-    const prompt = buildCombinedResumeRefinementPrompt(
-      originalResume,
-      jobPosting,
-      promptOptions
-    );
+    const prompt = buildCombinedResumeRefinementPrompt(originalResume, jobPosting, promptOptions)
 
     // Determine retry settings
     const enableRetry =
-      options.retryOnValidationFailure ??
-      this.config.enableRetryOnValidationFailure;
-    const maxRetries =
-      options.maxValidationRetries ?? this.config.maxValidationRetries;
+      options.retryOnValidationFailure ?? this.config.enableRetryOnValidationFailure
+    const maxRetries = options.maxValidationRetries ?? this.config.maxValidationRetries
 
     // Execute with validation retry loop
-    let lastError: Error | undefined;
-    const attempts = enableRetry ? maxRetries + 1 : 1;
+    let lastError: Error | undefined
+    const attempts = enableRetry ? maxRetries + 1 : 1
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
@@ -190,28 +178,26 @@ export class AIProcessorService {
           prompt,
           RefinedResumeSchema,
           options.timeout
-        );
+        )
 
         // Sanitize output if enabled
-        const finalResult = this.config.sanitizeOutput
-          ? sanitizeAIResponse(result)
-          : result;
+        const finalResult = this.config.sanitizeOutput ? sanitizeAIResponse(result) : result
 
-        return finalResult;
+        return finalResult
       } catch (error) {
-        lastError = error as Error;
+        lastError = error as Error
 
         // Only retry on validation failures
         if (
           !(error instanceof AIProcessorError) ||
           error.code !== AIProcessorErrorCode.VALIDATION_FAILED
         ) {
-          throw error;
+          throw error
         }
 
         // If this was the last attempt, throw
         if (attempt >= attempts - 1) {
-          throw error;
+          throw error
         }
 
         // Otherwise, continue to next attempt
@@ -221,11 +207,8 @@ export class AIProcessorService {
     // Should not reach here, but throw the last error just in case
     throw (
       lastError ??
-      new AIProcessorError(
-        AIProcessorErrorCode.UNKNOWN,
-        'Unknown error during resume refinement'
-      )
-    );
+      new AIProcessorError(AIProcessorErrorCode.UNKNOWN, 'Unknown error during resume refinement')
+    )
   }
 
   /**
@@ -243,37 +226,35 @@ export class AIProcessorService {
     options: GenerateCoverLetterOptions = {}
   ): Promise<GeneratedCoverLetter> {
     // Check provider availability
-    const isAvailable = await this.isAvailable();
+    const isAvailable = await this.isAvailable()
     if (!isAvailable) {
       throw new AIProcessorError(
         AIProcessorErrorCode.CLI_NOT_AVAILABLE,
         `AI provider '${this.provider.type}' is not available.`
-      );
+      )
     }
 
     // Build the prompt
     const promptOptions: CoverLetterGenerationOptions = {
       includeMetadata: this.config.includeMetadata,
       ...options.promptOptions,
-    };
+    }
 
     const prompt = buildCombinedCoverLetterPrompt(
       resume,
       jobPosting,
       options.companyInfo,
       promptOptions
-    );
+    )
 
     // Determine retry settings
     const enableRetry =
-      options.retryOnValidationFailure ??
-      this.config.enableRetryOnValidationFailure;
-    const maxRetries =
-      options.maxValidationRetries ?? this.config.maxValidationRetries;
+      options.retryOnValidationFailure ?? this.config.enableRetryOnValidationFailure
+    const maxRetries = options.maxValidationRetries ?? this.config.maxValidationRetries
 
     // Execute with validation retry loop
-    let lastError: Error | undefined;
-    const attempts = enableRetry ? maxRetries + 1 : 1;
+    let lastError: Error | undefined
+    const attempts = enableRetry ? maxRetries + 1 : 1
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
@@ -281,28 +262,26 @@ export class AIProcessorService {
           prompt,
           GeneratedCoverLetterSchema,
           options.timeout
-        );
+        )
 
         // Sanitize output if enabled
-        const finalResult = this.config.sanitizeOutput
-          ? sanitizeAIResponse(result)
-          : result;
+        const finalResult = this.config.sanitizeOutput ? sanitizeAIResponse(result) : result
 
-        return finalResult;
+        return finalResult
       } catch (error) {
-        lastError = error as Error;
+        lastError = error as Error
 
         // Only retry on validation failures
         if (
           !(error instanceof AIProcessorError) ||
           error.code !== AIProcessorErrorCode.VALIDATION_FAILED
         ) {
-          throw error;
+          throw error
         }
 
         // If this was the last attempt, throw
         if (attempt >= attempts - 1) {
-          throw error;
+          throw error
         }
 
         // Otherwise, continue to next attempt
@@ -316,7 +295,7 @@ export class AIProcessorService {
         AIProcessorErrorCode.UNKNOWN,
         'Unknown error during cover letter generation'
       )
-    );
+    )
   }
 
   /**
@@ -334,36 +313,32 @@ export class AIProcessorService {
     targetCharCount: number
   ): Promise<GeneratedCoverLetter> {
     // Check provider availability
-    const isAvailable = await this.isAvailable();
+    const isAvailable = await this.isAvailable()
     if (!isAvailable) {
       throw new AIProcessorError(
         AIProcessorErrorCode.CLI_NOT_AVAILABLE,
         `AI provider '${this.provider.type}' is not available.`
-      );
+      )
     }
 
-    const prompt = buildShortenCoverLetterPrompt(
-      coverLetter,
-      currentCharCount,
-      targetCharCount
-    );
+    const prompt = buildShortenCoverLetterPrompt(coverLetter, currentCharCount, targetCharCount)
 
     try {
       const result = await this.executeAndValidate<GeneratedCoverLetter>(
         prompt,
         GeneratedCoverLetterSchema
-      );
+      )
 
       // Sanitize output
-      return this.config.sanitizeOutput ? sanitizeAIResponse(result) : result;
+      return this.config.sanitizeOutput ? sanitizeAIResponse(result) : result
     } catch (error) {
       if (error instanceof AIProcessorError) {
-        throw error;
+        throw error
       }
       throw new AIProcessorError(
         AIProcessorErrorCode.UNKNOWN,
         `Failed to shorten cover letter: ${String(error)}`
-      );
+      )
     }
   }
 
@@ -375,65 +350,54 @@ export class AIProcessorService {
    * @returns The extracted resume data
    * @throws AIProcessorError if processing fails
    */
-  async extractResume(
-    documentText: string,
-    options: ExtractResumeOptions = {}
-  ): Promise<Resume> {
+  async extractResume(documentText: string, options: ExtractResumeOptions = {}): Promise<Resume> {
     // Check provider availability
-    const isAvailable = await this.isAvailable();
+    const isAvailable = await this.isAvailable()
     if (!isAvailable) {
       throw new AIProcessorError(
         AIProcessorErrorCode.CLI_NOT_AVAILABLE,
         `AI provider '${this.provider.type}' is not available.`
-      );
+      )
     }
 
     // Build the prompt
     const promptOptions: ResumeExtractionOptions = {
       inferSkillLevels: options.promptOptions?.inferSkillLevels ?? false,
-    };
+    }
 
-    const prompt = buildResumeExtractionPrompt(documentText, promptOptions);
+    const prompt = buildResumeExtractionPrompt(documentText, promptOptions)
 
     // Determine retry settings
     const enableRetry =
-      options.retryOnValidationFailure ??
-      this.config.enableRetryOnValidationFailure;
-    const maxRetries =
-      options.maxValidationRetries ?? this.config.maxValidationRetries;
+      options.retryOnValidationFailure ?? this.config.enableRetryOnValidationFailure
+    const maxRetries = options.maxValidationRetries ?? this.config.maxValidationRetries
 
     // Execute with validation retry loop
-    let lastError: Error | undefined;
-    const attempts = enableRetry ? maxRetries + 1 : 1;
+    let lastError: Error | undefined
+    const attempts = enableRetry ? maxRetries + 1 : 1
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
-        const result = await this.executeAndValidate<Resume>(
-          prompt,
-          ResumeSchema,
-          options.timeout
-        );
+        const result = await this.executeAndValidate<Resume>(prompt, ResumeSchema, options.timeout)
 
         // Sanitize output if enabled
-        const finalResult = this.config.sanitizeOutput
-          ? sanitizeAIResponse(result)
-          : result;
+        const finalResult = this.config.sanitizeOutput ? sanitizeAIResponse(result) : result
 
-        return finalResult;
+        return finalResult
       } catch (error) {
-        lastError = error as Error;
+        lastError = error as Error
 
         // Only retry on validation failures
         if (
           !(error instanceof AIProcessorError) ||
           error.code !== AIProcessorErrorCode.VALIDATION_FAILED
         ) {
-          throw error;
+          throw error
         }
 
         // If this was the last attempt, throw
         if (attempt >= attempts - 1) {
-          throw error;
+          throw error
         }
 
         // Otherwise, continue to next attempt
@@ -443,11 +407,8 @@ export class AIProcessorService {
     // Should not reach here, but throw the last error just in case
     throw (
       lastError ??
-      new AIProcessorError(
-        AIProcessorErrorCode.UNKNOWN,
-        'Unknown error during resume extraction'
-      )
-    );
+      new AIProcessorError(AIProcessorErrorCode.UNKNOWN, 'Unknown error during resume extraction')
+    )
   }
 
   /**
@@ -463,31 +424,29 @@ export class AIProcessorService {
     options: ExtractJobPostingOptions = {}
   ): Promise<ExtractedJobPosting> {
     // Check provider availability
-    const isAvailable = await this.isAvailable();
+    const isAvailable = await this.isAvailable()
     if (!isAvailable) {
       throw new AIProcessorError(
         AIProcessorErrorCode.CLI_NOT_AVAILABLE,
         `AI provider '${this.provider.type}' is not available.`
-      );
+      )
     }
 
     // Build the prompt
     const promptOptions: JobExtractionOptions = {
       inferSalary: options.promptOptions?.inferSalary ?? false,
-    };
+    }
 
-    const prompt = buildJobExtractionPrompt(jobPostingText, promptOptions);
+    const prompt = buildJobExtractionPrompt(jobPostingText, promptOptions)
 
     // Determine retry settings
     const enableRetry =
-      options.retryOnValidationFailure ??
-      this.config.enableRetryOnValidationFailure;
-    const maxRetries =
-      options.maxValidationRetries ?? this.config.maxValidationRetries;
+      options.retryOnValidationFailure ?? this.config.enableRetryOnValidationFailure
+    const maxRetries = options.maxValidationRetries ?? this.config.maxValidationRetries
 
     // Execute with validation retry loop
-    let lastError: Error | undefined;
-    const attempts = enableRetry ? maxRetries + 1 : 1;
+    let lastError: Error | undefined
+    const attempts = enableRetry ? maxRetries + 1 : 1
 
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
@@ -495,28 +454,26 @@ export class AIProcessorService {
           prompt,
           ExtractedJobPostingSchema,
           options.timeout
-        );
+        )
 
         // Sanitize output if enabled
-        const finalResult = this.config.sanitizeOutput
-          ? sanitizeAIResponse(result)
-          : result;
+        const finalResult = this.config.sanitizeOutput ? sanitizeAIResponse(result) : result
 
-        return finalResult;
+        return finalResult
       } catch (error) {
-        lastError = error as Error;
+        lastError = error as Error
 
         // Only retry on validation failures
         if (
           !(error instanceof AIProcessorError) ||
           error.code !== AIProcessorErrorCode.VALIDATION_FAILED
         ) {
-          throw error;
+          throw error
         }
 
         // If this was the last attempt, throw
         if (attempt >= attempts - 1) {
-          throw error;
+          throw error
         }
 
         // Otherwise, continue to next attempt
@@ -530,7 +487,7 @@ export class AIProcessorService {
         AIProcessorErrorCode.UNKNOWN,
         'Unknown error during job posting extraction'
       )
-    );
+    )
   }
 
   /**
@@ -549,18 +506,18 @@ export class AIProcessorService {
   ): Promise<T> {
     // Update timeout if specified
     if (timeout !== undefined) {
-      const originalConfig = this.provider.getConfig();
-      this.provider.updateConfig({ timeout });
+      const originalConfig = this.provider.getConfig()
+      this.provider.updateConfig({ timeout })
 
       try {
-        return await this.doExecuteAndValidate(prompt, schema);
+        return await this.doExecuteAndValidate(prompt, schema)
       } finally {
         // Restore original timeout
-        this.provider.updateConfig({ timeout: originalConfig.timeout });
+        this.provider.updateConfig({ timeout: originalConfig.timeout })
       }
     }
 
-    return this.doExecuteAndValidate(prompt, schema);
+    return this.doExecuteAndValidate(prompt, schema)
   }
 
   /**
@@ -574,11 +531,11 @@ export class AIProcessorService {
     const response = await this.provider.execute({
       prompt,
       outputFormat: 'json',
-    });
+    })
 
     // Handle execution errors
     if (!response.success) {
-      const error = response.error;
+      const error = response.error
 
       switch (error.code) {
         case AIProviderErrorCode.PROVIDER_NOT_AVAILABLE:
@@ -586,53 +543,47 @@ export class AIProcessorService {
             AIProcessorErrorCode.CLI_NOT_AVAILABLE,
             error.message,
             error.details
-          );
+          )
 
         case AIProviderErrorCode.AUTH_FAILED:
           throw new AIProcessorError(
             AIProcessorErrorCode.CLI_NOT_AVAILABLE,
             `Authentication failed: ${error.message}`,
             error.details
-          );
+          )
 
         case AIProviderErrorCode.TIMEOUT:
-          throw new AIProcessorError(
-            AIProcessorErrorCode.TIMEOUT,
-            error.message,
-            error.details
-          );
+          throw new AIProcessorError(AIProcessorErrorCode.TIMEOUT, error.message, error.details)
 
         case AIProviderErrorCode.INVALID_JSON:
           throw new AIProcessorError(
             AIProcessorErrorCode.PARSE_FAILED,
             error.message,
             error.details
-          );
+          )
 
         case AIProviderErrorCode.RATE_LIMITED:
           throw new AIProcessorError(
             AIProcessorErrorCode.EXECUTION_FAILED,
             `Rate limited: ${error.message}`,
             error.details
-          );
+          )
 
         default:
           throw new AIProcessorError(
             AIProcessorErrorCode.EXECUTION_FAILED,
             error.message,
             error.details
-          );
+          )
       }
     }
 
     // Validate the response data against the schema
     try {
-      return schema.parse(response.data);
+      return schema.parse(response.data)
     } catch (error) {
       if (error instanceof ZodError) {
-        const validationErrors = error.errors.map(
-          (e) => `${e.path.join('.')}: ${e.message}`
-        );
+        const validationErrors = error.errors.map(e => `${e.path.join('.')}: ${e.message}`)
 
         throw new AIProcessorError(
           AIProcessorErrorCode.VALIDATION_FAILED,
@@ -642,17 +593,17 @@ export class AIProcessorService {
             zodErrors: error.errors,
             rawData: response.data,
           }
-        );
+        )
       }
 
       throw new AIProcessorError(
         AIProcessorErrorCode.VALIDATION_FAILED,
         `Schema validation failed: ${String(error)}`,
         { originalError: String(error) }
-      );
+      )
     }
   }
 }
 
 // Export a singleton instance with default configuration
-export const aiProcessorService = new AIProcessorService();
+export const aiProcessorService = new AIProcessorService()

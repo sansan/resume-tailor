@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 // Contact types enum for common contact methods
 export const ContactTypeSchema = z.enum([
@@ -11,14 +11,14 @@ export const ContactTypeSchema = z.enum([
   'website',
   'portfolio',
   'other',
-]);
+])
 
 // Contact item schema
 export const ContactSchema = z.object({
   type: ContactTypeSchema,
   value: z.string().min(1, 'Contact value is required'),
   label: z.string().optional(), // Optional custom label for 'other' type
-});
+})
 
 // Personal Information Schema
 // Use .nullish() to allow both null and undefined from AI responses
@@ -27,7 +27,7 @@ export const PersonalInfoSchema = z.object({
   location: z.string().nullish(),
   summary: z.string().nullish(),
   contacts: z.array(ContactSchema).default([]),
-});
+})
 
 // Work Experience Schema
 export const WorkExperienceSchema = z.object({
@@ -37,7 +37,7 @@ export const WorkExperienceSchema = z.object({
   endDate: z.string().nullish(), // Optional for current positions
   location: z.string().nullish(),
   highlights: z.array(z.string()).default([]),
-});
+})
 
 // Education Schema
 export const EducationSchema = z.object({
@@ -47,14 +47,14 @@ export const EducationSchema = z.object({
   graduationDate: z.string().nullish(),
   gpa: z.string().nullish(),
   highlights: z.array(z.string()).default([]),
-});
+})
 
 // Skill Schema
 export const SkillSchema = z.object({
   name: z.string().min(1, 'Skill name is required'),
   level: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).nullish(),
   category: z.string().nullish(),
-});
+})
 
 // Project Schema
 export const ProjectSchema = z.object({
@@ -63,7 +63,7 @@ export const ProjectSchema = z.object({
   technologies: z.array(z.string()).default([]),
   url: z.string().url('Invalid project URL').nullish(),
   highlights: z.array(z.string()).default([]),
-});
+})
 
 // Certification Schema
 export const CertificationSchema = z.object({
@@ -71,7 +71,7 @@ export const CertificationSchema = z.object({
   issuer: z.string().min(1, 'Issuer is required'),
   date: z.string().nullish(),
   url: z.string().url('Invalid certification URL').nullish(),
-});
+})
 
 // Full Resume Schema
 export const ResumeSchema = z.object({
@@ -81,18 +81,18 @@ export const ResumeSchema = z.object({
   skills: z.array(SkillSchema).default([]),
   projects: z.array(ProjectSchema).default([]),
   certifications: z.array(CertificationSchema).default([]),
-});
+})
 
 // TypeScript types inferred from Zod schemas
-export type ContactType = z.infer<typeof ContactTypeSchema>;
-export type Contact = z.infer<typeof ContactSchema>;
-export type PersonalInfo = z.infer<typeof PersonalInfoSchema>;
-export type WorkExperience = z.infer<typeof WorkExperienceSchema>;
-export type Education = z.infer<typeof EducationSchema>;
-export type Skill = z.infer<typeof SkillSchema>;
-export type Project = z.infer<typeof ProjectSchema>;
-export type Certification = z.infer<typeof CertificationSchema>;
-export type Resume = z.infer<typeof ResumeSchema>;
+export type ContactType = z.infer<typeof ContactTypeSchema>
+export type Contact = z.infer<typeof ContactSchema>
+export type PersonalInfo = z.infer<typeof PersonalInfoSchema>
+export type WorkExperience = z.infer<typeof WorkExperienceSchema>
+export type Education = z.infer<typeof EducationSchema>
+export type Skill = z.infer<typeof SkillSchema>
+export type Project = z.infer<typeof ProjectSchema>
+export type Certification = z.infer<typeof CertificationSchema>
+export type Resume = z.infer<typeof ResumeSchema>
 
 // Contact type labels for UI display
 export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
@@ -105,7 +105,7 @@ export const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
   website: 'Website',
   portfolio: 'Portfolio',
   other: 'Other',
-};
+}
 
 // Contact type placeholders
 export const CONTACT_TYPE_PLACEHOLDERS: Record<ContactType, string> = {
@@ -118,16 +118,19 @@ export const CONTACT_TYPE_PLACEHOLDERS: Record<ContactType, string> = {
   website: 'https://johndoe.com',
   portfolio: 'https://portfolio.johndoe.com',
   other: 'Enter contact info...',
-};
+}
 
 // Helper function to get a contact value by type
-export function getContactByType(contacts: Contact[] | undefined, type: ContactType): string | undefined {
-  return contacts?.find((c) => c.type === type)?.value;
+export function getContactByType(
+  contacts: Contact[] | undefined,
+  type: ContactType
+): string | undefined {
+  return contacts?.find(c => c.type === type)?.value
 }
 
 // Helper function to get all contacts of a specific type
 export function getContactsByType(contacts: Contact[] | undefined, type: ContactType): Contact[] {
-  return contacts?.filter((c) => c.type === type) ?? [];
+  return contacts?.filter(c => c.type === type) ?? []
 }
 
 // User Profile Schema (extends Resume with import metadata)
@@ -136,6 +139,6 @@ export const UserProfileSchema = z.object({
   importedAt: z.string().datetime().optional(),
   sourceFile: z.string().optional(),
   lastModifiedAt: z.string().datetime().optional(),
-});
+})
 
-export type UserProfile = z.infer<typeof UserProfileSchema>;
+export type UserProfile = z.infer<typeof UserProfileSchema>

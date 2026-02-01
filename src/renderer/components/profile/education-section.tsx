@@ -58,7 +58,7 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
 
       {education.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className="text-muted-foreground py-8 text-center">
             No education entries added yet. Click "Add Entry" to get started.
           </CardContent>
         </Card>
@@ -71,7 +71,7 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
                   {/* Drag handle */}
                   <div className="flex items-start pt-2">
                     <GripVertical
-                      className="h-5 w-5 text-muted-foreground cursor-grab"
+                      className="text-muted-foreground h-5 w-5 cursor-grab"
                       aria-hidden="true"
                     />
                   </div>
@@ -85,7 +85,7 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
                         <Input
                           id={`degree-${index}`}
                           value={edu.degree}
-                          onChange={(e) => handleUpdateEntry(index, 'degree', e.target.value)}
+                          onChange={e => handleUpdateEntry(index, 'degree', e.target.value)}
                           placeholder="Bachelor of Science"
                         />
                       </div>
@@ -94,7 +94,7 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
                         <Input
                           id={`field-${index}`}
                           value={edu.field ?? ''}
-                          onChange={(e) =>
+                          onChange={e =>
                             handleUpdateEntry(index, 'field', e.target.value || undefined)
                           }
                           placeholder="Computer Science"
@@ -109,7 +109,7 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
                         <Input
                           id={`institution-${index}`}
                           value={edu.institution}
-                          onChange={(e) => handleUpdateEntry(index, 'institution', e.target.value)}
+                          onChange={e => handleUpdateEntry(index, 'institution', e.target.value)}
                           placeholder="Stanford University"
                         />
                       </div>
@@ -118,12 +118,8 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
                         <Input
                           id={`graduationDate-${index}`}
                           value={edu.graduationDate ?? ''}
-                          onChange={(e) =>
-                            handleUpdateEntry(
-                              index,
-                              'graduationDate',
-                              e.target.value || undefined
-                            )
+                          onChange={e =>
+                            handleUpdateEntry(index, 'graduationDate', e.target.value || undefined)
                           }
                           placeholder="May 2020"
                         />
@@ -133,7 +129,7 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
                         <Input
                           id={`gpa-${index}`}
                           value={edu.gpa ?? ''}
-                          onChange={(e) =>
+                          onChange={e =>
                             handleUpdateEntry(index, 'gpa', e.target.value || undefined)
                           }
                           placeholder="3.8"
@@ -150,7 +146,7 @@ export function EducationSection({ education, onChange }: EducationSectionProps)
                       onClick={() => handleDeleteEntry(index)}
                       aria-label="Delete education entry"
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="text-destructive h-4 w-4" />
                     </Button>
                   </div>
                 </div>

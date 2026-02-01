@@ -19,9 +19,7 @@ export function SkillsSection({ skills, onChange }: SkillsSectionProps) {
     if (!trimmed) return
 
     // Check for duplicates (case-insensitive)
-    const exists = skills.some(
-      (s) => s.name.toLowerCase() === trimmed.toLowerCase()
-    )
+    const exists = skills.some(s => s.name.toLowerCase() === trimmed.toLowerCase())
     if (exists) {
       setNewSkill('')
       return
@@ -61,12 +59,12 @@ export function SkillsSection({ skills, onChange }: SkillsSectionProps) {
       </div>
 
       <Card>
-        <CardContent className="pt-6 space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {/* Add skill input */}
           <div className="flex gap-2">
             <Input
               value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
+              onChange={e => setNewSkill(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Enter a skill (e.g., JavaScript, Project Management)"
               className="flex-1"
@@ -79,22 +77,18 @@ export function SkillsSection({ skills, onChange }: SkillsSectionProps) {
 
           {/* Skills badges */}
           {skills.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-muted-foreground py-4 text-center text-sm">
               No skills added yet. Start typing above to add skills.
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {skills.map((skill, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  className="pl-3 pr-1.5 py-1.5 text-sm"
-                >
+                <Badge key={index} variant="secondary" className="py-1.5 pr-1.5 pl-3 text-sm">
                   {skill.name}
                   <button
                     type="button"
                     onClick={() => handleRemoveSkill(index)}
-                    className="ml-1.5 rounded-full p-0.5 hover:bg-muted-foreground/20 transition-colors"
+                    className="hover:bg-muted-foreground/20 ml-1.5 rounded-full p-0.5 transition-colors"
                     aria-label={`Remove ${skill.name}`}
                   >
                     <X className="h-3 w-3" />

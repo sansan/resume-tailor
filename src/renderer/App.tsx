@@ -7,6 +7,7 @@ import {
   TargetingPage,
   CoverLetterPage,
   SettingsPage,
+  TrackingPage,
 } from '@/components/pages'
 import { OnboardingFlow } from '@/components/onboarding'
 import { APP_PAGES } from '@config/constants'
@@ -16,10 +17,10 @@ import { APP_PAGES } from '@config/constants'
  */
 function LoadingScreen(): React.JSX.Element {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="bg-background flex min-h-screen items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <Loader2 className="size-10 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <Loader2 className="text-primary size-10 animate-spin" />
+        <p className="text-muted-foreground text-sm">Loading...</p>
       </div>
     </div>
   )
@@ -78,17 +79,19 @@ function App() {
   const renderPage = () => {
     switch (activePage) {
       case APP_PAGES.DASHBOARD:
-        return <DashboardPage onNavigate={(page) => setActivePage(page)} />
+        return <DashboardPage onNavigate={page => setActivePage(page)} />
       case APP_PAGES.RESUME:
         return <ProfilePage />
       case APP_PAGES.TARGETING:
         return <TargetingPage />
       case APP_PAGES.COVER_LETTER:
         return <CoverLetterPage />
+      case APP_PAGES.TRACKING:
+        return <TrackingPage />
       case APP_PAGES.SETTINGS:
         return <SettingsPage />
       default:
-        return <DashboardPage onNavigate={(page) => setActivePage(page)} />
+        return <DashboardPage onNavigate={page => setActivePage(page)} />
     }
   }
 

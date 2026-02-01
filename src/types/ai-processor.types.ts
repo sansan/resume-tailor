@@ -4,26 +4,23 @@
  * and cover letter generation.
  */
 
-import type { ResumeRefinementOptions } from '@prompts/resume-refinement.prompt';
-import type {
-  CoverLetterGenerationOptions,
-  CompanyInfo,
-} from '@prompts/cover-letter.prompt';
-import type { ResumeExtractionOptions } from '@prompts/resume-extraction.prompt';
-import type { JobExtractionOptions } from '@prompts/job-extraction.prompt';
+import type { ResumeRefinementOptions } from '@prompts/resume-refinement.prompt'
+import type { CoverLetterGenerationOptions, CompanyInfo } from '@prompts/cover-letter.prompt'
+import type { ResumeExtractionOptions } from '@prompts/resume-extraction.prompt'
+import type { JobExtractionOptions } from '@prompts/job-extraction.prompt'
 
 /**
  * Configuration options for the AI processor service.
  */
 export interface AIProcessorConfig {
   /** Whether to enable automatic retries on validation failure (default: false) */
-  enableRetryOnValidationFailure: boolean;
+  enableRetryOnValidationFailure: boolean
   /** Maximum number of retries on validation failure (default: 1) */
-  maxValidationRetries: number;
+  maxValidationRetries: number
   /** Whether to sanitize AI output automatically (default: true) */
-  sanitizeOutput: boolean;
+  sanitizeOutput: boolean
   /** Whether to include refinement/generation metadata in output (default: true) */
-  includeMetadata: boolean;
+  includeMetadata: boolean
 }
 
 /**
@@ -34,20 +31,20 @@ export const DEFAULT_AI_PROCESSOR_CONFIG: AIProcessorConfig = {
   maxValidationRetries: 1,
   sanitizeOutput: true,
   includeMetadata: true,
-};
+}
 
 /**
  * Options for resume refinement operation.
  */
 export interface RefineResumeOptions {
   /** Options for customizing the prompt template */
-  promptOptions?: ResumeRefinementOptions;
+  promptOptions?: ResumeRefinementOptions
   /** Override the default timeout (in milliseconds) */
-  timeout?: number;
+  timeout?: number
   /** Override retry settings for this operation */
-  retryOnValidationFailure?: boolean;
+  retryOnValidationFailure?: boolean
   /** Maximum validation retries for this operation */
-  maxValidationRetries?: number;
+  maxValidationRetries?: number
 }
 
 /**
@@ -55,15 +52,15 @@ export interface RefineResumeOptions {
  */
 export interface GenerateCoverLetterOptions {
   /** Additional company information for personalization */
-  companyInfo?: CompanyInfo;
+  companyInfo?: CompanyInfo
   /** Options for customizing the prompt template */
-  promptOptions?: CoverLetterGenerationOptions;
+  promptOptions?: CoverLetterGenerationOptions
   /** Override the default timeout (in milliseconds) */
-  timeout?: number;
+  timeout?: number
   /** Override retry settings for this operation */
-  retryOnValidationFailure?: boolean;
+  retryOnValidationFailure?: boolean
   /** Maximum validation retries for this operation */
-  maxValidationRetries?: number;
+  maxValidationRetries?: number
 }
 
 /**
@@ -71,13 +68,13 @@ export interface GenerateCoverLetterOptions {
  */
 export interface ExtractResumeOptions {
   /** Options for customizing the prompt template */
-  promptOptions?: ResumeExtractionOptions;
+  promptOptions?: ResumeExtractionOptions
   /** Override the default timeout (in milliseconds) */
-  timeout?: number;
+  timeout?: number
   /** Override retry settings for this operation */
-  retryOnValidationFailure?: boolean;
+  retryOnValidationFailure?: boolean
   /** Maximum validation retries for this operation */
-  maxValidationRetries?: number;
+  maxValidationRetries?: number
 }
 
 /**
@@ -85,31 +82,31 @@ export interface ExtractResumeOptions {
  */
 export interface ExtractJobPostingOptions {
   /** Options for customizing the prompt template */
-  promptOptions?: JobExtractionOptions | undefined;
+  promptOptions?: JobExtractionOptions | undefined
   /** Override the default timeout (in milliseconds) */
-  timeout?: number | undefined;
+  timeout?: number | undefined
   /** Override retry settings for this operation */
-  retryOnValidationFailure?: boolean | undefined;
+  retryOnValidationFailure?: boolean | undefined
   /** Maximum validation retries for this operation */
-  maxValidationRetries?: number | undefined;
+  maxValidationRetries?: number | undefined
 }
 
 /**
  * Result type for successful resume refinement.
  */
 export interface RefineResumeResult {
-  success: true;
+  success: true
   /** Processing time in milliseconds */
-  processingTimeMs: number;
+  processingTimeMs: number
 }
 
 /**
  * Result type for successful cover letter generation.
  */
 export interface GenerateCoverLetterResult {
-  success: true;
+  success: true
   /** Processing time in milliseconds */
-  processingTimeMs: number;
+  processingTimeMs: number
 }
 
 /**
@@ -136,17 +133,13 @@ export enum AIProcessorErrorCode {
  * Error class for AI processor operations.
  */
 export class AIProcessorError extends Error {
-  readonly code: AIProcessorErrorCode;
-  readonly details: Record<string, unknown> | undefined;
+  readonly code: AIProcessorErrorCode
+  readonly details: Record<string, unknown> | undefined
 
-  constructor(
-    code: AIProcessorErrorCode,
-    message: string,
-    details?: Record<string, unknown>
-  ) {
-    super(message);
-    this.name = 'AIProcessorError';
-    this.code = code;
-    this.details = details;
+  constructor(code: AIProcessorErrorCode, message: string, details?: Record<string, unknown>) {
+    super(message)
+    this.name = 'AIProcessorError'
+    this.code = code
+    this.details = details
   }
 }

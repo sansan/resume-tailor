@@ -14,21 +14,11 @@ import { RefreshCw, Trash2 } from 'lucide-react'
 import { useAIStatus } from './ai-status-provider'
 
 export function AIStatusSheet({ children }: { children: React.ReactNode }) {
-  const {
-    status,
-    isAvailable,
-    version,
-    error,
-    logs,
-    checkAvailability,
-    clearLogs
-  } = useAIStatus()
+  const { status, isAvailable, version, error, logs, checkAvailability, clearLogs } = useAIStatus()
 
   return (
     <Sheet>
-      <SheetTrigger asChild>
-        {children}
-      </SheetTrigger>
+      <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="w-[400px] sm:w-[540px]">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
@@ -37,9 +27,7 @@ export function AIStatusSheet({ children }: { children: React.ReactNode }) {
               {isAvailable ? 'Available' : 'Unavailable'}
             </Badge>
           </SheetTitle>
-          <SheetDescription>
-            Local AI processing status and logs.
-          </SheetDescription>
+          <SheetDescription>Local AI processing status and logs.</SheetDescription>
         </SheetHeader>
 
         <div className="mt-6 space-y-6 px-4">
@@ -63,7 +51,7 @@ export function AIStatusSheet({ children }: { children: React.ReactNode }) {
 
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={checkAvailability}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="mr-2 h-4 w-4" />
               Re-check
             </Button>
           </div>
@@ -75,15 +63,13 @@ export function AIStatusSheet({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium">System Logs</h4>
               <Button variant="ghost" size="sm" onClick={clearLogs}>
-                <Trash2 className="h-4 w-4 mr-1" />
+                <Trash2 className="mr-1 h-4 w-4" />
                 Clear
               </Button>
             </div>
-            <ScrollArea className="h-[300px] rounded-md border bg-muted p-4">
-              <pre className="text-xs font-mono">
-                {logs.length > 0
-                  ? logs.join('\n')
-                  : 'No logs yet...'}
+            <ScrollArea className="bg-muted h-[300px] rounded-md border p-4">
+              <pre className="font-mono text-xs">
+                {logs.length > 0 ? logs.join('\n') : 'No logs yet...'}
               </pre>
             </ScrollArea>
           </div>

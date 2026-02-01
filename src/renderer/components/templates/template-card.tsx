@@ -28,8 +28,8 @@ export function TemplateCard({
     <Card
       data-template-id={id}
       className={cn(
-        'cursor-pointer transition-all hover:ring-2 hover:ring-primary/50',
-        isSelected && 'ring-2 ring-primary'
+        'hover:ring-primary/50 cursor-pointer transition-all hover:ring-2',
+        isSelected && 'ring-primary ring-2'
       )}
       onClick={onClick}
     >
@@ -37,40 +37,32 @@ export function TemplateCard({
         {/* Thumbnail area with 3:4 aspect ratio */}
         <div className="relative mb-3">
           <AspectRatio ratio={3 / 4}>
-            <div className="h-full w-full rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-              <span className="text-4xl font-bold text-muted-foreground/30">
-                CV
-              </span>
+            <div className="from-muted to-muted/50 flex h-full w-full items-center justify-center rounded-md bg-gradient-to-br">
+              <span className="text-muted-foreground/30 text-4xl font-bold">CV</span>
             </div>
           </AspectRatio>
 
           {/* Selected checkmark overlay */}
           {isSelected && (
             <div className="absolute top-2 right-2">
-              <CheckCircle2 className="h-6 w-6 text-primary fill-background" />
+              <CheckCircle2 className="text-primary fill-background h-6 w-6" />
             </div>
           )}
         </div>
 
         {/* Template name and tags */}
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-medium text-sm">{name}</h3>
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-[10px] px-1.5 py-0"
-              >
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-medium">{name}</h3>
+            {tags.map(tag => (
+              <Badge key={tag} variant="secondary" className="px-1.5 py-0 text-[10px]">
                 {tag}
               </Badge>
             ))}
           </div>
 
           {/* Truncated description */}
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {description}
-          </p>
+          <p className="text-muted-foreground line-clamp-2 text-xs">{description}</p>
         </div>
       </CardContent>
     </Card>

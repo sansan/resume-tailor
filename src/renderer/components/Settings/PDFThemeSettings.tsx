@@ -1,42 +1,42 @@
-import React, { useMemo } from 'react';
+import React, { useMemo } from 'react'
 import {
   SUPPORTED_PDF_FONTS,
   DEFAULT_APP_SETTINGS,
   type AppSettings,
   type PDFThemeSettings as PDFThemeSettingsType,
-} from '@schemas/settings.schema';
+} from '@schemas/settings.schema'
 
 /**
  * Props for the PDFThemeSettings component.
  */
 export interface PDFThemeSettingsProps {
   /** Current application settings */
-  settings: AppSettings;
+  settings: AppSettings
   /** Field validation errors */
-  errors: Record<string, string>;
+  errors: Record<string, string>
   /** Whether the section is expanded */
-  isExpanded: boolean;
+  isExpanded: boolean
   /** Toggle section expansion */
-  onToggle: () => void;
+  onToggle: () => void
   /** Update PDF theme colors */
-  onUpdateColors: (updates: Partial<PDFThemeSettingsType['colors']>) => void;
+  onUpdateColors: (updates: Partial<PDFThemeSettingsType['colors']>) => void
   /** Update PDF theme fonts */
-  onUpdateFonts: (updates: Partial<PDFThemeSettingsType['fonts']>) => void;
+  onUpdateFonts: (updates: Partial<PDFThemeSettingsType['fonts']>) => void
   /** Update PDF theme font sizes */
-  onUpdateFontSizes: (updates: Partial<PDFThemeSettingsType['fontSizes']>) => void;
+  onUpdateFontSizes: (updates: Partial<PDFThemeSettingsType['fontSizes']>) => void
   /** Update PDF theme spacing */
-  onUpdateSpacing: (updates: Partial<PDFThemeSettingsType['spacing']>) => void;
+  onUpdateSpacing: (updates: Partial<PDFThemeSettingsType['spacing']>) => void
   /** Reset PDF theme to defaults */
-  onResetTheme: () => void;
+  onResetTheme: () => void
 }
 
 /**
  * Color input configuration for the color grid.
  */
 interface ColorConfig {
-  key: keyof PDFThemeSettingsType['colors'];
-  label: string;
-  description: string;
+  key: keyof PDFThemeSettingsType['colors']
+  label: string
+  description: string
 }
 
 const COLOR_CONFIGS: ColorConfig[] = [
@@ -49,17 +49,17 @@ const COLOR_CONFIGS: ColorConfig[] = [
   { key: 'pageBackground', label: 'Page Background', description: 'Main page background' },
   { key: 'sidebarBackground', label: 'Sidebar Background', description: 'Sidebar area background' },
   { key: 'white', label: 'White', description: 'White accent elements' },
-];
+]
 
 /**
  * Font size configuration for the size controls.
  */
 interface FontSizeConfig {
-  key: keyof PDFThemeSettingsType['fontSizes'];
-  label: string;
-  min: number;
-  max: number;
-  description: string;
+  key: keyof PDFThemeSettingsType['fontSizes']
+  label: string
+  min: number
+  max: number
+  description: string
 }
 
 const FONT_SIZE_CONFIGS: FontSizeConfig[] = [
@@ -68,36 +68,68 @@ const FONT_SIZE_CONFIGS: FontSizeConfig[] = [
   { key: 'itemTitle', label: 'Item Title', min: 8, max: 18, description: 'Job titles, degrees' },
   { key: 'body', label: 'Body', min: 8, max: 14, description: 'Regular text content' },
   { key: 'small', label: 'Small', min: 6, max: 12, description: 'Dates, metadata' },
-];
+]
 
 /**
  * Spacing configuration for the spacing controls.
  */
 interface SpacingConfig {
-  key: keyof PDFThemeSettingsType['spacing'];
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-  description: string;
-  unit: string;
+  key: keyof PDFThemeSettingsType['spacing']
+  label: string
+  min: number
+  max: number
+  step: number
+  description: string
+  unit: string
 }
 
 const SPACING_CONFIGS: SpacingConfig[] = [
-  { key: 'page', label: 'Page Margin', min: 20, max: 80, step: 5, description: 'Distance from page edges', unit: 'pt' },
-  { key: 'sectionGap', label: 'Section Gap', min: 8, max: 40, step: 2, description: 'Space between sections', unit: 'pt' },
-  { key: 'itemGap', label: 'Item Gap', min: 4, max: 24, step: 2, description: 'Space between entries', unit: 'pt' },
-  { key: 'lineHeight', label: 'Line Height', min: 1, max: 2, step: 0.1, description: 'Text line spacing', unit: 'x' },
-];
+  {
+    key: 'page',
+    label: 'Page Margin',
+    min: 20,
+    max: 80,
+    step: 5,
+    description: 'Distance from page edges',
+    unit: 'pt',
+  },
+  {
+    key: 'sectionGap',
+    label: 'Section Gap',
+    min: 8,
+    max: 40,
+    step: 2,
+    description: 'Space between sections',
+    unit: 'pt',
+  },
+  {
+    key: 'itemGap',
+    label: 'Item Gap',
+    min: 4,
+    max: 24,
+    step: 2,
+    description: 'Space between entries',
+    unit: 'pt',
+  },
+  {
+    key: 'lineHeight',
+    label: 'Line Height',
+    min: 1,
+    max: 2,
+    step: 0.1,
+    description: 'Text line spacing',
+    unit: 'x',
+  },
+]
 
 /**
  * Get display-friendly font name options, grouped by font family.
  */
 function getFontOptions(): { value: string; label: string }[] {
-  return SUPPORTED_PDF_FONTS.map((font) => ({
+  return SUPPORTED_PDF_FONTS.map(font => ({
     value: font,
     label: font,
-  }));
+  }))
 }
 
 /**
@@ -123,8 +155,8 @@ function PDFThemeSettings({
   onUpdateSpacing,
   onResetTheme,
 }: PDFThemeSettingsProps): React.JSX.Element {
-  const { pdfTheme } = settings;
-  const fontOptions = useMemo(() => getFontOptions(), []);
+  const { pdfTheme } = settings
+  const fontOptions = useMemo(() => getFontOptions(), [])
 
   return (
     <section className="settings-view__section">
@@ -142,15 +174,12 @@ function PDFThemeSettings({
       </button>
 
       {isExpanded && (
-        <div
-          id="pdf-theme-settings-content"
-          className="settings-view__section-content"
-        >
+        <div id="pdf-theme-settings-content" className="settings-view__section-content">
           {/* Introduction */}
           <div className="settings-view__field">
             <p className="settings-view__help">
-              Customize how your resume and cover letter PDFs look. Changes will be applied
-              to all future PDF exports.
+              Customize how your resume and cover letter PDFs look. Changes will be applied to all
+              future PDF exports.
             </p>
           </div>
 
@@ -164,8 +193,8 @@ function PDFThemeSettings({
           <div className="settings-view__subsection">
             <h4 className="settings-view__subsection-title">Colors</h4>
             <p className="settings-view__help">
-              Choose colors for different elements of your PDF. Click the color swatch to open the picker,
-              or type a hex code directly.
+              Choose colors for different elements of your PDF. Click the color swatch to open the
+              picker, or type a hex code directly.
             </p>
             <div className="settings-view__color-grid">
               {COLOR_CONFIGS.map(({ key, label, description }) => (
@@ -174,7 +203,7 @@ function PDFThemeSettings({
                   label={label}
                   description={description}
                   value={pdfTheme.colors[key]}
-                  onChange={(value) => onUpdateColors({ [key]: value })}
+                  onChange={value => onUpdateColors({ [key]: value })}
                   error={errors[`pdfTheme.colors.${key}`]}
                 />
               ))}
@@ -193,16 +222,14 @@ function PDFThemeSettings({
                 <label htmlFor="pdf-font-primary" className="settings-view__label">
                   Primary Font
                 </label>
-                <p className="settings-view__help">
-                  Used for body text and most content.
-                </p>
+                <p className="settings-view__help">Used for body text and most content.</p>
                 <select
                   id="pdf-font-primary"
                   className="settings-view__select"
                   value={pdfTheme.fonts.primary}
-                  onChange={(e) => onUpdateFonts({ primary: e.target.value })}
+                  onChange={e => onUpdateFonts({ primary: e.target.value })}
                 >
-                  {fontOptions.map((opt) => (
+                  {fontOptions.map(opt => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -220,9 +247,9 @@ function PDFThemeSettings({
                   id="pdf-font-heading"
                   className="settings-view__select"
                   value={pdfTheme.fonts.heading}
-                  onChange={(e) => onUpdateFonts({ heading: e.target.value })}
+                  onChange={e => onUpdateFonts({ heading: e.target.value })}
                 >
-                  {fontOptions.map((opt) => (
+                  {fontOptions.map(opt => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -253,7 +280,7 @@ function PDFThemeSettings({
                       max={max}
                       step={1}
                       value={pdfTheme.fontSizes[key]}
-                      onChange={(e) => onUpdateFontSizes({ [key]: parseInt(e.target.value) })}
+                      onChange={e => onUpdateFontSizes({ [key]: parseInt(e.target.value) })}
                       aria-describedby={`pdf-fontsize-${key}-value`}
                     />
                     <span id={`pdf-fontsize-${key}-value`} className="settings-view__range-value">
@@ -291,19 +318,20 @@ function PDFThemeSettings({
                       max={max}
                       step={step}
                       value={pdfTheme.spacing[key]}
-                      onChange={(e) => {
-                        const value = key === 'lineHeight'
-                          ? parseFloat(e.target.value)
-                          : parseInt(e.target.value);
-                        onUpdateSpacing({ [key]: value });
+                      onChange={e => {
+                        const value =
+                          key === 'lineHeight'
+                            ? parseFloat(e.target.value)
+                            : parseInt(e.target.value)
+                        onUpdateSpacing({ [key]: value })
                       }}
                       aria-describedby={`pdf-spacing-${key}-value`}
                     />
                     <span id={`pdf-spacing-${key}-value`} className="settings-view__range-value">
                       {key === 'lineHeight'
                         ? pdfTheme.spacing[key].toFixed(1)
-                        : pdfTheme.spacing[key]
-                      }{unit}
+                        : pdfTheme.spacing[key]}
+                      {unit}
                     </span>
                   </div>
                   {errors[`pdfTheme.spacing.${key}`] && (
@@ -329,22 +357,28 @@ function PDFThemeSettings({
         </div>
       )}
     </section>
-  );
+  )
 }
 
 /**
  * Color input component with preview and hex code input.
  */
 interface ColorInputProps {
-  label: string;
-  description: string;
-  value: string;
-  onChange: (value: string) => void;
-  error: string | undefined;
+  label: string
+  description: string
+  value: string
+  onChange: (value: string) => void
+  error: string | undefined
 }
 
-function ColorInput({ label, description, value, onChange, error }: ColorInputProps): React.JSX.Element {
-  const inputId = `color-${label.toLowerCase().replace(/\s+/g, '-')}`;
+function ColorInput({
+  label,
+  description,
+  value,
+  onChange,
+  error,
+}: ColorInputProps): React.JSX.Element {
+  const inputId = `color-${label.toLowerCase().replace(/\s+/g, '-')}`
 
   return (
     <div className="settings-view__color-input">
@@ -357,29 +391,29 @@ function ColorInput({ label, description, value, onChange, error }: ColorInputPr
           id={inputId}
           type="color"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           className="settings-view__color-picker"
           aria-label={`${label} color picker`}
         />
         <input
           type="text"
           value={value}
-          onChange={(e) => {
-            const val = e.target.value;
+          onChange={e => {
+            const val = e.target.value
             // Allow partial input while typing
             if (val === '' || val === '#' || /^#[0-9A-Fa-f]{0,6}$/.test(val)) {
               // Only trigger onChange for valid complete hex colors
               if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                onChange(val);
+                onChange(val)
               }
             }
           }}
-          onBlur={(e) => {
+          onBlur={e => {
             // On blur, validate and potentially reset to valid value
-            const val = e.target.value;
+            const val = e.target.value
             if (!/^#[0-9A-Fa-f]{6}$/.test(val)) {
               // Reset to current valid value if invalid
-              e.target.value = value;
+              e.target.value = value
             }
           }}
           className="settings-view__text-input settings-view__text-input--short"
@@ -394,19 +428,19 @@ function ColorInput({ label, description, value, onChange, error }: ColorInputPr
         </p>
       )}
     </div>
-  );
+  )
 }
 
 /**
  * Live preview thumbnail showing how the PDF will look with current theme settings.
  */
 interface PDFPreviewThumbnailProps {
-  theme: PDFThemeSettingsType;
+  theme: PDFThemeSettingsType
 }
 
 function PDFPreviewThumbnail({ theme }: PDFPreviewThumbnailProps): React.JSX.Element {
   // Calculate relative sizes for the preview (scaled down from actual pt sizes)
-  const scale = 0.4;
+  const scale = 0.4
   const previewStyles = {
     container: {
       width: '100%',
@@ -473,7 +507,7 @@ function PDFPreviewThumbnail({ theme }: PDFPreviewThumbnailProps): React.JSX.Ele
     item: {
       marginBottom: `${theme.spacing.itemGap * scale}px`,
     } as React.CSSProperties,
-  };
+  }
 
   return (
     <div className="settings-view__pdf-preview">
@@ -514,23 +548,21 @@ function PDFPreviewThumbnail({ theme }: PDFPreviewThumbnailProps): React.JSX.Ele
         {/* Skills Section */}
         <div style={previewStyles.section}>
           <div style={previewStyles.sectionTitle}>Skills</div>
-          <div style={previewStyles.body}>
-            JavaScript, TypeScript, React, Node.js
-          </div>
+          <div style={previewStyles.body}>JavaScript, TypeScript, React, Node.js</div>
         </div>
       </div>
       <p className="settings-view__hint" style={{ marginTop: '0.5rem' }}>
         Preview shows approximate appearance. Actual PDF may vary slightly.
       </p>
     </div>
-  );
+  )
 }
 
 /**
  * Get the default PDF theme settings.
  */
 export function getDefaultPDFThemeSettings(): PDFThemeSettingsType {
-  return DEFAULT_APP_SETTINGS.pdfTheme;
+  return DEFAULT_APP_SETTINGS.pdfTheme
 }
 
-export default PDFThemeSettings;
+export default PDFThemeSettings

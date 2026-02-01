@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 /**
  * Export History Entry Schema
@@ -26,7 +26,7 @@ export const HistoryEntrySchema = z.object({
 
   /** Path to the folder containing the exports */
   folderPath: z.string(),
-});
+})
 
 /**
  * Export History Schema
@@ -39,13 +39,13 @@ export const ExportHistorySchema = z.object({
 
   /** Array of history entries, newest first */
   entries: z.array(HistoryEntrySchema).default([]),
-});
+})
 
 /**
  * TypeScript types inferred from Zod schemas.
  */
-export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
-export type ExportHistory = z.infer<typeof ExportHistorySchema>;
+export type HistoryEntry = z.infer<typeof HistoryEntrySchema>
+export type ExportHistory = z.infer<typeof ExportHistorySchema>
 
 /**
  * Default empty export history.
@@ -53,16 +53,16 @@ export type ExportHistory = z.infer<typeof ExportHistorySchema>;
 export const DEFAULT_EXPORT_HISTORY: ExportHistory = {
   version: 1,
   entries: [],
-};
+}
 
 /**
  * Maximum number of history entries to keep.
  */
-export const MAX_HISTORY_ENTRIES = 20;
+export const MAX_HISTORY_ENTRIES = 20
 
 /**
  * Generate a unique ID for a history entry.
  */
 export function generateHistoryEntryId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 }

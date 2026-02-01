@@ -1,32 +1,37 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import type { RefinedResume, GeneratedCoverLetter } from '@schemas/ai-output.schema';
-import type { AppSettings } from '@schemas/settings.schema';
-import { generateHistoryEntryId } from '@schemas/history.schema';
-import { renderResumeToPDFBlob, renderCoverLetterToPDFBlob, createPDFTheme, type PDFTheme } from '../../services/pdf';
-import { convertToPDFTheme } from '@schemas/settings.schema';
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
+import type { RefinedResume, GeneratedCoverLetter } from '@schemas/ai-output.schema'
+import type { AppSettings } from '@schemas/settings.schema'
+import { generateHistoryEntryId } from '@schemas/history.schema'
+import {
+  renderResumeToPDFBlob,
+  renderCoverLetterToPDFBlob,
+  createPDFTheme,
+  type PDFTheme,
+} from '../../services/pdf'
+import { convertToPDFTheme } from '@schemas/settings.schema'
 
 export interface ExportPanelProps {
-  refinedResume: RefinedResume;
-  coverLetter: GeneratedCoverLetter;
-  companyName: string;
-  jobTitle: string;
-  onStartOver: () => void;
+  refinedResume: RefinedResume
+  coverLetter: GeneratedCoverLetter
+  companyName: string
+  jobTitle: string
+  onStartOver: () => void
 }
 
 export interface ExportState {
-  status: 'idle' | 'exporting' | 'success' | 'error' | 'loading';
-  exportedPath: string | null;
-  error: string | null;
+  status: 'idle' | 'exporting' | 'success' | 'error' | 'loading'
+  exportedPath: string | null
+  error: string | null
   exportedFiles: {
-    resume: boolean;
-    coverLetter: boolean;
-  };
+    resume: boolean
+    coverLetter: boolean
+  }
 }
 
 export interface OverwriteConfirmation {
-  show: boolean;
-  existingFiles: string[];
-  onConfirm: () => void;
+  show: boolean
+  existingFiles: string[]
+  onConfirm: () => void
 }
 
 /**
@@ -39,15 +44,15 @@ function sanitizeForFileName(name: string): string {
     .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
     .replace(/\s+/g, '_') // Replace spaces with underscores
     .replace(/_{2,}/g, '_') // Collapse multiple underscores
-    .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+    .replace(/^_|_$/g, '') // Remove leading/trailing underscores
 }
 
 /**
  * Generates a default folder name from company name.
  */
 function generateFolderName(companyName: string): string {
-  const sanitized = sanitizeForFileName(companyName);
-  return sanitized || 'Application';
+  const sanitized = sanitizeForFileName(companyName)
+  return sanitized || 'Application'
 }
 
 /**
@@ -57,10 +62,10 @@ function generateFolderName(companyName: string): string {
 function applyFileNamingPattern(
   pattern: string,
   variables: {
-    company: string;
-    date: string;
-    title: string;
-    name: string;
+    company: string
+    date: string
+    title: string
+    name: string
   },
   documentType: 'resume' | 'cover-letter'
 ): string {
@@ -69,32 +74,32 @@ function applyFileNamingPattern(
     .replace(/\{company\}/gi, sanitizeForFileName(variables.company) || 'Company')
     .replace(/\{date\}/gi, variables.date)
     .replace(/\{title\}/gi, sanitizeForFileName(variables.title) || 'Position')
-    .replace(/\{name\}/gi, sanitizeForFileName(variables.name) || 'Candidate');
+    .replace(/\{name\}/gi, sanitizeForFileName(variables.name) || 'Candidate')
 
   // Ensure file has proper suffix based on document type
   if (documentType === 'resume' && !result.toLowerCase().includes('resume')) {
-    result = `${result}_Resume`;
+    result = `${result}_Resume`
   } else if (documentType === 'cover-letter' && !result.toLowerCase().includes('cover')) {
-    result = `${result}_Cover_Letter`;
+    result = `${result}_Cover_Letter`
   }
 
   // Ensure extension
   if (!result.toLowerCase().endsWith('.pdf')) {
-    result = `${result}.pdf`;
+    result = `${result}.pdf`
   }
 
-  return result;
+  return result
 }
 
 /**
  * Gets the current date in YYYY-MM-DD format.
  */
 function getCurrentDateString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 function ExportPanel({
@@ -105,13 +110,13 @@ function ExportPanel({
   onStartOver,
 }: ExportPanelProps): React.JSX.Element {
   // Settings state
-  const [settings, setSettings] = useState<AppSettings | null>(null);
-  const [defaultExportFolder, setDefaultExportFolder] = useState<string>('');
+  const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [defaultExportFolder, setDefaultExportFolder] = useState<string>('')
 
   // Export state
-  const [baseFolderPath, setBaseFolderPath] = useState<string | null>(null);
-  const [subfolderName, setSubfolderName] = useState<string>(generateFolderName(companyName));
-  const [useCompanySubfolders, setUseCompanySubfolders] = useState<boolean>(true);
+  const [baseFolderPath, setBaseFolderPath] = useState<string | null>(null)
+  const [subfolderName, setSubfolderName] = useState<string>(generateFolderName(companyName))
+  const [useCompanySubfolders, setUseCompanySubfolders] = useState<boolean>(true)
   const [exportState, setExportState] = useState<ExportState>({
     status: 'loading',
     exportedPath: null,
@@ -120,12 +125,12 @@ function ExportPanel({
       resume: false,
       coverLetter: false,
     },
-  });
+  })
   const [overwriteConfirmation, setOverwriteConfirmation] = useState<OverwriteConfirmation>({
     show: false,
     existingFiles: [],
     onConfirm: () => {},
-  });
+  })
 
   // Load settings on mount
   useEffect(() => {
@@ -134,74 +139,74 @@ function ExportPanel({
         const [loadedSettings, defaultFolder] = await Promise.all([
           window.electronAPI.getSettings(),
           window.electronAPI.getDefaultOutputFolder(),
-        ]);
+        ])
 
-        setSettings(loadedSettings);
-        setDefaultExportFolder(defaultFolder);
+        setSettings(loadedSettings)
+        setDefaultExportFolder(defaultFolder)
 
         // Apply settings defaults
-        const effectiveOutputFolder = loadedSettings.outputFolderPath || defaultFolder;
-        setBaseFolderPath(effectiveOutputFolder);
-        setUseCompanySubfolders(loadedSettings.createCompanySubfolders);
+        const effectiveOutputFolder = loadedSettings.outputFolderPath || defaultFolder
+        setBaseFolderPath(effectiveOutputFolder)
+        setUseCompanySubfolders(loadedSettings.createCompanySubfolders)
 
-        setExportState((prev) => ({
+        setExportState(prev => ({
           ...prev,
           status: 'idle',
-        }));
-      } catch (err) {
-        console.error('Failed to load settings:', err);
+        }))
+      } catch (_err) {
+        console.error('Failed to load settings:', _err)
         setExportState({
           status: 'idle',
           exportedPath: null,
           error: null,
           exportedFiles: { resume: false, coverLetter: false },
-        });
+        })
       }
-    };
-    loadSettings();
-  }, []);
+    }
+    loadSettings()
+  }, [])
 
   // Create PDF theme from settings
   const pdfTheme: PDFTheme = useMemo(() => {
     if (!settings) {
-      return createPDFTheme();
+      return createPDFTheme()
     }
-    return convertToPDFTheme(settings.pdfTheme);
-  }, [settings]);
+    return convertToPDFTheme(settings.pdfTheme)
+  }, [settings])
 
   // Generate file names based on settings pattern
   const fileNames = useMemo(() => {
-    const pattern = settings?.fileNamingPattern || '{company}-{name}-{date}';
+    const pattern = settings?.fileNamingPattern || '{company}-{name}-{date}'
     const variables = {
       company: companyName || 'Company',
       date: getCurrentDateString(),
       title: jobTitle || 'Position',
       name: refinedResume.personalInfo.name || 'Candidate',
-    };
+    }
 
     return {
       resume: applyFileNamingPattern(pattern, variables, 'resume'),
       coverLetter: applyFileNamingPattern(pattern, variables, 'cover-letter'),
-    };
-  }, [settings?.fileNamingPattern, companyName, jobTitle, refinedResume.personalInfo.name]);
+    }
+  }, [settings?.fileNamingPattern, companyName, jobTitle, refinedResume.personalInfo.name])
 
   // Compute effective subfolder name
-  const effectiveSubfolderName = useCompanySubfolders ? subfolderName : '';
+  const effectiveSubfolderName = useCompanySubfolders ? subfolderName : ''
 
   const handleSelectFolder = useCallback(async () => {
     try {
-      const selectedPath = await window.electronAPI.selectFolder();
+      const selectedPath = await window.electronAPI.selectFolder()
       if (selectedPath) {
-        setBaseFolderPath(selectedPath);
+        setBaseFolderPath(selectedPath)
       }
-    } catch (err) {
-      console.error('Failed to select folder:', err);
+    } catch (_err) {
+      console.error('Failed to select folder:', _err)
     }
-  }, []);
+  }, [])
 
   const performExportAll = useCallback(async () => {
     if (!baseFolderPath) {
-      return;
+      return
     }
 
     setExportState({
@@ -209,7 +214,7 @@ function ExportPanel({
       exportedPath: null,
       error: null,
       exportedFiles: { resume: false, coverLetter: false },
-    });
+    })
 
     try {
       // Create the company subfolder (if enabled) and export both PDFs
@@ -217,13 +222,16 @@ function ExportPanel({
         baseFolderPath,
         subfolderName: effectiveSubfolderName,
         resumeBlob: await renderResumeToPDFBlob(refinedResume, { theme: pdfTheme }),
-        coverLetterBlob: await renderCoverLetterToPDFBlob(coverLetter, { theme: pdfTheme, personalInfo: refinedResume.personalInfo }),
+        coverLetterBlob: await renderCoverLetterToPDFBlob(coverLetter, {
+          theme: pdfTheme,
+          personalInfo: refinedResume.personalInfo,
+        }),
         resumeFileName: fileNames.resume,
         coverLetterFileName: fileNames.coverLetter,
-      });
+      })
 
       if (result.success) {
-        const folderPath = result.folderPath ?? baseFolderPath;
+        const folderPath = result.folderPath ?? baseFolderPath
 
         // Add to export history
         try {
@@ -235,10 +243,10 @@ function ExportPanel({
             resumePath: `${folderPath}/${fileNames.resume}`,
             coverLetterPath: `${folderPath}/${fileNames.coverLetter}`,
             folderPath,
-          });
+          })
         } catch (historyError) {
           // Log but don't fail the export if history fails
-          console.warn('Failed to save to history:', historyError);
+          console.warn('Failed to save to history:', historyError)
         }
 
         setExportState({
@@ -246,33 +254,42 @@ function ExportPanel({
           exportedPath: result.folderPath ?? null,
           error: null,
           exportedFiles: { resume: true, coverLetter: true },
-        });
+        })
       } else {
         setExportState({
           status: 'error',
           exportedPath: null,
           error: result.error ?? 'Failed to export PDFs',
           exportedFiles: { resume: false, coverLetter: false },
-        });
+        })
       }
-    } catch (err) {
+    } catch (_err) {
       setExportState({
         status: 'error',
         exportedPath: null,
-        error: err instanceof Error ? err.message : 'An unexpected error occurred',
+        error: _err instanceof Error ? _err.message : 'An unexpected error occurred',
         exportedFiles: { resume: false, coverLetter: false },
-      });
+      })
     }
-  }, [baseFolderPath, effectiveSubfolderName, refinedResume, coverLetter, fileNames, pdfTheme, companyName, jobTitle]);
+  }, [
+    baseFolderPath,
+    effectiveSubfolderName,
+    refinedResume,
+    coverLetter,
+    fileNames,
+    pdfTheme,
+    companyName,
+    jobTitle,
+  ])
 
   const handleExportAll = useCallback(async () => {
     if (!baseFolderPath) {
-      setExportState((prev) => ({
+      setExportState(prev => ({
         ...prev,
         status: 'error',
         error: 'Please select a folder first',
-      }));
-      return;
+      }))
+      return
     }
 
     try {
@@ -281,7 +298,7 @@ function ExportPanel({
         baseFolderPath,
         subfolderName: effectiveSubfolderName,
         fileNames: [fileNames.resume, fileNames.coverLetter],
-      });
+      })
 
       if (checkResult.exists) {
         // Show confirmation dialog
@@ -289,30 +306,30 @@ function ExportPanel({
           show: true,
           existingFiles: checkResult.existingFiles,
           onConfirm: () => {
-            setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} });
-            performExportAll();
+            setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} })
+            performExportAll()
           },
-        });
+        })
       } else {
         // No existing files, proceed with export
-        performExportAll();
+        performExportAll()
       }
-    } catch (err) {
+    } catch (_err) {
       // If check fails, proceed with export anyway
-      performExportAll();
+      performExportAll()
     }
-  }, [baseFolderPath, effectiveSubfolderName, fileNames, performExportAll]);
+  }, [baseFolderPath, effectiveSubfolderName, fileNames, performExportAll])
 
   const performExportResume = useCallback(async () => {
     if (!baseFolderPath) {
-      return;
+      return
     }
 
-    setExportState((prev) => ({
+    setExportState(prev => ({
       ...prev,
       status: 'exporting',
       error: null,
-    }));
+    }))
 
     try {
       const result = await window.electronAPI.exportSinglePDF({
@@ -320,39 +337,39 @@ function ExportPanel({
         subfolderName: effectiveSubfolderName,
         pdfBlob: await renderResumeToPDFBlob(refinedResume, { theme: pdfTheme }),
         fileName: fileNames.resume,
-      });
+      })
 
       if (result.success) {
-        setExportState((prev) => ({
+        setExportState(prev => ({
           ...prev,
           status: 'success',
           exportedPath: result.folderPath ?? null,
           exportedFiles: { ...prev.exportedFiles, resume: true },
-        }));
+        }))
       } else {
-        setExportState((prev) => ({
+        setExportState(prev => ({
           ...prev,
           status: 'error',
           error: result.error ?? 'Failed to export resume PDF',
-        }));
+        }))
       }
-    } catch (err) {
-      setExportState((prev) => ({
+    } catch (_err) {
+      setExportState(prev => ({
         ...prev,
         status: 'error',
-        error: err instanceof Error ? err.message : 'An unexpected error occurred',
-      }));
+        error: _err instanceof Error ? _err.message : 'An unexpected error occurred',
+      }))
     }
-  }, [baseFolderPath, effectiveSubfolderName, refinedResume, fileNames.resume, pdfTheme]);
+  }, [baseFolderPath, effectiveSubfolderName, refinedResume, fileNames.resume, pdfTheme])
 
   const handleExportResume = useCallback(async () => {
     if (!baseFolderPath) {
-      setExportState((prev) => ({
+      setExportState(prev => ({
         ...prev,
         status: 'error',
         error: 'Please select a folder first',
-      }));
-      return;
+      }))
+      return
     }
 
     try {
@@ -361,7 +378,7 @@ function ExportPanel({
         baseFolderPath,
         subfolderName: effectiveSubfolderName,
         fileNames: [fileNames.resume],
-      });
+      })
 
       if (checkResult.exists) {
         // Show confirmation dialog
@@ -369,70 +386,73 @@ function ExportPanel({
           show: true,
           existingFiles: checkResult.existingFiles,
           onConfirm: () => {
-            setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} });
-            performExportResume();
+            setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} })
+            performExportResume()
           },
-        });
+        })
       } else {
         // No existing file, proceed with export
-        performExportResume();
+        performExportResume()
       }
-    } catch (err) {
+    } catch (_err) {
       // If check fails, proceed with export anyway
-      performExportResume();
+      performExportResume()
     }
-  }, [baseFolderPath, effectiveSubfolderName, fileNames.resume, performExportResume]);
+  }, [baseFolderPath, effectiveSubfolderName, fileNames.resume, performExportResume])
 
   const performExportCoverLetter = useCallback(async () => {
     if (!baseFolderPath) {
-      return;
+      return
     }
 
-    setExportState((prev) => ({
+    setExportState(prev => ({
       ...prev,
       status: 'exporting',
       error: null,
-    }));
+    }))
 
     try {
       const result = await window.electronAPI.exportSinglePDF({
         baseFolderPath,
         subfolderName: effectiveSubfolderName,
-        pdfBlob: await renderCoverLetterToPDFBlob(coverLetter, { theme: pdfTheme, personalInfo: refinedResume.personalInfo }),
+        pdfBlob: await renderCoverLetterToPDFBlob(coverLetter, {
+          theme: pdfTheme,
+          personalInfo: refinedResume.personalInfo,
+        }),
         fileName: fileNames.coverLetter,
-      });
+      })
 
       if (result.success) {
-        setExportState((prev) => ({
+        setExportState(prev => ({
           ...prev,
           status: 'success',
           exportedPath: result.folderPath ?? null,
           exportedFiles: { ...prev.exportedFiles, coverLetter: true },
-        }));
+        }))
       } else {
-        setExportState((prev) => ({
+        setExportState(prev => ({
           ...prev,
           status: 'error',
           error: result.error ?? 'Failed to export cover letter PDF',
-        }));
+        }))
       }
-    } catch (err) {
-      setExportState((prev) => ({
+    } catch (_err) {
+      setExportState(prev => ({
         ...prev,
         status: 'error',
-        error: err instanceof Error ? err.message : 'An unexpected error occurred',
-      }));
+        error: _err instanceof Error ? _err.message : 'An unexpected error occurred',
+      }))
     }
-  }, [baseFolderPath, effectiveSubfolderName, coverLetter, fileNames.coverLetter, pdfTheme]);
+  }, [baseFolderPath, effectiveSubfolderName, coverLetter, fileNames.coverLetter, pdfTheme])
 
   const handleExportCoverLetter = useCallback(async () => {
     if (!baseFolderPath) {
-      setExportState((prev) => ({
+      setExportState(prev => ({
         ...prev,
         status: 'error',
         error: 'Please select a folder first',
-      }));
-      return;
+      }))
+      return
     }
 
     try {
@@ -441,7 +461,7 @@ function ExportPanel({
         baseFolderPath,
         subfolderName: effectiveSubfolderName,
         fileNames: [fileNames.coverLetter],
-      });
+      })
 
       if (checkResult.exists) {
         // Show confirmation dialog
@@ -449,44 +469,41 @@ function ExportPanel({
           show: true,
           existingFiles: checkResult.existingFiles,
           onConfirm: () => {
-            setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} });
-            performExportCoverLetter();
+            setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} })
+            performExportCoverLetter()
           },
-        });
+        })
       } else {
         // No existing file, proceed with export
-        performExportCoverLetter();
+        performExportCoverLetter()
       }
-    } catch (err) {
+    } catch (_err) {
       // If check fails, proceed with export anyway
-      performExportCoverLetter();
+      performExportCoverLetter()
     }
-  }, [baseFolderPath, effectiveSubfolderName, fileNames.coverLetter, performExportCoverLetter]);
+  }, [baseFolderPath, effectiveSubfolderName, fileNames.coverLetter, performExportCoverLetter])
 
   const handleOpenFolder = useCallback(async () => {
     if (exportState.exportedPath) {
-      await window.electronAPI.openFolder(exportState.exportedPath);
+      await window.electronAPI.openFolder(exportState.exportedPath)
     }
-  }, [exportState.exportedPath]);
+  }, [exportState.exportedPath])
 
-  const handleSubfolderNameChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSubfolderName(e.target.value);
-    },
-    []
-  );
+  const handleSubfolderNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSubfolderName(e.target.value)
+  }, [])
 
   const handleToggleSubfolders = useCallback(() => {
-    setUseCompanySubfolders((prev) => !prev);
-  }, []);
+    setUseCompanySubfolders(prev => !prev)
+  }, [])
 
   const handleCancelOverwrite = useCallback(() => {
-    setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} });
-  }, []);
+    setOverwriteConfirmation({ show: false, existingFiles: [], onConfirm: () => {} })
+  }, [])
 
   const renderOverwriteConfirmation = () => {
     if (!overwriteConfirmation.show) {
-      return null;
+      return null
     }
 
     return (
@@ -497,7 +514,7 @@ function ExportPanel({
             The following file(s) already exist and will be overwritten:
           </p>
           <ul className="export-panel__confirmation-files">
-            {overwriteConfirmation.existingFiles.map((file) => (
+            {overwriteConfirmation.existingFiles.map(file => (
               <li key={file}>{file}</li>
             ))}
           </ul>
@@ -519,8 +536,8 @@ function ExportPanel({
           </div>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const renderFolderSelection = () => {
     // Compute the full export path for preview
@@ -528,7 +545,7 @@ function ExportPanel({
       ? useCompanySubfolders && subfolderName
         ? `${baseFolderPath}/${subfolderName}/`
         : `${baseFolderPath}/`
-      : '...';
+      : '...'
 
     return (
       <div className="export-panel__folder-selection">
@@ -585,8 +602,8 @@ function ExportPanel({
           PDFs will be saved to: <code>{fullExportPath}</code>
         </p>
       </div>
-    );
-  };
+    )
+  }
 
   const renderPDFPreview = () => (
     <div className="export-panel__pdf-list">
@@ -606,7 +623,11 @@ function ExportPanel({
           type="button"
           className="export-panel__btn export-panel__btn--small"
           onClick={handleExportResume}
-          disabled={!baseFolderPath || exportState.status === 'exporting' || exportState.status === 'loading'}
+          disabled={
+            !baseFolderPath ||
+            exportState.status === 'exporting' ||
+            exportState.status === 'loading'
+          }
         >
           Export
         </button>
@@ -626,13 +647,17 @@ function ExportPanel({
           type="button"
           className="export-panel__btn export-panel__btn--small"
           onClick={handleExportCoverLetter}
-          disabled={!baseFolderPath || exportState.status === 'exporting' || exportState.status === 'loading'}
+          disabled={
+            !baseFolderPath ||
+            exportState.status === 'exporting' ||
+            exportState.status === 'loading'
+          }
         >
           Export
         </button>
       </div>
     </div>
-  );
+  )
 
   const renderExportActions = () => (
     <div className="export-panel__actions">
@@ -640,12 +665,14 @@ function ExportPanel({
         type="button"
         className="export-panel__btn export-panel__btn--primary export-panel__btn--large"
         onClick={handleExportAll}
-        disabled={!baseFolderPath || exportState.status === 'exporting' || exportState.status === 'loading'}
+        disabled={
+          !baseFolderPath || exportState.status === 'exporting' || exportState.status === 'loading'
+        }
       >
         {exportState.status === 'exporting' ? 'Exporting...' : 'Export All'}
       </button>
     </div>
-  );
+  )
 
   const renderSuccessState = () => (
     <div className="export-panel__success">
@@ -672,7 +699,7 @@ function ExportPanel({
         </button>
       </div>
     </div>
-  );
+  )
 
   const renderErrorState = () => (
     <div className="export-panel__error">
@@ -680,18 +707,18 @@ function ExportPanel({
       <button
         type="button"
         className="export-panel__btn export-panel__btn--secondary"
-        onClick={() => setExportState((prev) => ({ ...prev, status: 'idle', error: null }))}
+        onClick={() => setExportState(prev => ({ ...prev, status: 'idle', error: null }))}
       >
         Try Again
       </button>
     </div>
-  );
+  )
 
   const renderLoadingState = () => (
     <div className="export-panel__loading">
       <p>Loading export settings...</p>
     </div>
-  );
+  )
 
   // Loading state
   if (exportState.status === 'loading') {
@@ -700,7 +727,7 @@ function ExportPanel({
         <h3 className="export-panel__title">Export Your Application</h3>
         {renderLoadingState()}
       </div>
-    );
+    )
   }
 
   // If we have a full success (both files exported), show the success state
@@ -715,22 +742,15 @@ function ExportPanel({
         {renderSuccessState()}
         {renderOverwriteConfirmation()}
       </div>
-    );
+    )
   }
 
   return (
     <div className="export-panel">
       <h3 className="export-panel__title">Export Your Application</h3>
       <p className="export-panel__description">
-        Your tailored resume and cover letter for{' '}
-        <strong>{companyName || 'this position'}</strong>
-        {jobTitle && (
-          <>
-            {' '}
-            ({jobTitle})
-          </>
-        )}{' '}
-        are ready for export.
+        Your tailored resume and cover letter for <strong>{companyName || 'this position'}</strong>
+        {jobTitle && <> ({jobTitle})</>} are ready for export.
       </p>
 
       {renderFolderSelection()}
@@ -750,7 +770,7 @@ function ExportPanel({
 
       {renderOverwriteConfirmation()}
     </div>
-  );
+  )
 }
 
-export default ExportPanel;
+export default ExportPanel

@@ -19,18 +19,18 @@ import {
   type PDFThemeSettings,
   type ResumePromptTemplateSettings,
   type CoverLetterPromptTemplateSettings,
-} from '../schemas/settings.schema';
+} from '../schemas/settings.schema'
 
 /**
  * Validation error with field path and user-friendly message.
  */
 export interface ValidationError {
   /** Dot-notation path to the field (e.g., 'pdfTheme.colors.primary') */
-  field: string;
+  field: string
   /** User-friendly error message */
-  message: string;
+  message: string
   /** Error code for programmatic handling */
-  code: SettingsValidationErrorCode;
+  code: SettingsValidationErrorCode
 }
 
 /**
@@ -38,18 +38,18 @@ export interface ValidationError {
  */
 export interface ValidationWarning {
   /** Dot-notation path to the field */
-  field: string;
+  field: string
   /** User-friendly warning message */
-  message: string;
+  message: string
 }
 
 /**
  * Result of settings validation.
  */
 export interface SettingsValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-  warnings: ValidationWarning[];
+  isValid: boolean
+  errors: ValidationError[]
+  warnings: ValidationWarning[]
 }
 
 /**
@@ -88,17 +88,18 @@ export enum SettingsValidationErrorCode {
 /**
  * Hex color validation regex.
  */
-const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
+const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/
 
 /**
  * Invalid filename characters (cross-platform).
  */
-const INVALID_FILENAME_CHARS = /[<>:"/\\|?*\x00-\x1f]/g;
+// eslint-disable-next-line no-control-regex
+const INVALID_FILENAME_CHARS = /[<>:"/\\|?*\x00-\x1f]/g
 
 /**
  * Available file naming variables (as strings for comparison).
  */
-const VALID_VARIABLES: string[] = FILE_NAMING_VARIABLES.map((v) => v.variable);
+const VALID_VARIABLES: string[] = FILE_NAMING_VARIABLES.map(v => v.variable)
 
 // ============================================
 // Color Validation
@@ -113,7 +114,7 @@ export function validateHexColor(color: unknown, fieldPath: string): ValidationE
       field: fieldPath,
       message: 'Color must be a string',
       code: SettingsValidationErrorCode.INVALID_TYPE,
-    };
+    }
   }
 
   if (!HEX_COLOR_REGEX.test(color)) {
@@ -121,10 +122,10 @@ export function validateHexColor(color: unknown, fieldPath: string): ValidationE
       field: fieldPath,
       message: `Invalid color format: "${color}". Use hex format like #RRGGBB (e.g., #1a1a2e)`,
       code: SettingsValidationErrorCode.COLOR_INVALID_FORMAT,
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -134,7 +135,7 @@ export function validatePDFThemeColors(
   colors: PDFThemeSettings['colors'],
   basePath: string = 'pdfTheme.colors'
 ): ValidationError[] {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
   const colorFields: Array<keyof PDFThemeSettings['colors']> = [
     'pageBackground',
     'sidebarBackground',
@@ -145,16 +146,16 @@ export function validatePDFThemeColors(
     'light',
     'accent',
     'white',
-  ];
+  ]
 
   for (const field of colorFields) {
-    const error = validateHexColor(colors[field], `${basePath}.${field}`);
+    const error = validateHexColor(colors[field], `${basePath}.${field}`)
     if (error) {
-      errors.push(error);
+      errors.push(error)
     }
   }
 
-  return errors;
+  return errors
 }
 
 // ============================================
@@ -170,18 +171,18 @@ export function validateFont(font: unknown, fieldPath: string): ValidationError 
       field: fieldPath,
       message: 'Font must be a string',
       code: SettingsValidationErrorCode.INVALID_TYPE,
-    };
+    }
   }
 
-  if (!SUPPORTED_PDF_FONTS.includes(font as typeof SUPPORTED_PDF_FONTS[number])) {
+  if (!SUPPORTED_PDF_FONTS.includes(font as (typeof SUPPORTED_PDF_FONTS)[number])) {
     return {
       field: fieldPath,
       message: `Font "${font}" is not supported. Supported fonts: ${SUPPORTED_PDF_FONTS.join(', ')}`,
       code: SettingsValidationErrorCode.FONT_NOT_SUPPORTED,
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -191,15 +192,15 @@ export function validatePDFThemeFonts(
   fonts: PDFThemeSettings['fonts'],
   basePath: string = 'pdfTheme.fonts'
 ): ValidationError[] {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
 
-  const primaryError = validateFont(fonts.primary, `${basePath}.primary`);
-  if (primaryError) errors.push(primaryError);
+  const primaryError = validateFont(fonts.primary, `${basePath}.primary`)
+  if (primaryError) errors.push(primaryError)
 
-  const headingError = validateFont(fonts.heading, `${basePath}.heading`);
-  if (headingError) errors.push(headingError);
+  const headingError = validateFont(fonts.heading, `${basePath}.heading`)
+  if (headingError) errors.push(headingError)
 
-  return errors;
+  return errors
 }
 
 // ============================================
@@ -216,7 +217,7 @@ export const FONT_SIZE_CONSTRAINTS = {
   body: { min: 8, max: 14 },
   small: { min: 6, max: 12 },
   tiny: { min: 5, max: 10 },
-} as const;
+} as const
 
 /**
  * Validates a font size value within constraints.
@@ -232,7 +233,7 @@ export function validateFontSize(
       field: fieldPath,
       message: 'Font size must be a number',
       code: SettingsValidationErrorCode.INVALID_TYPE,
-    };
+    }
   }
 
   if (value < min || value > max) {
@@ -240,10 +241,10 @@ export function validateFontSize(
       field: fieldPath,
       message: `Font size must be between ${min}pt and ${max}pt (current: ${value}pt)`,
       code: SettingsValidationErrorCode.FONT_SIZE_OUT_OF_RANGE,
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -253,15 +254,15 @@ export function validatePDFThemeFontSizes(
   fontSizes: PDFThemeSettings['fontSizes'],
   basePath: string = 'pdfTheme.fontSizes'
 ): ValidationError[] {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
 
   for (const [field, constraints] of Object.entries(FONT_SIZE_CONSTRAINTS)) {
-    const value = fontSizes[field as keyof typeof fontSizes];
-    const error = validateFontSize(value, `${basePath}.${field}`, constraints.min, constraints.max);
-    if (error) errors.push(error);
+    const value = fontSizes[field as keyof typeof fontSizes]
+    const error = validateFontSize(value, `${basePath}.${field}`, constraints.min, constraints.max)
+    if (error) errors.push(error)
   }
 
-  return errors;
+  return errors
 }
 
 // ============================================
@@ -276,7 +277,7 @@ export const SPACING_CONSTRAINTS = {
   sectionGap: { min: 8, max: 40 },
   itemGap: { min: 4, max: 24 },
   lineHeight: { min: 1, max: 2 },
-} as const;
+} as const
 
 /**
  * Validates a spacing value within constraints.
@@ -293,7 +294,7 @@ export function validateSpacing(
       field: fieldPath,
       message: 'Spacing value must be a number',
       code: SettingsValidationErrorCode.INVALID_TYPE,
-    };
+    }
   }
 
   if (value < min || value > max) {
@@ -301,10 +302,10 @@ export function validateSpacing(
       field: fieldPath,
       message: `Spacing must be between ${min}${unit} and ${max}${unit} (current: ${value}${unit})`,
       code: SettingsValidationErrorCode.SPACING_OUT_OF_RANGE,
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -314,31 +315,31 @@ export function validatePDFThemeSpacing(
   spacing: PDFThemeSettings['spacing'],
   basePath: string = 'pdfTheme.spacing'
 ): ValidationError[] {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
 
   const pageError = validateSpacing(
     spacing.page,
     `${basePath}.page`,
     SPACING_CONSTRAINTS.page.min,
     SPACING_CONSTRAINTS.page.max
-  );
-  if (pageError) errors.push(pageError);
+  )
+  if (pageError) errors.push(pageError)
 
   const sectionGapError = validateSpacing(
     spacing.sectionGap,
     `${basePath}.sectionGap`,
     SPACING_CONSTRAINTS.sectionGap.min,
     SPACING_CONSTRAINTS.sectionGap.max
-  );
-  if (sectionGapError) errors.push(sectionGapError);
+  )
+  if (sectionGapError) errors.push(sectionGapError)
 
   const itemGapError = validateSpacing(
     spacing.itemGap,
     `${basePath}.itemGap`,
     SPACING_CONSTRAINTS.itemGap.min,
     SPACING_CONSTRAINTS.itemGap.max
-  );
-  if (itemGapError) errors.push(itemGapError);
+  )
+  if (itemGapError) errors.push(itemGapError)
 
   const lineHeightError = validateSpacing(
     spacing.lineHeight,
@@ -346,10 +347,10 @@ export function validatePDFThemeSpacing(
     SPACING_CONSTRAINTS.lineHeight.min,
     SPACING_CONSTRAINTS.lineHeight.max,
     'x'
-  );
-  if (lineHeightError) errors.push(lineHeightError);
+  )
+  if (lineHeightError) errors.push(lineHeightError)
 
-  return errors;
+  return errors
 }
 
 // ============================================
@@ -360,20 +361,20 @@ export function validatePDFThemeSpacing(
  * Validates a file naming pattern.
  */
 export function validateFileNamingPattern(pattern: unknown): {
-  errors: ValidationError[];
-  warnings: ValidationWarning[];
+  errors: ValidationError[]
+  warnings: ValidationWarning[]
 } {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationWarning[] = [];
-  const fieldPath = 'fileNamingPattern';
+  const errors: ValidationError[] = []
+  const warnings: ValidationWarning[] = []
+  const fieldPath = 'fileNamingPattern'
 
   if (typeof pattern !== 'string') {
     errors.push({
       field: fieldPath,
       message: 'File naming pattern must be a string',
       code: SettingsValidationErrorCode.INVALID_TYPE,
-    });
-    return { errors, warnings };
+    })
+    return { errors, warnings }
   }
 
   // Check for empty pattern
@@ -382,8 +383,8 @@ export function validateFileNamingPattern(pattern: unknown): {
       field: fieldPath,
       message: 'File naming pattern cannot be empty',
       code: SettingsValidationErrorCode.PATTERN_EMPTY,
-    });
-    return { errors, warnings };
+    })
+    return { errors, warnings }
   }
 
   // Check for max length
@@ -392,43 +393,44 @@ export function validateFileNamingPattern(pattern: unknown): {
       field: fieldPath,
       message: `File naming pattern is too long (${pattern.length} characters). Maximum is 200 characters.`,
       code: SettingsValidationErrorCode.PATTERN_TOO_LONG,
-    });
+    })
   }
 
   // Check for invalid filename characters (excluding variable braces)
-  const patternWithoutVars = pattern.replace(/\{[^}]+\}/g, '');
-  const invalidChars = patternWithoutVars.match(INVALID_FILENAME_CHARS);
+  const patternWithoutVars = pattern.replace(/\{[^}]+\}/g, '')
+  const invalidChars = patternWithoutVars.match(INVALID_FILENAME_CHARS)
   if (invalidChars) {
-    const uniqueChars = [...new Set(invalidChars)].join(', ');
+    const uniqueChars = [...new Set(invalidChars)].join(', ')
     errors.push({
       field: fieldPath,
       message: `File naming pattern contains invalid characters: ${uniqueChars}`,
       code: SettingsValidationErrorCode.PATTERN_INVALID_CHARS,
-    });
+    })
   }
 
   // Extract variables from pattern
-  const variableMatches = pattern.match(/\{[^}]+\}/g) || [];
+  const variableMatches = pattern.match(/\{[^}]+\}/g) || []
 
   // Check if pattern has no variables (warning)
   if (variableMatches.length === 0) {
     warnings.push({
       field: fieldPath,
-      message: 'File naming pattern has no variables. All files will have the same name. Consider adding variables like {company} or {date}.',
-    });
+      message:
+        'File naming pattern has no variables. All files will have the same name. Consider adding variables like {company} or {date}.',
+    })
   }
 
   // Check for unknown variables
-  const unknownVariables = variableMatches.filter((v) => !VALID_VARIABLES.includes(v));
+  const unknownVariables = variableMatches.filter(v => !VALID_VARIABLES.includes(v))
   if (unknownVariables.length > 0) {
     errors.push({
       field: fieldPath,
       message: `Unknown variable(s) in pattern: ${unknownVariables.join(', ')}. Valid variables are: ${VALID_VARIABLES.join(', ')}`,
       code: SettingsValidationErrorCode.PATTERN_UNKNOWN_VARIABLE,
-    });
+    })
   }
 
-  return { errors, warnings };
+  return { errors, warnings }
 }
 
 // ============================================
@@ -442,8 +444,8 @@ export function validateResumePromptTemplate(
   template: ResumePromptTemplateSettings,
   basePath: string = 'resumePromptTemplate'
 ): { errors: ValidationError[]; warnings: ValidationWarning[] } {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationWarning[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationWarning[] = []
 
   // Validate maxSummaryLength
   if (template.maxSummaryLength < 100 || template.maxSummaryLength > 1000) {
@@ -451,7 +453,7 @@ export function validateResumePromptTemplate(
       field: `${basePath}.maxSummaryLength`,
       message: `Summary length must be between 100 and 1000 characters (current: ${template.maxSummaryLength})`,
       code: SettingsValidationErrorCode.PROMPT_VALUE_OUT_OF_RANGE,
-    });
+    })
   }
 
   // Validate maxHighlightsPerExperience
@@ -460,7 +462,7 @@ export function validateResumePromptTemplate(
       field: `${basePath}.maxHighlightsPerExperience`,
       message: `Highlights per experience must be between 1 and 10 (current: ${template.maxHighlightsPerExperience})`,
       code: SettingsValidationErrorCode.PROMPT_VALUE_OUT_OF_RANGE,
-    });
+    })
   }
 
   // Validate customInstructions length
@@ -469,7 +471,7 @@ export function validateResumePromptTemplate(
       field: `${basePath}.customInstructions`,
       message: `Custom instructions exceed maximum length of 2000 characters (current: ${template.customInstructions.length})`,
       code: SettingsValidationErrorCode.PROMPT_INSTRUCTIONS_TOO_LONG,
-    });
+    })
   }
 
   // Validate focusAreas
@@ -477,10 +479,10 @@ export function validateResumePromptTemplate(
     warnings.push({
       field: `${basePath}.focusAreas`,
       message: 'No focus areas selected. The AI will use balanced defaults.',
-    });
+    })
   }
 
-  return { errors, warnings };
+  return { errors, warnings }
 }
 
 /**
@@ -490,8 +492,8 @@ export function validateCoverLetterPromptTemplate(
   template: CoverLetterPromptTemplateSettings,
   basePath: string = 'coverLetterPromptTemplate'
 ): { errors: ValidationError[]; warnings: ValidationWarning[] } {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationWarning[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationWarning[] = []
 
   // Validate maxOpeningLength
   if (template.maxOpeningLength < 100 || template.maxOpeningLength > 500) {
@@ -499,7 +501,7 @@ export function validateCoverLetterPromptTemplate(
       field: `${basePath}.maxOpeningLength`,
       message: `Opening length must be between 100 and 500 characters (current: ${template.maxOpeningLength})`,
       code: SettingsValidationErrorCode.PROMPT_VALUE_OUT_OF_RANGE,
-    });
+    })
   }
 
   // Validate maxBodyParagraphs
@@ -508,7 +510,7 @@ export function validateCoverLetterPromptTemplate(
       field: `${basePath}.maxBodyParagraphs`,
       message: `Body paragraphs must be between 1 and 5 (current: ${template.maxBodyParagraphs})`,
       code: SettingsValidationErrorCode.PROMPT_VALUE_OUT_OF_RANGE,
-    });
+    })
   }
 
   // Validate customInstructions length
@@ -517,7 +519,7 @@ export function validateCoverLetterPromptTemplate(
       field: `${basePath}.customInstructions`,
       message: `Custom instructions exceed maximum length of 2000 characters (current: ${template.customInstructions.length})`,
       code: SettingsValidationErrorCode.PROMPT_INSTRUCTIONS_TOO_LONG,
-    });
+    })
   }
 
   // Validate focusAreas
@@ -525,10 +527,10 @@ export function validateCoverLetterPromptTemplate(
     warnings.push({
       field: `${basePath}.focusAreas`,
       message: 'No focus areas selected. The AI will use balanced defaults.',
-    });
+    })
   }
 
-  return { errors, warnings };
+  return { errors, warnings }
 }
 
 // ============================================
@@ -542,48 +544,48 @@ export function validatePDFTheme(
   theme: PDFThemeSettings,
   basePath: string = 'pdfTheme'
 ): { errors: ValidationError[]; warnings: ValidationWarning[] } {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationWarning[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationWarning[] = []
 
   // Validate colors
-  errors.push(...validatePDFThemeColors(theme.colors, `${basePath}.colors`));
+  errors.push(...validatePDFThemeColors(theme.colors, `${basePath}.colors`))
 
   // Validate fonts
-  errors.push(...validatePDFThemeFonts(theme.fonts, `${basePath}.fonts`));
+  errors.push(...validatePDFThemeFonts(theme.fonts, `${basePath}.fonts`))
 
   // Validate font sizes
-  errors.push(...validatePDFThemeFontSizes(theme.fontSizes, `${basePath}.fontSizes`));
+  errors.push(...validatePDFThemeFontSizes(theme.fontSizes, `${basePath}.fontSizes`))
 
   // Validate spacing
-  errors.push(...validatePDFThemeSpacing(theme.spacing, `${basePath}.spacing`));
+  errors.push(...validatePDFThemeSpacing(theme.spacing, `${basePath}.spacing`))
 
   // Add warnings for potentially problematic combinations
   if (theme.fontSizes.body > theme.fontSizes.sectionTitle) {
     warnings.push({
       field: `${basePath}.fontSizes`,
       message: 'Body font size is larger than section title font size. This may look unusual.',
-    });
+    })
   }
 
   if (theme.fontSizes.small > theme.fontSizes.body) {
     warnings.push({
       field: `${basePath}.fontSizes`,
       message: 'Small font size is larger than body font size. This may look unusual.',
-    });
+    })
   }
 
   // Check color contrast (simplified check)
-  const bgColor = theme.colors.pageBackground.toLowerCase();
-  const textColor = theme.colors.body.toLowerCase();
+  const bgColor = theme.colors.pageBackground.toLowerCase()
+  const textColor = theme.colors.body.toLowerCase()
   if (bgColor === textColor) {
     errors.push({
       field: `${basePath}.colors`,
       message: 'Background color and text color are the same. Text will not be visible.',
       code: SettingsValidationErrorCode.COLOR_INVALID_FORMAT,
-    });
+    })
   }
 
-  return { errors, warnings };
+  return { errors, warnings }
 }
 
 // ============================================
@@ -597,43 +599,45 @@ export function validatePDFTheme(
  * (folder existence/writability). For filesystem validation, use
  * the settings service methods in the main process.
  */
-export function validateSettings(settings: AppSettings | PartialAppSettings): SettingsValidationResult {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationWarning[] = [];
+export function validateSettings(
+  settings: AppSettings | PartialAppSettings
+): SettingsValidationResult {
+  const errors: ValidationError[] = []
+  const warnings: ValidationWarning[] = []
 
   // Validate file naming pattern if present
   if ('fileNamingPattern' in settings && settings.fileNamingPattern !== undefined) {
-    const patternResult = validateFileNamingPattern(settings.fileNamingPattern);
-    errors.push(...patternResult.errors);
-    warnings.push(...patternResult.warnings);
+    const patternResult = validateFileNamingPattern(settings.fileNamingPattern)
+    errors.push(...patternResult.errors)
+    warnings.push(...patternResult.warnings)
   }
 
   // Validate resume prompt template if present
   if ('resumePromptTemplate' in settings && settings.resumePromptTemplate !== undefined) {
-    const resumeResult = validateResumePromptTemplate(settings.resumePromptTemplate);
-    errors.push(...resumeResult.errors);
-    warnings.push(...resumeResult.warnings);
+    const resumeResult = validateResumePromptTemplate(settings.resumePromptTemplate)
+    errors.push(...resumeResult.errors)
+    warnings.push(...resumeResult.warnings)
   }
 
   // Validate cover letter prompt template if present
   if ('coverLetterPromptTemplate' in settings && settings.coverLetterPromptTemplate !== undefined) {
-    const coverLetterResult = validateCoverLetterPromptTemplate(settings.coverLetterPromptTemplate);
-    errors.push(...coverLetterResult.errors);
-    warnings.push(...coverLetterResult.warnings);
+    const coverLetterResult = validateCoverLetterPromptTemplate(settings.coverLetterPromptTemplate)
+    errors.push(...coverLetterResult.errors)
+    warnings.push(...coverLetterResult.warnings)
   }
 
   // Validate PDF theme if present
   if ('pdfTheme' in settings && settings.pdfTheme !== undefined) {
-    const themeResult = validatePDFTheme(settings.pdfTheme);
-    errors.push(...themeResult.errors);
-    warnings.push(...themeResult.warnings);
+    const themeResult = validatePDFTheme(settings.pdfTheme)
+    errors.push(...themeResult.errors)
+    warnings.push(...themeResult.warnings)
   }
 
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
-  };
+  }
 }
 
 /**
@@ -642,20 +646,20 @@ export function validateSettings(settings: AppSettings | PartialAppSettings): Se
  * This is useful for displaying errors next to specific form fields.
  */
 export function errorsToFieldMap(errors: ValidationError[]): Record<string, string> {
-  const fieldMap: Record<string, string> = {};
+  const fieldMap: Record<string, string> = {}
 
   for (const error of errors) {
     // Use the field path as the key, but also add a simple key for nested fields
-    fieldMap[error.field] = error.message;
+    fieldMap[error.field] = error.message
 
     // Also add a simplified key for UI components that use simple field names
-    const simpleKey = error.field.split('.').pop() || error.field;
+    const simpleKey = error.field.split('.').pop() || error.field
     if (!(simpleKey in fieldMap)) {
-      fieldMap[simpleKey] = error.message;
+      fieldMap[simpleKey] = error.message
     }
   }
 
-  return fieldMap;
+  return fieldMap
 }
 
 /**
@@ -664,24 +668,32 @@ export function errorsToFieldMap(errors: ValidationError[]): Record<string, stri
 export function getErrorMessage(code: SettingsValidationErrorCode): string {
   const messages: Record<SettingsValidationErrorCode, string> = {
     [SettingsValidationErrorCode.FOLDER_NOT_EXISTS]: 'The selected folder does not exist',
-    [SettingsValidationErrorCode.FOLDER_NOT_WRITABLE]: 'The selected folder is not writable. Please choose a different folder.',
+    [SettingsValidationErrorCode.FOLDER_NOT_WRITABLE]:
+      'The selected folder is not writable. Please choose a different folder.',
     [SettingsValidationErrorCode.FOLDER_IS_FILE]: 'The selected path is a file, not a folder',
     [SettingsValidationErrorCode.FOLDER_INVALID_PATH]: 'The folder path is invalid',
     [SettingsValidationErrorCode.PATTERN_EMPTY]: 'File naming pattern cannot be empty',
-    [SettingsValidationErrorCode.PATTERN_TOO_LONG]: 'File naming pattern is too long (max 200 characters)',
-    [SettingsValidationErrorCode.PATTERN_INVALID_CHARS]: 'File naming pattern contains invalid characters',
-    [SettingsValidationErrorCode.PATTERN_NO_VARIABLES]: 'Consider adding variables like {company} or {date} for unique file names',
-    [SettingsValidationErrorCode.PATTERN_UNKNOWN_VARIABLE]: 'Unknown variable in file naming pattern',
-    [SettingsValidationErrorCode.COLOR_INVALID_FORMAT]: 'Invalid color format. Use hex format like #RRGGBB',
+    [SettingsValidationErrorCode.PATTERN_TOO_LONG]:
+      'File naming pattern is too long (max 200 characters)',
+    [SettingsValidationErrorCode.PATTERN_INVALID_CHARS]:
+      'File naming pattern contains invalid characters',
+    [SettingsValidationErrorCode.PATTERN_NO_VARIABLES]:
+      'Consider adding variables like {company} or {date} for unique file names',
+    [SettingsValidationErrorCode.PATTERN_UNKNOWN_VARIABLE]:
+      'Unknown variable in file naming pattern',
+    [SettingsValidationErrorCode.COLOR_INVALID_FORMAT]:
+      'Invalid color format. Use hex format like #RRGGBB',
     [SettingsValidationErrorCode.FONT_NOT_SUPPORTED]: 'Font is not supported for PDF generation',
     [SettingsValidationErrorCode.FONT_SIZE_OUT_OF_RANGE]: 'Font size is outside the allowed range',
-    [SettingsValidationErrorCode.SPACING_OUT_OF_RANGE]: 'Spacing value is outside the allowed range',
+    [SettingsValidationErrorCode.SPACING_OUT_OF_RANGE]:
+      'Spacing value is outside the allowed range',
     [SettingsValidationErrorCode.PROMPT_VALUE_OUT_OF_RANGE]: 'Value is outside the allowed range',
-    [SettingsValidationErrorCode.PROMPT_INSTRUCTIONS_TOO_LONG]: 'Custom instructions are too long (max 2000 characters)',
+    [SettingsValidationErrorCode.PROMPT_INSTRUCTIONS_TOO_LONG]:
+      'Custom instructions are too long (max 2000 characters)',
     [SettingsValidationErrorCode.PROMPT_NO_FOCUS_AREAS]: 'No focus areas selected',
     [SettingsValidationErrorCode.REQUIRED_FIELD_MISSING]: 'This field is required',
     [SettingsValidationErrorCode.INVALID_TYPE]: 'Invalid value type',
-  };
+  }
 
-  return messages[code] || 'Validation error';
+  return messages[code] || 'Validation error'
 }

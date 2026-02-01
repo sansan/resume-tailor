@@ -44,21 +44,13 @@ const PHASES: PhaseConfig[] = [
     id: 'extracting',
     icon: <Search className="size-6" />,
     label: 'Extracting information',
-    subtitles: [
-      'Finding your skills...',
-      'Spotting achievements...',
-      'Identifying experience...',
-    ],
+    subtitles: ['Finding your skills...', 'Spotting achievements...', 'Identifying experience...'],
   },
   {
     id: 'organizing',
     icon: <Brain className="size-6" />,
     label: 'Organizing sections',
-    subtitles: [
-      'Sorting experience...',
-      'Grouping skills...',
-      'Structuring content...',
-    ],
+    subtitles: ['Sorting experience...', 'Grouping skills...', 'Structuring content...'],
   },
   {
     id: 'finalizing',
@@ -85,7 +77,7 @@ export function ProcessingProgress({
   const prevPhaseRef = useRef(phase)
 
   // Get the current phase config
-  const currentPhase = PHASES.find((p) => p.id === displayedPhase)
+  const currentPhase = PHASES.find(p => p.id === displayedPhase)
 
   // Handle phase transition with flip animation
   useEffect(() => {
@@ -109,9 +101,7 @@ export function ProcessingProgress({
     }
 
     const interval = setInterval(() => {
-      setCurrentSubtitleIndex(
-        (prev) => (prev + 1) % currentPhase.subtitles.length
-      )
+      setCurrentSubtitleIndex(prev => (prev + 1) % currentPhase.subtitles.length)
     }, 2000)
 
     return () => clearInterval(interval)
@@ -133,9 +123,7 @@ export function ProcessingProgress({
         <div
           className={cn(
             'flex size-20 items-center justify-center rounded-full transition-all duration-500',
-            isComplete
-              ? 'bg-green-500/10 text-green-500'
-              : 'bg-primary/10 text-primary'
+            isComplete ? 'bg-green-500/10 text-green-500' : 'bg-primary/10 text-primary'
           )}
         >
           {isComplete ? (
@@ -146,7 +134,7 @@ export function ProcessingProgress({
         </div>
         {/* Animated ring */}
         {!isComplete && phase !== 'idle' && (
-          <div className="absolute inset-0 animate-ping rounded-full bg-primary/20 [animation-duration:1.5s]" />
+          <div className="bg-primary/20 absolute inset-0 animate-ping rounded-full [animation-duration:1.5s]" />
         )}
       </div>
 
@@ -155,9 +143,7 @@ export function ProcessingProgress({
         <p
           className={cn(
             'text-xl font-semibold transition-all duration-300',
-            isFlipping
-              ? 'translate-y-full opacity-0'
-              : 'translate-y-0 opacity-100',
+            isFlipping ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100',
             isComplete ? 'text-green-600 dark:text-green-400' : 'text-foreground'
           )}
         >
@@ -170,13 +156,11 @@ export function ProcessingProgress({
         <p
           key={currentSubtitle}
           className={cn(
-            'text-sm text-muted-foreground animate-in fade-in slide-in-from-bottom-2 duration-300',
+            'text-muted-foreground animate-in fade-in slide-in-from-bottom-2 text-sm duration-300',
             isComplete && 'text-green-600/80 dark:text-green-400/80'
           )}
         >
-          {isComplete
-            ? 'Your information has been extracted successfully'
-            : currentSubtitle}
+          {isComplete ? 'Your information has been extracted successfully' : currentSubtitle}
         </p>
       </div>
 
@@ -184,7 +168,7 @@ export function ProcessingProgress({
       {!isComplete && (
         <div className="flex gap-2 pt-2">
           {PHASES.map((p, idx) => {
-            const currentIdx = PHASES.findIndex((x) => x.id === displayedPhase)
+            const currentIdx = PHASES.findIndex(x => x.id === displayedPhase)
             const isActive = idx === currentIdx
             const isDone = idx < currentIdx
             return (

@@ -93,7 +93,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
 
       {experiences.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className="text-muted-foreground py-8 text-center">
             No work experience added yet. Click "Add Entry" to get started.
           </CardContent>
         </Card>
@@ -106,7 +106,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                   {/* Drag handle */}
                   <div className="flex items-start pt-2">
                     <GripVertical
-                      className="h-5 w-5 text-muted-foreground cursor-grab"
+                      className="text-muted-foreground h-5 w-5 cursor-grab"
                       aria-hidden="true"
                     />
                   </div>
@@ -120,7 +120,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                         <Input
                           id={`title-${index}`}
                           value={experience.title}
-                          onChange={(e) => handleUpdateEntry(index, 'title', e.target.value)}
+                          onChange={e => handleUpdateEntry(index, 'title', e.target.value)}
                           placeholder="Software Engineer"
                         />
                       </div>
@@ -129,7 +129,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                         <Input
                           id={`startDate-${index}`}
                           value={experience.startDate}
-                          onChange={(e) => handleUpdateEntry(index, 'startDate', e.target.value)}
+                          onChange={e => handleUpdateEntry(index, 'startDate', e.target.value)}
                           placeholder="Jan 2020"
                         />
                       </div>
@@ -138,12 +138,8 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                         <Input
                           id={`endDate-${index}`}
                           value={experience.endDate ?? ''}
-                          onChange={(e) =>
-                            handleUpdateEntry(
-                              index,
-                              'endDate',
-                              e.target.value || undefined
-                            )
+                          onChange={e =>
+                            handleUpdateEntry(index, 'endDate', e.target.value || undefined)
                           }
                           placeholder="Present"
                         />
@@ -157,7 +153,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                         <Input
                           id={`company-${index}`}
                           value={experience.company}
-                          onChange={(e) => handleUpdateEntry(index, 'company', e.target.value)}
+                          onChange={e => handleUpdateEntry(index, 'company', e.target.value)}
                           placeholder="Acme Corp"
                         />
                       </div>
@@ -166,12 +162,8 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                         <Input
                           id={`location-${index}`}
                           value={experience.location ?? ''}
-                          onChange={(e) =>
-                            handleUpdateEntry(
-                              index,
-                              'location',
-                              e.target.value || undefined
-                            )
+                          onChange={e =>
+                            handleUpdateEntry(index, 'location', e.target.value || undefined)
                           }
                           placeholder="San Francisco, CA"
                         />
@@ -182,17 +174,13 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Highlights</Label>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAddHighlight(index)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleAddHighlight(index)}>
                           <Plus className="mr-1 h-3 w-3" />
                           Add
                         </Button>
                       </div>
                       {experience.highlights.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           No highlights yet. Add bullet points to describe your achievements.
                         </p>
                       ) : (
@@ -201,9 +189,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                             <div key={hIndex} className="flex gap-2">
                               <Input
                                 value={highlight}
-                                onChange={(e) =>
-                                  handleUpdateHighlight(index, hIndex, e.target.value)
-                                }
+                                onChange={e => handleUpdateHighlight(index, hIndex, e.target.value)}
                                 placeholder="Describe an achievement or responsibility"
                               />
                               <Button
@@ -212,7 +198,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                                 onClick={() => handleRemoveHighlight(index, hIndex)}
                                 aria-label="Remove highlight"
                               >
-                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                <Trash2 className="text-muted-foreground h-4 w-4" />
                               </Button>
                             </div>
                           ))}
@@ -229,7 +215,7 @@ export function ExperienceSection({ experiences, onChange }: ExperienceSectionPr
                       onClick={() => handleDeleteEntry(index)}
                       aria-label="Delete experience entry"
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="text-destructive h-4 w-4" />
                     </Button>
                   </div>
                 </div>

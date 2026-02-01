@@ -55,10 +55,7 @@ function saveCoverLetterToStorage(coverLetter: GeneratedCoverLetter): void {
  * Creates a default cover letter from resume data.
  * This generates a generic cover letter without AI, using just the resume information.
  */
-function createDefaultCoverLetter(
-  name: string,
-  summary?: string | null
-): GeneratedCoverLetter {
+function createDefaultCoverLetter(name: string, summary?: string | null): GeneratedCoverLetter {
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -170,7 +167,9 @@ export function CoverLetterPage() {
           let attempt = 0
           while (charCount > TARGET_CHAR_COUNT && attempt < MAX_SHORTEN_ATTEMPTS) {
             attempt++
-            setGenerationStatus(`Letter too long (${charCount} chars). Shortening... (attempt ${attempt}/${MAX_SHORTEN_ATTEMPTS})`)
+            setGenerationStatus(
+              `Letter too long (${charCount} chars). Shortening... (attempt ${attempt}/${MAX_SHORTEN_ATTEMPTS})`
+            )
 
             const shortenResult = await window.electronAPI.shortenCoverLetter({
               coverLetter: letter,
@@ -189,7 +188,9 @@ export function CoverLetterPage() {
           }
 
           if (charCount > TARGET_CHAR_COUNT) {
-            setGenerationError(`Cover letter is ${charCount} characters (target: ${TARGET_CHAR_COUNT}). It may not fit on one page.`)
+            setGenerationError(
+              `Cover letter is ${charCount} characters (target: ${TARGET_CHAR_COUNT}). It may not fit on one page.`
+            )
           }
 
           setCoverLetter(letter)
@@ -197,7 +198,9 @@ export function CoverLetterPage() {
         } else {
           // AI failed, show error and fall back to default
           console.error('AI generation failed:', result.error)
-          setGenerationError(`AI generation failed: ${result.error.message}. Using template instead.`)
+          setGenerationError(
+            `AI generation failed: ${result.error.message}. Using template instead.`
+          )
           const letter = createDefaultCoverLetter(name, personalInfo?.summary)
           setCoverLetter(letter)
           saveCoverLetterToStorage(letter)
@@ -231,12 +234,7 @@ export function CoverLetterPage() {
 
     try {
       // Generate PDF blob
-      const doc = (
-        <CoverLetterPDFDocument
-          coverLetter={coverLetter}
-          personalInfo={personalInfo}
-        />
-      )
+      const doc = <CoverLetterPDFDocument coverLetter={coverLetter} personalInfo={personalInfo} />
       const blob = await pdf(doc).toBlob()
 
       // Convert to array buffer for Electron
@@ -245,9 +243,10 @@ export function CoverLetterPage() {
 
       // Create filename: Cover-Letter-FirstName-LastName.pdf
       const formattedName = formatNameForFilename(name)
-      const fileName = formattedName && formattedName !== 'Your-Name'
-        ? `Cover-Letter-${formattedName}.pdf`
-        : 'Cover-Letter.pdf'
+      const fileName =
+        formattedName && formattedName !== 'Your-Name'
+          ? `Cover-Letter-${formattedName}.pdf`
+          : 'Cover-Letter.pdf'
 
       // Use Electron's save dialog with custom filename
       await window.electronAPI.generatePDF(uint8Array, fileName)
@@ -269,8 +268,8 @@ export function CoverLetterPage() {
   // Show loading state while profile loads
   if (isLoadingProfile) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
       </div>
     )
   }
@@ -283,11 +282,7 @@ export function CoverLetterPage() {
           <h1 className="text-3xl font-bold tracking-tight">Cover Letter</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-          >
+          <Button variant="outline" onClick={handleGenerate} disabled={isGenerating}>
             {isGenerating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -300,10 +295,7 @@ export function CoverLetterPage() {
               </>
             )}
           </Button>
-          <Button
-            onClick={handleExportPDF}
-            disabled={!coverLetter || isExporting}
-          >
+          <Button onClick={handleExportPDF} disabled={!coverLetter || isExporting}>
             {isExporting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -337,13 +329,13 @@ export function CoverLetterPage() {
           />
         ) : (
           <div
-            className="mx-auto flex flex-col items-center justify-center rounded-lg bg-white shadow-lg border border-border w-full"
+            className="border-border mx-auto flex w-full flex-col items-center justify-center rounded-lg border bg-white shadow-lg"
             style={{ aspectRatio: '8.5 / 11' }}
           >
-            <div className="flex flex-col items-center justify-center text-muted-foreground">
+            <div className="text-muted-foreground flex flex-col items-center justify-center">
               <FileText className="mb-4 h-16 w-16 opacity-50" />
               <p className="text-lg font-medium">No cover letter generated</p>
-              <p className="mt-1 text-sm text-center px-8">
+              <p className="mt-1 px-8 text-center text-sm">
                 {isAIAvailable
                   ? 'Click "Generate" to create a personalized cover letter using AI'
                   : 'Click "Generate" to create a cover letter based on your resume'}

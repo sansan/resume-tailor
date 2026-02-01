@@ -1,10 +1,10 @@
-import React from 'react';
+import React from 'react'
 import {
   type AppSettings,
   type ResumePromptTemplateSettings,
   type CoverLetterPromptTemplateSettings,
   DEFAULT_APP_SETTINGS,
-} from '@schemas/settings.schema';
+} from '@schemas/settings.schema'
 
 /**
  * Available prompt variables with descriptions.
@@ -22,32 +22,32 @@ export const PROMPT_VARIABLES = {
     { variable: '{companyInfo}', description: 'Company information (if provided)' },
     { variable: '{schema}', description: 'The expected output JSON schema' },
   ],
-} as const;
+} as const
 
 /**
  * Props for the PromptSettings component.
  */
 export interface PromptSettingsProps {
   /** Current application settings */
-  settings: AppSettings;
+  settings: AppSettings
   /** Field validation errors */
-  errors: Record<string, string>;
+  errors: Record<string, string>
   /** Whether the resume prompt section is expanded */
-  isResumeExpanded: boolean;
+  isResumeExpanded: boolean
   /** Whether the cover letter prompt section is expanded */
-  isCoverLetterExpanded: boolean;
+  isCoverLetterExpanded: boolean
   /** Toggle resume section expansion */
-  onToggleResume: () => void;
+  onToggleResume: () => void
   /** Toggle cover letter section expansion */
-  onToggleCoverLetter: () => void;
+  onToggleCoverLetter: () => void
   /** Update resume prompt settings */
-  onUpdateResumePrompt: (updates: Partial<ResumePromptTemplateSettings>) => void;
+  onUpdateResumePrompt: (updates: Partial<ResumePromptTemplateSettings>) => void
   /** Update cover letter prompt settings */
-  onUpdateCoverLetterPrompt: (updates: Partial<CoverLetterPromptTemplateSettings>) => void;
+  onUpdateCoverLetterPrompt: (updates: Partial<CoverLetterPromptTemplateSettings>) => void
   /** Reset resume prompt to defaults */
-  onResetResumePrompt: () => void;
+  onResetResumePrompt: () => void
   /** Reset cover letter prompt to defaults */
-  onResetCoverLetterPrompt: () => void;
+  onResetCoverLetterPrompt: () => void
 }
 
 /**
@@ -90,25 +90,25 @@ function PromptSettings({
         </button>
 
         {isResumeExpanded && (
-          <div
-            id="resume-prompt-settings-content"
-            className="settings-view__section-content"
-          >
+          <div id="resume-prompt-settings-content" className="settings-view__section-content">
             {/* Help text about prompt variables */}
             <div className="settings-view__field">
               <p className="settings-view__help">
-                These settings control how the AI refines your resume for specific job postings.
-                The AI uses your original resume and the job posting to create a tailored version.
+                These settings control how the AI refines your resume for specific job postings. The
+                AI uses your original resume and the job posting to create a tailored version.
               </p>
               <details className="settings-view__details">
                 <summary className="settings-view__details-summary">
                   How it works (technical details)
                 </summary>
-                <div className="settings-view__variables" aria-label="Available prompt variables for resume refinement">
+                <div
+                  className="settings-view__variables"
+                  aria-label="Available prompt variables for resume refinement"
+                >
                   <p className="settings-view__help" style={{ marginBottom: '0.5rem' }}>
                     The AI prompt is built using these components:
                   </p>
-                  {PROMPT_VARIABLES.resume.map((v) => (
+                  {PROMPT_VARIABLES.resume.map(v => (
                     <span key={v.variable} className="settings-view__variable">
                       <code>{v.variable}</code> - {v.description}
                     </span>
@@ -134,7 +134,9 @@ function PromptSettings({
                     max="1000"
                     step="50"
                     value={settings.resumePromptTemplate.maxSummaryLength}
-                    onChange={(e) => onUpdateResumePrompt({ maxSummaryLength: parseInt(e.target.value) })}
+                    onChange={e =>
+                      onUpdateResumePrompt({ maxSummaryLength: parseInt(e.target.value) })
+                    }
                     aria-describedby="max-summary-length-value"
                   />
                   <span id="max-summary-length-value" className="settings-view__range-value">
@@ -158,7 +160,9 @@ function PromptSettings({
                     max="10"
                     step="1"
                     value={settings.resumePromptTemplate.maxHighlightsPerExperience}
-                    onChange={(e) => onUpdateResumePrompt({ maxHighlightsPerExperience: parseInt(e.target.value) })}
+                    onChange={e =>
+                      onUpdateResumePrompt({ maxHighlightsPerExperience: parseInt(e.target.value) })
+                    }
                     aria-describedby="max-highlights-value"
                   />
                   <span id="max-highlights-value" className="settings-view__range-value">
@@ -173,14 +177,16 @@ function PromptSettings({
               <label htmlFor="resume-tone" className="settings-view__label">
                 Tone
               </label>
-              <p className="settings-view__help">
-                The writing style for your refined resume.
-              </p>
+              <p className="settings-view__help">The writing style for your refined resume.</p>
               <select
                 id="resume-tone"
                 className="settings-view__select"
                 value={settings.resumePromptTemplate.tone}
-                onChange={(e) => onUpdateResumePrompt({ tone: e.target.value as ResumePromptTemplateSettings['tone'] })}
+                onChange={e =>
+                  onUpdateResumePrompt({
+                    tone: e.target.value as ResumePromptTemplateSettings['tone'],
+                  })
+                }
               >
                 <option value="professional">Professional - Formal business language</option>
                 <option value="conversational">Conversational - Approachable and personable</option>
@@ -195,16 +201,16 @@ function PromptSettings({
                 Select which aspects to prioritize when refining the resume.
               </p>
               <div className="settings-view__checkbox-group">
-                {(['skills', 'experience', 'achievements', 'education'] as const).map((area) => (
+                {(['skills', 'experience', 'achievements', 'education'] as const).map(area => (
                   <label key={area} className="settings-view__label settings-view__label--checkbox">
                     <input
                       type="checkbox"
                       checked={settings.resumePromptTemplate.focusAreas.includes(area)}
-                      onChange={(e) => {
+                      onChange={e => {
                         const newAreas = e.target.checked
                           ? [...settings.resumePromptTemplate.focusAreas, area]
-                          : settings.resumePromptTemplate.focusAreas.filter((a) => a !== area);
-                        onUpdateResumePrompt({ focusAreas: newAreas });
+                          : settings.resumePromptTemplate.focusAreas.filter(a => a !== area)
+                        onUpdateResumePrompt({ focusAreas: newAreas })
                       }}
                     />
                     <span>{area.charAt(0).toUpperCase() + area.slice(1)}</span>
@@ -219,13 +225,13 @@ function PromptSettings({
                 <input
                   type="checkbox"
                   checked={settings.resumePromptTemplate.preserveAllContent}
-                  onChange={(e) => onUpdateResumePrompt({ preserveAllContent: e.target.checked })}
+                  onChange={e => onUpdateResumePrompt({ preserveAllContent: e.target.checked })}
                 />
                 <span>Preserve all content</span>
               </label>
               <p className="settings-view__help">
-                When enabled, the AI will not remove or significantly shorten any content.
-                Useful when you want all experiences included regardless of relevance.
+                When enabled, the AI will not remove or significantly shorten any content. Useful
+                when you want all experiences included regardless of relevance.
               </p>
             </div>
 
@@ -235,14 +241,14 @@ function PromptSettings({
                 Custom Instructions
               </label>
               <p className="settings-view__help">
-                Additional instructions for the AI when refining your resume.
-                These are appended to the system prompt.
+                Additional instructions for the AI when refining your resume. These are appended to
+                the system prompt.
               </p>
               <textarea
                 id="resume-custom-instructions"
                 className="settings-view__textarea"
                 value={settings.resumePromptTemplate.customInstructions}
-                onChange={(e) => onUpdateResumePrompt({ customInstructions: e.target.value })}
+                onChange={e => onUpdateResumePrompt({ customInstructions: e.target.value })}
                 rows={4}
                 maxLength={2000}
                 placeholder="E.g., Always emphasize leadership skills, avoid jargon, focus on quantifiable achievements..."
@@ -263,11 +269,17 @@ function PromptSettings({
               <label className="settings-view__label">Settings Preview</label>
               <div className="settings-view__preview">
                 <p className="settings-view__preview-text">
-                  Your resume will be refined with a <strong>{settings.resumePromptTemplate.tone}</strong> tone,
-                  focusing on <strong>{settings.resumePromptTemplate.focusAreas.join(', ') || 'all areas'}</strong>.
-                  The summary will be limited to <strong>{settings.resumePromptTemplate.maxSummaryLength}</strong> characters,
-                  with up to <strong>{settings.resumePromptTemplate.maxHighlightsPerExperience}</strong> highlights per experience.
-                  {settings.resumePromptTemplate.preserveAllContent && ' All original content will be preserved.'}
+                  Your resume will be refined with a{' '}
+                  <strong>{settings.resumePromptTemplate.tone}</strong> tone, focusing on{' '}
+                  <strong>
+                    {settings.resumePromptTemplate.focusAreas.join(', ') || 'all areas'}
+                  </strong>
+                  . The summary will be limited to{' '}
+                  <strong>{settings.resumePromptTemplate.maxSummaryLength}</strong> characters, with
+                  up to <strong>{settings.resumePromptTemplate.maxHighlightsPerExperience}</strong>{' '}
+                  highlights per experience.
+                  {settings.resumePromptTemplate.preserveAllContent &&
+                    ' All original content will be preserved.'}
                 </p>
               </div>
             </div>
@@ -302,25 +314,26 @@ function PromptSettings({
         </button>
 
         {isCoverLetterExpanded && (
-          <div
-            id="cover-letter-prompt-settings-content"
-            className="settings-view__section-content"
-          >
+          <div id="cover-letter-prompt-settings-content" className="settings-view__section-content">
             {/* Help text about prompt variables */}
             <div className="settings-view__field">
               <p className="settings-view__help">
-                These settings control how the AI generates cover letters tailored to specific job postings.
-                The AI uses your resume and the job posting to create a personalized cover letter.
+                These settings control how the AI generates cover letters tailored to specific job
+                postings. The AI uses your resume and the job posting to create a personalized cover
+                letter.
               </p>
               <details className="settings-view__details">
                 <summary className="settings-view__details-summary">
                   How it works (technical details)
                 </summary>
-                <div className="settings-view__variables" aria-label="Available prompt variables for cover letter generation">
+                <div
+                  className="settings-view__variables"
+                  aria-label="Available prompt variables for cover letter generation"
+                >
                   <p className="settings-view__help" style={{ marginBottom: '0.5rem' }}>
                     The AI prompt is built using these components:
                   </p>
-                  {PROMPT_VARIABLES.coverLetter.map((v) => (
+                  {PROMPT_VARIABLES.coverLetter.map(v => (
                     <span key={v.variable} className="settings-view__variable">
                       <code>{v.variable}</code> - {v.description}
                     </span>
@@ -346,7 +359,9 @@ function PromptSettings({
                     max="500"
                     step="50"
                     value={settings.coverLetterPromptTemplate.maxOpeningLength}
-                    onChange={(e) => onUpdateCoverLetterPrompt({ maxOpeningLength: parseInt(e.target.value) })}
+                    onChange={e =>
+                      onUpdateCoverLetterPrompt({ maxOpeningLength: parseInt(e.target.value) })
+                    }
                     aria-describedby="max-opening-length-value"
                   />
                   <span id="max-opening-length-value" className="settings-view__range-value">
@@ -370,7 +385,9 @@ function PromptSettings({
                     max="5"
                     step="1"
                     value={settings.coverLetterPromptTemplate.maxBodyParagraphs}
-                    onChange={(e) => onUpdateCoverLetterPrompt({ maxBodyParagraphs: parseInt(e.target.value) })}
+                    onChange={e =>
+                      onUpdateCoverLetterPrompt({ maxBodyParagraphs: parseInt(e.target.value) })
+                    }
                     aria-describedby="max-body-paragraphs-value"
                   />
                   <span id="max-body-paragraphs-value" className="settings-view__range-value">
@@ -386,14 +403,16 @@ function PromptSettings({
                 <label htmlFor="cover-letter-tone" className="settings-view__label">
                   Tone
                 </label>
-                <p className="settings-view__help">
-                  The overall voice of the cover letter.
-                </p>
+                <p className="settings-view__help">The overall voice of the cover letter.</p>
                 <select
                   id="cover-letter-tone"
                   className="settings-view__select"
                   value={settings.coverLetterPromptTemplate.tone}
-                  onChange={(e) => onUpdateCoverLetterPrompt({ tone: e.target.value as CoverLetterPromptTemplateSettings['tone'] })}
+                  onChange={e =>
+                    onUpdateCoverLetterPrompt({
+                      tone: e.target.value as CoverLetterPromptTemplateSettings['tone'],
+                    })
+                  }
                 >
                   <option value="formal">Formal - Traditional business style</option>
                   <option value="conversational">Conversational - Warm and personable</option>
@@ -405,14 +424,16 @@ function PromptSettings({
                 <label htmlFor="cover-letter-style" className="settings-view__label">
                   Style
                 </label>
-                <p className="settings-view__help">
-                  The writing approach for the content.
-                </p>
+                <p className="settings-view__help">The writing approach for the content.</p>
                 <select
                   id="cover-letter-style"
                   className="settings-view__select"
                   value={settings.coverLetterPromptTemplate.style}
-                  onChange={(e) => onUpdateCoverLetterPrompt({ style: e.target.value as CoverLetterPromptTemplateSettings['style'] })}
+                  onChange={e =>
+                    onUpdateCoverLetterPrompt({
+                      style: e.target.value as CoverLetterPromptTemplateSettings['style'],
+                    })
+                  }
                 >
                   <option value="concise">Concise - Short and impactful</option>
                   <option value="detailed">Detailed - Comprehensive coverage</option>
@@ -428,19 +449,32 @@ function PromptSettings({
                 Select which aspects to emphasize in the cover letter.
               </p>
               <div className="settings-view__checkbox-group">
-                {(['technical-skills', 'leadership', 'achievements', 'culture-fit', 'career-growth'] as const).map((area) => (
+                {(
+                  [
+                    'technical-skills',
+                    'leadership',
+                    'achievements',
+                    'culture-fit',
+                    'career-growth',
+                  ] as const
+                ).map(area => (
                   <label key={area} className="settings-view__label settings-view__label--checkbox">
                     <input
                       type="checkbox"
                       checked={settings.coverLetterPromptTemplate.focusAreas.includes(area)}
-                      onChange={(e) => {
+                      onChange={e => {
                         const newAreas = e.target.checked
                           ? [...settings.coverLetterPromptTemplate.focusAreas, area]
-                          : settings.coverLetterPromptTemplate.focusAreas.filter((a) => a !== area);
-                        onUpdateCoverLetterPrompt({ focusAreas: newAreas });
+                          : settings.coverLetterPromptTemplate.focusAreas.filter(a => a !== area)
+                        onUpdateCoverLetterPrompt({ focusAreas: newAreas })
                       }}
                     />
-                    <span>{area.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+                    <span>
+                      {area
+                        .split('-')
+                        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                        .join(' ')}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -452,7 +486,9 @@ function PromptSettings({
                 <input
                   type="checkbox"
                   checked={settings.coverLetterPromptTemplate.emphasizeCompanyKnowledge}
-                  onChange={(e) => onUpdateCoverLetterPrompt({ emphasizeCompanyKnowledge: e.target.checked })}
+                  onChange={e =>
+                    onUpdateCoverLetterPrompt({ emphasizeCompanyKnowledge: e.target.checked })
+                  }
                 />
                 <span>Emphasize company knowledge</span>
               </label>
@@ -468,14 +504,14 @@ function PromptSettings({
                 Custom Instructions
               </label>
               <p className="settings-view__help">
-                Additional instructions for the AI when generating cover letters.
-                These are appended to the system prompt.
+                Additional instructions for the AI when generating cover letters. These are appended
+                to the system prompt.
               </p>
               <textarea
                 id="cover-letter-custom-instructions"
                 className="settings-view__textarea"
                 value={settings.coverLetterPromptTemplate.customInstructions}
-                onChange={(e) => onUpdateCoverLetterPrompt({ customInstructions: e.target.value })}
+                onChange={e => onUpdateCoverLetterPrompt({ customInstructions: e.target.value })}
                 rows={4}
                 maxLength={2000}
                 placeholder="E.g., Keep it under one page, mention remote work preference, highlight startup experience..."
@@ -496,12 +532,20 @@ function PromptSettings({
               <label className="settings-view__label">Settings Preview</label>
               <div className="settings-view__preview">
                 <p className="settings-view__preview-text">
-                  Your cover letter will be written in a <strong>{settings.coverLetterPromptTemplate.tone}</strong> tone
-                  with a <strong>{settings.coverLetterPromptTemplate.style}</strong> style,
-                  focusing on <strong>{settings.coverLetterPromptTemplate.focusAreas.map(a => a.split('-').join(' ')).join(', ') || 'all areas'}</strong>.
-                  It will have an opening (up to <strong>{settings.coverLetterPromptTemplate.maxOpeningLength}</strong> chars)
-                  and <strong>{settings.coverLetterPromptTemplate.maxBodyParagraphs}</strong> body paragraph{settings.coverLetterPromptTemplate.maxBodyParagraphs !== 1 ? 's' : ''}.
-                  {settings.coverLetterPromptTemplate.emphasizeCompanyKnowledge && ' Company-specific details will be emphasized.'}
+                  Your cover letter will be written in a{' '}
+                  <strong>{settings.coverLetterPromptTemplate.tone}</strong> tone with a{' '}
+                  <strong>{settings.coverLetterPromptTemplate.style}</strong> style, focusing on{' '}
+                  <strong>
+                    {settings.coverLetterPromptTemplate.focusAreas
+                      .map(a => a.split('-').join(' '))
+                      .join(', ') || 'all areas'}
+                  </strong>
+                  . It will have an opening (up to{' '}
+                  <strong>{settings.coverLetterPromptTemplate.maxOpeningLength}</strong> chars) and{' '}
+                  <strong>{settings.coverLetterPromptTemplate.maxBodyParagraphs}</strong> body
+                  paragraph{settings.coverLetterPromptTemplate.maxBodyParagraphs !== 1 ? 's' : ''}.
+                  {settings.coverLetterPromptTemplate.emphasizeCompanyKnowledge &&
+                    ' Company-specific details will be emphasized.'}
                 </p>
               </div>
             </div>
@@ -520,21 +564,21 @@ function PromptSettings({
         )}
       </section>
     </>
-  );
+  )
 }
 
 /**
  * Get the default resume prompt template settings.
  */
 export function getDefaultResumePromptSettings(): ResumePromptTemplateSettings {
-  return DEFAULT_APP_SETTINGS.resumePromptTemplate;
+  return DEFAULT_APP_SETTINGS.resumePromptTemplate
 }
 
 /**
  * Get the default cover letter prompt template settings.
  */
 export function getDefaultCoverLetterPromptSettings(): CoverLetterPromptTemplateSettings {
-  return DEFAULT_APP_SETTINGS.coverLetterPromptTemplate;
+  return DEFAULT_APP_SETTINGS.coverLetterPromptTemplate
 }
 
-export default PromptSettings;
+export default PromptSettings

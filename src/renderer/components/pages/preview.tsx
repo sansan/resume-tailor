@@ -39,9 +39,7 @@ export function PreviewPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Preview & Export</h1>
-          <p className="text-muted-foreground">
-            Preview your resume and export it to PDF.
-          </p>
+          <p className="text-muted-foreground">Preview your resume and export it to PDF.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline">
@@ -59,10 +57,7 @@ export function PreviewPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left column - Preview area (2/3) */}
         <div className="lg:col-span-2">
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as 'resume' | 'cover-letter')}
-          >
+          <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'resume' | 'cover-letter')}>
             <TabsList>
               <TabsTrigger value="resume">Resume</TabsTrigger>
               <TabsTrigger value="cover-letter">Cover Letter</TabsTrigger>
@@ -73,7 +68,7 @@ export function PreviewPage() {
                 <CardContent className="p-6">
                   {/* Preview container with letter aspect ratio (8.5:11) */}
                   <div
-                    className="mx-auto bg-white shadow-lg overflow-auto scrollbar-hide"
+                    className="scrollbar-hide mx-auto overflow-auto bg-white shadow-lg"
                     style={{
                       aspectRatio: '8.5 / 11',
                       maxHeight: '80vh',
@@ -84,19 +79,15 @@ export function PreviewPage() {
                         <ResumePreview resume={resume} />
                       </div>
                     ) : (
-                      <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+                      <div className="text-muted-foreground flex h-full flex-col items-center justify-center">
                         <FileText className="mb-4 h-16 w-16 opacity-50" />
                         <p className="text-lg font-medium">No resume loaded</p>
-                        <p className="text-sm">
-                          Load or create a resume to see the preview
-                        </p>
+                        <p className="text-sm">Load or create a resume to see the preview</p>
                       </div>
                     )}
                   </div>
                   {/* Page indicator */}
-                  <p className="mt-4 text-center text-sm text-muted-foreground">
-                    Page 1 of 1
-                  </p>
+                  <p className="text-muted-foreground mt-4 text-center text-sm">Page 1 of 1</p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -106,24 +97,20 @@ export function PreviewPage() {
                 <CardContent className="p-6">
                   {/* Preview container with letter aspect ratio */}
                   <div
-                    className="mx-auto bg-white shadow-lg overflow-auto scrollbar-hide"
+                    className="scrollbar-hide mx-auto overflow-auto bg-white shadow-lg"
                     style={{
                       aspectRatio: '8.5 / 11',
                       maxHeight: '80vh',
                     }}
                   >
-                    <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+                    <div className="text-muted-foreground flex h-full flex-col items-center justify-center">
                       <FileText className="mb-4 h-16 w-16 opacity-50" />
                       <p className="text-lg font-medium">No cover letter generated</p>
-                      <p className="text-sm text-center px-4">
-                        Use Job Targeting to generate one
-                      </p>
+                      <p className="px-4 text-center text-sm">Use Job Targeting to generate one</p>
                     </div>
                   </div>
                   {/* Page indicator */}
-                  <p className="mt-4 text-center text-sm text-muted-foreground">
-                    Page 1 of 1
-                  </p>
+                  <p className="text-muted-foreground mt-4 text-center text-sm">Page 1 of 1</p>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -150,9 +137,7 @@ export function PreviewPage() {
                       Professional Modern (Default)
                     </SelectItem>
                     <SelectItem value="minimalist-bold">Minimalist Bold</SelectItem>
-                    <SelectItem value="executive-two-column">
-                      Executive Two-Column
-                    </SelectItem>
+                    <SelectItem value="executive-two-column">Executive Two-Column</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -167,9 +152,7 @@ export function PreviewPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="font-size">Font Size</Label>
-                    <span className="text-sm text-muted-foreground">
-                      {fontSize}pt
-                    </span>
+                    <span className="text-muted-foreground text-sm">{fontSize}pt</span>
                   </div>
                   <Slider
                     id="font-size"
@@ -177,7 +160,7 @@ export function PreviewPage() {
                     max={14}
                     step={0.5}
                     value={[fontSize]}
-                    onValueChange={(values) => setFontSize(values[0] ?? fontSize)}
+                    onValueChange={values => setFontSize(values[0] ?? fontSize)}
                   />
                 </div>
 
@@ -185,9 +168,7 @@ export function PreviewPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="line-height">Line Height</Label>
-                    <span className="text-sm text-muted-foreground">
-                      {lineHeight.toFixed(1)}
-                    </span>
+                    <span className="text-muted-foreground text-sm">{lineHeight.toFixed(1)}</span>
                   </div>
                   <Slider
                     id="line-height"
@@ -195,7 +176,7 @@ export function PreviewPage() {
                     max={2}
                     step={0.1}
                     value={[lineHeight]}
-                    onValueChange={(values) => setLineHeight(values[0] ?? lineHeight)}
+                    onValueChange={values => setLineHeight(values[0] ?? lineHeight)}
                   />
                 </div>
               </div>
@@ -211,9 +192,7 @@ export function PreviewPage() {
                     <Checkbox
                       id="show-summary"
                       checked={showSummary}
-                      onCheckedChange={(checked) =>
-                        setShowSummary(checked as boolean)
-                      }
+                      onCheckedChange={checked => setShowSummary(checked as boolean)}
                     />
                     <Label htmlFor="show-summary" className="cursor-pointer">
                       Professional Summary
@@ -224,9 +203,7 @@ export function PreviewPage() {
                     <Checkbox
                       id="show-skills"
                       checked={showSkills}
-                      onCheckedChange={(checked) =>
-                        setShowSkills(checked as boolean)
-                      }
+                      onCheckedChange={checked => setShowSkills(checked as boolean)}
                     />
                     <Label htmlFor="show-skills" className="cursor-pointer">
                       Core Skills
@@ -237,9 +214,7 @@ export function PreviewPage() {
                     <Checkbox
                       id="show-certifications"
                       checked={showCertifications}
-                      onCheckedChange={(checked) =>
-                        setShowCertifications(checked as boolean)
-                      }
+                      onCheckedChange={checked => setShowCertifications(checked as boolean)}
                     />
                     <Label htmlFor="show-certifications" className="cursor-pointer">
                       Certifications
@@ -250,9 +225,7 @@ export function PreviewPage() {
                     <Checkbox
                       id="show-references"
                       checked={showReferences}
-                      onCheckedChange={(checked) =>
-                        setShowReferences(checked as boolean)
-                      }
+                      onCheckedChange={checked => setShowReferences(checked as boolean)}
                     />
                     <Label htmlFor="show-references" className="cursor-pointer">
                       References
@@ -283,57 +256,51 @@ export function PreviewPage() {
               <ScrollArea className="h-64">
                 <div className="space-y-4">
                   {/* Version timeline items */}
-                  <div className="relative border-l-2 border-muted pl-4">
-                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-primary" />
+                  <div className="border-muted relative border-l-2 pl-4">
+                    <div className="bg-primary absolute top-1 -left-[5px] h-2 w-2 rounded-full" />
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">v2.4</span>
-                        <span className="text-xs text-muted-foreground">
-                          Today, 2:30 PM
-                        </span>
+                        <span className="text-muted-foreground text-xs">Today, 2:30 PM</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         ATS-optimized typography tweaks
                       </p>
                     </div>
                   </div>
 
-                  <div className="relative border-l-2 border-muted pl-4">
-                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-muted-foreground" />
+                  <div className="border-muted relative border-l-2 pl-4">
+                    <div className="bg-muted-foreground absolute top-1 -left-[5px] h-2 w-2 rounded-full" />
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Saved Draft</span>
-                        <span className="text-xs text-muted-foreground">
-                          Yesterday
-                        </span>
+                        <span className="text-muted-foreground text-xs">Yesterday</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Added new skills section
-                      </p>
+                      <p className="text-muted-foreground text-sm">Added new skills section</p>
                     </div>
                   </div>
 
-                  <div className="relative border-l-2 border-muted pl-4">
-                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-muted-foreground" />
+                  <div className="border-muted relative border-l-2 pl-4">
+                    <div className="bg-muted-foreground absolute top-1 -left-[5px] h-2 w-2 rounded-full" />
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">AI Revision @ 4:15 PM</span>
-                        <span className="text-xs text-muted-foreground">Jan 28</span>
+                        <span className="text-muted-foreground text-xs">Jan 28</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         AI-tailored for Senior Engineer role
                       </p>
                     </div>
                   </div>
 
-                  <div className="relative border-l-2 border-muted pl-4">
-                    <div className="absolute -left-[5px] top-1 h-2 w-2 rounded-full bg-muted-foreground" />
+                  <div className="border-muted relative border-l-2 pl-4">
+                    <div className="bg-muted-foreground absolute top-1 -left-[5px] h-2 w-2 rounded-full" />
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Initial Import</span>
-                        <span className="text-xs text-muted-foreground">Jan 25</span>
+                        <span className="text-muted-foreground text-xs">Jan 25</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         Originally imported from source PDF
                       </p>
                     </div>

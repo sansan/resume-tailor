@@ -1,5 +1,5 @@
-import type { Resume } from '@schemas/resume.schema';
-import { getResumeSchemaInstructions } from './schema-instructions';
+import type { Resume } from '@schemas/resume.schema'
+import { getResumeSchemaInstructions } from './schema-instructions'
 
 /**
  * Options for customizing the resume refinement prompt.
@@ -7,19 +7,19 @@ import { getResumeSchemaInstructions } from './schema-instructions';
  */
 export interface ResumeRefinementOptions {
   /** Maximum length for the summary in characters (default: 500) */
-  maxSummaryLength?: number;
+  maxSummaryLength?: number
   /** Maximum number of highlights per work experience (default: 6) */
-  maxHighlightsPerExperience?: number;
+  maxHighlightsPerExperience?: number
   /** Whether to include refinement metadata in output (default: true) */
-  includeMetadata?: boolean;
+  includeMetadata?: boolean
   /** Tone for the refined resume (default: 'professional') */
-  tone?: 'professional' | 'conversational' | 'technical';
+  tone?: 'professional' | 'conversational' | 'technical'
   /** Focus areas to prioritize during refinement */
-  focusAreas?: ('skills' | 'experience' | 'achievements' | 'education')[];
+  focusAreas?: ('skills' | 'experience' | 'achievements' | 'education')[]
   /** Custom instructions to append to the prompt */
-  customInstructions?: string;
+  customInstructions?: string
   /** Whether to preserve all original content or allow trimming (default: false) */
-  preserveAllContent?: boolean;
+  preserveAllContent?: boolean
 }
 
 const DEFAULT_OPTIONS: Required<ResumeRefinementOptions> = {
@@ -30,7 +30,7 @@ const DEFAULT_OPTIONS: Required<ResumeRefinementOptions> = {
   focusAreas: ['skills', 'experience', 'achievements'],
   customInstructions: '',
   preserveAllContent: false,
-};
+}
 
 /**
  * Generates the system prompt for resume refinement.
@@ -39,7 +39,7 @@ const DEFAULT_OPTIONS: Required<ResumeRefinementOptions> = {
 export function generateResumeRefinementSystemPrompt(
   options: ResumeRefinementOptions = {}
 ): string {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const opts = { ...DEFAULT_OPTIONS, ...options }
 
   return `You are an expert resume writer and career coach with deep knowledge of applicant tracking systems (ATS), hiring practices, and industry-specific requirements. Your task is to refine a candidate's resume to better match a specific job posting while maintaining complete factual accuracy.
 
@@ -70,7 +70,7 @@ ${opts.customInstructions ? `\n## Additional Instructions\n\n${opts.customInstru
 
 ## Output Format
 
-You must respond with ONLY a valid JSON object matching the schema provided. Do not include any text before or after the JSON. Do not use markdown code blocks.`;
+You must respond with ONLY a valid JSON object matching the schema provided. Do not include any text before or after the JSON. Do not use markdown code blocks.`
 }
 
 /**
@@ -81,12 +81,13 @@ export function generateResumeRefinementUserPrompt(
   jobPosting: string,
   options: ResumeRefinementOptions = {}
 ): string {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-  const schemaInstructions = getResumeSchemaInstructions();
+  const opts = { ...DEFAULT_OPTIONS, ...options }
+  const schemaInstructions = getResumeSchemaInstructions()
 
-  const focusAreasSection = opts.focusAreas.length > 0
-    ? `\n## Focus Areas\nPrioritize refinements in these areas: ${opts.focusAreas.join(', ')}\n`
-    : '';
+  const focusAreasSection =
+    opts.focusAreas.length > 0
+      ? `\n## Focus Areas\nPrioritize refinements in these areas: ${opts.focusAreas.join(', ')}\n`
+      : ''
 
   return `## Job Posting
 
@@ -113,9 +114,14 @@ ${JSON.stringify(originalResume, null, 2)}
 
 Refine this resume to better align with the job posting while following these specific instructions:
 
-1. **Summary**: ${originalResume.personalInfo.summary
-    ? 'Rewrite the summary to directly address the role\'s key requirements using language from the job posting. Keep it under ' + opts.maxSummaryLength + ' characters.'
-    : 'Create a compelling summary (under ' + opts.maxSummaryLength + ' characters) that positions the candidate for this specific role, using ONLY information from their existing experience and skills.'
+1. **Summary**: ${
+    originalResume.personalInfo.summary
+      ? "Rewrite the summary to directly address the role's key requirements using language from the job posting. Keep it under " +
+        opts.maxSummaryLength +
+        ' characters.'
+      : 'Create a compelling summary (under ' +
+        opts.maxSummaryLength +
+        ' characters) that positions the candidate for this specific role, using ONLY information from their existing experience and skills.'
   }
 
 2. **Work Experience**:
@@ -135,18 +141,22 @@ Refine this resume to better align with the job posting while following these sp
 ${focusAreasSection}
 ${schemaInstructions}
 
-${opts.includeMetadata ? `
+${
+  opts.includeMetadata
+    ? `
 ### Refinement Metadata
 
 Include the refinementMetadata object with:
 - targetedKeywords: List the key terms from the job posting that you incorporated
 - changesSummary: Brief description of the main refinements made
 - confidenceScore: Your confidence (0-1) in how well the refined resume matches the job requirements
-` : ''}
+`
+    : ''
+}
 
 ## Response
 
-Respond with ONLY the refined resume as a valid JSON object. No additional text or formatting.`;
+Respond with ONLY the refined resume as a valid JSON object. No additional text or formatting.`
 }
 
 /**
@@ -161,7 +171,7 @@ export function buildResumeRefinementPrompt(
   return {
     systemPrompt: generateResumeRefinementSystemPrompt(options),
     userPrompt: generateResumeRefinementUserPrompt(originalResume, jobPosting, options),
-  };
+  }
 }
 
 /**
@@ -177,9 +187,9 @@ export function buildCombinedResumeRefinementPrompt(
     originalResume,
     jobPosting,
     options
-  );
+  )
 
-  return `${systemPrompt}\n\n---\n\n${userPrompt}`;
+  return `${systemPrompt}\n\n---\n\n${userPrompt}`
 }
 
 /**
@@ -187,12 +197,12 @@ export function buildCombinedResumeRefinementPrompt(
  * Can be used for storing customizable templates in settings.
  */
 export interface ResumePromptTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  options: ResumeRefinementOptions;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  description?: string
+  options: ResumeRefinementOptions
+  createdAt: string
+  updatedAt: string
 }
 
 /**
@@ -227,7 +237,8 @@ export const DEFAULT_RESUME_TEMPLATES: ResumePromptTemplate[] = [
       tone: 'professional',
       focusAreas: ['experience', 'achievements'],
       maxHighlightsPerExperience: 6,
-      customInstructions: 'Emphasize leadership, team management, strategic initiatives, and business impact metrics.',
+      customInstructions:
+        'Emphasize leadership, team management, strategic initiatives, and business impact metrics.',
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -244,4 +255,4 @@ export const DEFAULT_RESUME_TEMPLATES: ResumePromptTemplate[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
-];
+]

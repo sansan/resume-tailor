@@ -8,69 +8,69 @@
 export interface PDFTheme {
   colors: {
     /** Page background - white */
-    pageBackground: string;
+    pageBackground: string
     /** Sidebar and job title box background - light warm gray */
-    sidebarBackground: string;
+    sidebarBackground: string
     /** Primary text color - near black */
-    primary: string;
+    primary: string
     /** Body text color - dark gray */
-    body: string;
+    body: string
     /** Job title text - dark gray (high contrast) */
-    titleText: string;
+    titleText: string
     /** Muted text - medium gray */
-    muted: string;
+    muted: string
     /** Light text - for subtle elements */
-    light: string;
+    light: string
     /** Accent color - black for header bars */
-    accent: string;
+    accent: string
     /** White - for text on dark backgrounds */
-    white: string;
-  };
+    white: string
+  }
   fonts: {
     /** Primary font for body text */
-    primary: string;
+    primary: string
     /** Heading font for editorial feel */
-    heading: string;
-  };
+    heading: string
+  }
   fontSizes: {
     /** Large name in header */
-    name: number;
+    name: number
     /** Section titles */
-    sectionTitle: number;
+    sectionTitle: number
     /** Item titles (job titles, etc.) */
-    itemTitle: number;
+    itemTitle: number
     /** Body text */
-    body: number;
+    body: number
     /** Small text (dates, metadata) */
-    small: number;
+    small: number
     /** Tiny text (bullets, captions) */
-    tiny: number;
-  };
+    tiny: number
+  }
   spacing: {
     /** Page margins */
-    page: number;
+    page: number
     /** Gap between sections */
-    sectionGap: number;
+    sectionGap: number
     /** Gap between items */
-    itemGap: number;
+    itemGap: number
     /** Line height multiplier */
-    lineHeight: number;
-  };
+    lineHeight: number
+  }
   layout: {
     /** Sidebar width in points */
-    sidebarWidth: number;
+    sidebarWidth: number
     /** Gutter between sidebar and main content */
-    gutter: number;
-  };
+    gutter: number
+  }
 }
 
 /**
  * Partial theme type for overrides.
  */
 export type PartialPDFTheme = {
-  colors?: Partial<PDFTheme['colors']>;
-  fonts?: Partial<PDFTheme['fonts']>;
-  fontSizes?: Partial<PDFTheme['fontSizes']>;
-  spacing?: Partial<PDFTheme['spacing']>;
-  layout?: Partial<PDFTheme['layout']>;
-};
+  colors?: Partial<PDFTheme['colors']>
+  fonts?: Partial<PDFTheme['fonts']>
+  fontSizes?: Partial<PDFTheme['fontSizes']>
+  spacing?: Partial<PDFTheme['spacing']>
+  layout?: Partial<PDFTheme['layout']>
+}

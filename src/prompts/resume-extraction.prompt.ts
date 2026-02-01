@@ -4,14 +4,14 @@
  * Prompt template for extracting structured resume data from raw text.
  */
 
-import { getResumeSchemaInstructions } from './schema-instructions';
+import { getResumeSchemaInstructions } from './schema-instructions'
 
 /**
  * Options for resume extraction prompt.
  */
 export interface ResumeExtractionOptions {
   /** Whether to include skill levels (requires AI inference) */
-  inferSkillLevels?: boolean;
+  inferSkillLevels?: boolean
 }
 
 /**
@@ -25,11 +25,11 @@ export function buildResumeExtractionPrompt(
   documentText: string,
   options: ResumeExtractionOptions = {}
 ): string {
-  const schemaInstructions = getResumeSchemaInstructions();
+  const schemaInstructions = getResumeSchemaInstructions()
 
   const skillLevelInstruction = options.inferSkillLevels
     ? 'Infer skill levels (beginner/intermediate/advanced/expert) based on context clues like years of experience, job responsibilities, and how skills are described.'
-    : 'Set skill level to null unless explicitly stated in the document.';
+    : 'Set skill level to null unless explicitly stated in the document.'
 
   return `You are a resume parsing assistant. Extract structured data from the following resume text.
 
@@ -63,5 +63,5 @@ ${documentText}
 </resume_text>
 
 ## Output Format
-Return ONLY valid JSON matching the Resume schema. Do not include any explanation, markdown formatting, or code blocks around the JSON. Return raw JSON only.`;
+Return ONLY valid JSON matching the Resume schema. Do not include any explanation, markdown formatting, or code blocks around the JSON. Return raw JSON only.`
 }

@@ -7,7 +7,9 @@ import {
   Settings,
   PanelLeftClose,
   PanelLeft,
+  ClipboardList,
 } from 'lucide-react'
+import logoSvg from '@/../logo/logo.svg'
 
 import {
   Sidebar,
@@ -35,6 +37,7 @@ const navItems: Array<{ id: APP_PAGES; label: string; icon: typeof LayoutDashboa
   { id: APP_PAGES.RESUME, label: APP_PAGES.RESUME, icon: User },
   { id: APP_PAGES.COVER_LETTER, label: APP_PAGES.COVER_LETTER, icon: FileOutput },
   { id: APP_PAGES.TARGETING, label: APP_PAGES.TARGETING, icon: Target },
+  { id: APP_PAGES.TRACKING, label: APP_PAGES.TRACKING, icon: ClipboardList },
 ]
 
 function AIStatusIndicator() {
@@ -59,7 +62,9 @@ function AIStatusIndicator() {
       <div className="flex h-8 w-8 shrink-0 items-center justify-center">
         <span className={`h-2 w-2 rounded-full ${getStatusColor()}`} />
       </div>
-      <span className="text-xs text-muted-foreground whitespace-nowrap group-data-[collapsible=icon]:hidden">{getStatusText()}</span>
+      <span className="text-muted-foreground text-xs whitespace-nowrap group-data-[collapsible=icon]:hidden">
+        {getStatusText()}
+      </span>
     </div>
   )
 }
@@ -71,7 +76,7 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader
-        className="shrink-0 border-b border-sidebar-border p-2"
+        className="border-sidebar-border shrink-0 border-b p-2"
         onMouseEnter={() => setIsHeaderHovered(true)}
         onMouseLeave={() => setIsHeaderHovered(false)}
       >
@@ -79,21 +84,25 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
           {/* Logo - clickable to expand when collapsed */}
           <button
             onClick={() => !open && toggleSidebar()}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground relative"
+            className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg"
           >
             {/* Show expand icon on hover when collapsed */}
             {!open && isHeaderHovered ? (
-              <PanelLeft className="h-4 w-4" />
+              <div className="bg-primary text-primary-foreground flex h-full w-full items-center justify-center">
+                <PanelLeft className="h-4 w-4" />
+              </div>
             ) : (
-              <FileOutput className="h-4 w-4" />
+              <img src={logoSvg} alt="Resume Tailor" className="h-full w-full dark:invert" />
             )}
           </button>
-          <span className="font-semibold whitespace-nowrap group-data-[collapsible=icon]:hidden flex-1">Resume Tailor</span>
+          <span className="flex-1 font-semibold whitespace-nowrap group-data-[collapsible=icon]:hidden">
+            Resume Tailor
+          </span>
           {/* Collapse button - only visible when expanded */}
           {open && (
             <button
               onClick={toggleSidebar}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
               title="Collapse sidebar"
             >
               <PanelLeftClose className="h-4 w-4" />
@@ -102,11 +111,11 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="overflow-auto scrollbar-hide">
+      <SidebarContent className="scrollbar-hide overflow-auto">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="items-start">
-              {navItems.map((item) => (
+              {navItems.map(item => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     isActive={activePage === item.id}
@@ -114,7 +123,9 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
                     tooltip={item.label}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
-                    <span className="whitespace-nowrap group-data-[collapsible=icon]:hidden">{item.label}</span>
+                    <span className="whitespace-nowrap group-data-[collapsible=icon]:hidden">
+                      {item.label}
+                    </span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -123,7 +134,7 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="shrink-0 border-t border-sidebar-border p-2">
+      <SidebarFooter className="border-sidebar-border shrink-0 border-t p-2">
         <AIStatusIndicator />
         {/* Settings at the very bottom */}
         <SidebarMenu>
@@ -134,7 +145,9 @@ export function AppSidebar({ activePage, onNavigate }: AppSidebarProps) {
               tooltip="Settings"
             >
               <Settings className="h-4 w-4 shrink-0" />
-              <span className="whitespace-nowrap group-data-[collapsible=icon]:hidden">Settings</span>
+              <span className="whitespace-nowrap group-data-[collapsible=icon]:hidden">
+                Settings
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

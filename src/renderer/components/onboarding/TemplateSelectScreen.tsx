@@ -140,8 +140,8 @@ export function TemplateSelectScreen({
 
   // Get the currently selected palette object for the preview
   const currentPalette = getSelectedPalette()
-  const selectedPaletteData = palettes.find((p) => p.id === selectedPalette)
-  const selectedTemplateData = templates.find((t) => t.id === selectedTemplate)
+  const selectedPaletteData = palettes.find(p => p.id === selectedPalette)
+  const selectedTemplateData = templates.find(t => t.id === selectedTemplate)
 
   /**
    * Handle completing the onboarding setup.
@@ -163,11 +163,7 @@ export function TemplateSelectScreen({
       onComplete()
     } catch (err) {
       console.error('Failed to complete setup:', err)
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to complete setup. Please try again.'
-      )
+      setError(err instanceof Error ? err.message : 'Failed to complete setup. Please try again.')
       setIsCompleting(false)
     }
   }, [isCompleting, isSaving, savePreferences, onComplete])
@@ -180,12 +176,8 @@ export function TemplateSelectScreen({
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-8">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Choose your template
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Don't worry, you can change it later
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">Choose your template</h1>
+          <p className="text-muted-foreground mt-1 text-sm">Don't worry, you can change it later</p>
         </div>
 
         {/* Content area - accordion + preview */}
@@ -195,7 +187,7 @@ export function TemplateSelectScreen({
             <Accordion
               type="single"
               value={openSection}
-              onValueChange={(value) => {
+              onValueChange={value => {
                 if (value) setOpenSection(value)
               }}
               className="w-full"
@@ -205,7 +197,7 @@ export function TemplateSelectScreen({
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Template Style</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       ({selectedTemplateData?.name ?? 'None'})
                     </span>
                   </div>
@@ -213,7 +205,7 @@ export function TemplateSelectScreen({
                 <AccordionContent>
                   <div className="max-h-[50vh] overflow-y-auto pr-1">
                     <div className="grid grid-cols-2 gap-3">
-                      {templates.map((template) => {
+                      {templates.map(template => {
                         const isSelected = template.id === selectedTemplate
                         return (
                           <button
@@ -223,14 +215,12 @@ export function TemplateSelectScreen({
                             className={cn(
                               'relative flex flex-col items-center rounded-lg border-2 p-2 transition-all',
                               'hover:border-primary/50 hover:bg-accent/50',
-                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                              isSelected
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border bg-card'
+                              'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+                              isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card'
                             )}
                           >
                             {/* Mini preview */}
-                            <div className="mb-1.5 aspect-[3/4] w-full overflow-hidden rounded border border-border/50 bg-muted">
+                            <div className="border-border/50 bg-muted mb-1.5 aspect-[3/4] w-full overflow-hidden rounded border">
                               <TemplateMiniPreview
                                 templateId={template.id}
                                 palette={selectedPaletteData}
@@ -247,8 +237,8 @@ export function TemplateSelectScreen({
                             </span>
                             {/* Selection indicator */}
                             {isSelected && (
-                              <div className="absolute -right-1 -top-1 rounded-full bg-primary p-0.5">
-                                <Check className="size-3 text-primary-foreground" />
+                              <div className="bg-primary absolute -top-1 -right-1 rounded-full p-0.5">
+                                <Check className="text-primary-foreground size-3" />
                               </div>
                             )}
                           </button>
@@ -289,7 +279,7 @@ export function TemplateSelectScreen({
                 <AccordionContent>
                   <div className="max-h-[50vh] overflow-y-auto pr-1">
                     <div className="flex flex-col gap-1">
-                      {palettes.map((palette) => {
+                      {palettes.map(palette => {
                         const isSelected = palette.id === selectedPalette
                         return (
                           <button
@@ -299,10 +289,8 @@ export function TemplateSelectScreen({
                             className={cn(
                               'flex items-center gap-3 rounded-lg border-2 px-3 py-2 transition-all',
                               'hover:border-primary/50 hover:bg-accent/50',
-                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                              isSelected
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border bg-card'
+                              'focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none',
+                              isSelected ? 'border-primary bg-primary/5' : 'border-border bg-card'
                             )}
                           >
                             <div className="flex gap-0.5">
@@ -322,12 +310,12 @@ export function TemplateSelectScreen({
                             <span
                               className={cn(
                                 'flex-1 text-left text-sm',
-                                isSelected && 'font-medium text-primary'
+                                isSelected && 'text-primary font-medium'
                               )}
                             >
                               {palette.name}
                             </span>
-                            {isSelected && <Check className="size-4 text-primary" />}
+                            {isSelected && <Check className="text-primary size-4" />}
                           </button>
                         )
                       })}
@@ -339,7 +327,7 @@ export function TemplateSelectScreen({
 
             {/* Sample notice */}
             {isUsingSample && (
-              <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mt-4 flex items-center gap-1.5 text-xs">
                 <FileText className="size-3" />
                 Showing sample resume
               </div>
@@ -347,8 +335,8 @@ export function TemplateSelectScreen({
           </div>
 
           {/* Right side - PDF Preview (always visible) */}
-          <div className="flex flex-1 flex-col min-w-0">
-            <div className="aspect-[8.5/11] w-full overflow-hidden rounded-lg border bg-muted/30">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="bg-muted/30 aspect-[8.5/11] w-full overflow-hidden rounded-lg border">
               {currentPalette ? (
                 <ResumePDFPreview
                   resume={displayResume}
@@ -358,9 +346,7 @@ export function TemplateSelectScreen({
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <span className="text-sm text-muted-foreground">
-                    Loading preview...
-                  </span>
+                  <span className="text-muted-foreground text-sm">Loading preview...</span>
                 </div>
               )}
             </div>
@@ -369,7 +355,7 @@ export function TemplateSelectScreen({
 
         {/* Error display */}
         {error && (
-          <div className="mt-4 max-w-md rounded-lg bg-destructive/10 p-3 text-center text-sm text-destructive">
+          <div className="bg-destructive/10 text-destructive mt-4 max-w-md rounded-lg p-3 text-center text-sm">
             {error}
           </div>
         )}
@@ -379,14 +365,9 @@ export function TemplateSelectScreen({
       <div className="h-20" />
 
       {/* Footer Actions - fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed right-0 bottom-0 left-0 z-10 border-t backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            disabled={isLoading}
-            className="gap-1"
-          >
+          <Button variant="ghost" onClick={onBack} disabled={isLoading} className="gap-1">
             <ChevronLeft className="size-4" />
             Back
           </Button>

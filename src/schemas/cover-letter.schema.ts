@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 // Cover Letter Schema
 // Using nullish() for optional fields to allow both null and undefined from AI responses
@@ -12,7 +12,7 @@ export const CoverLetterSchema = z.object({
   body: z.array(z.string()).min(1, 'At least one body paragraph is required'),
   closing: z.string().min(1, 'Closing paragraph is required'),
   signature: z.string().min(1, 'Signature is required'),
-});
+})
 
 // TypeScript type inferred from Zod schema
-export type CoverLetter = z.infer<typeof CoverLetterSchema>;
+export type CoverLetter = z.infer<typeof CoverLetterSchema>

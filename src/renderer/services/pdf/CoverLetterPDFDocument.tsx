@@ -1,16 +1,9 @@
-import React, { useMemo } from 'react';
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Link,
-} from '@react-pdf/renderer';
-import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
-import type { PersonalInfo } from '@schemas/resume.schema';
-import { getContactByType } from '@schemas/resume.schema';
-import { defaultPDFTheme, type PDFTheme } from './theme';
+import React, { useMemo } from 'react'
+import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer'
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema'
+import type { PersonalInfo } from '@schemas/resume.schema'
+import { getContactByType } from '@schemas/resume.schema'
+import { defaultPDFTheme, type PDFTheme } from './theme'
 
 // =============================================================================
 // LAYOUT CONSTANTS (points)
@@ -22,7 +15,7 @@ const LAYOUT = {
   padRight: 50,
   mastheadH: 60,
   titleBoxMinW: 180,
-};
+}
 
 // =============================================================================
 // STYLE FACTORY
@@ -154,32 +147,32 @@ function createStyles(theme: PDFTheme) {
       textDecoration: 'none',
       marginBottom: 2,
     },
-  });
+  })
 }
 
 // =============================================================================
 // HELPERS
 // =============================================================================
 function formatDate(dateStr?: string | null): string {
-  if (dateStr) return dateStr;
+  if (dateStr) return dateStr
   return new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  });
+  })
 }
 
 // =============================================================================
 // COMPONENT PROPS
 // =============================================================================
 export interface CoverLetterPDFDocumentProps {
-  coverLetter: GeneratedCoverLetter;
+  coverLetter: GeneratedCoverLetter
   /** Personal info for header name and signature contact details */
-  personalInfo?: PersonalInfo | undefined;
+  personalInfo?: PersonalInfo | undefined
   /** Job title to display in header (position applying for) */
-  targetJobTitle?: string | undefined;
+  targetJobTitle?: string | undefined
   /** Optional theme override */
-  theme?: PDFTheme | undefined;
+  theme?: PDFTheme | undefined
 }
 
 // =============================================================================
@@ -201,30 +194,28 @@ function CoverLetterPDFDocument({
     body,
     closing,
     signature,
-  } = coverLetter;
+  } = coverLetter
 
-  const styles = useMemo(() => createStyles(theme ?? defaultPDFTheme), [theme]);
+  const styles = useMemo(() => createStyles(theme ?? defaultPDFTheme), [theme])
 
   // Name for header - ensure not empty
-  const displayName = (personalInfo?.name || signature || '').trim() || 'Your Name';
+  const displayName = (personalInfo?.name || signature || '').trim() || 'Your Name'
 
   // Job title for header box
-  const displayTitle = (targetJobTitle || '').trim();
+  const displayTitle = (targetJobTitle || '').trim()
 
   // Salutation
-  const recipientNameTrimmed = (recipientName || '').trim();
-  const salutation = recipientNameTrimmed
-    ? `Dear ${recipientNameTrimmed},`
-    : 'Dear Hiring Manager,';
+  const recipientNameTrimmed = (recipientName || '').trim()
+  const salutation = recipientNameTrimmed ? `Dear ${recipientNameTrimmed},` : 'Dear Hiring Manager,'
 
   // Formatted date
-  const formattedDate = formatDate(date);
+  const formattedDate = formatDate(date)
 
   // Signature - ensure not empty
-  const displaySignature = (signature || '').trim() || displayName;
+  const displaySignature = (signature || '').trim() || displayName
 
   // Body paragraphs - ensure array and filter empty
-  const bodyParagraphs = (body || []).filter(para => para && para.trim());
+  const bodyParagraphs = (body || []).filter(para => para && para.trim())
 
   return (
     <Document>
@@ -248,10 +239,16 @@ function CoverLetterPDFDocument({
 
           {/* Recipient block */}
           <View style={styles.recipientBlock}>
-            {recipientName?.trim() ? <Text style={styles.recipientName}>{recipientName}</Text> : null}
-            {recipientTitle?.trim() ? <Text style={styles.recipientInfo}>{recipientTitle}</Text> : null}
+            {recipientName?.trim() ? (
+              <Text style={styles.recipientName}>{recipientName}</Text>
+            ) : null}
+            {recipientTitle?.trim() ? (
+              <Text style={styles.recipientInfo}>{recipientTitle}</Text>
+            ) : null}
             {companyName?.trim() ? <Text style={styles.recipientInfo}>{companyName}</Text> : null}
-            {companyAddress?.trim() ? <Text style={styles.recipientInfo}>{companyAddress}</Text> : null}
+            {companyAddress?.trim() ? (
+              <Text style={styles.recipientInfo}>{companyAddress}</Text>
+            ) : null}
           </View>
 
           {/* Salutation */}
@@ -262,7 +259,9 @@ function CoverLetterPDFDocument({
 
           {/* Body paragraphs */}
           {bodyParagraphs.map((para, i) => (
-            <Text key={i} style={styles.paragraph}>{para}</Text>
+            <Text key={i} style={styles.paragraph}>
+              {para}
+            </Text>
           ))}
 
           {/* Closing paragraph */}
@@ -274,23 +273,23 @@ function CoverLetterPDFDocument({
           {/* Signature */}
           <Text style={styles.signatureName}>{displaySignature}</Text>
           {(() => {
-            const phone = getContactByType(personalInfo?.contacts, 'phone');
+            const phone = getContactByType(personalInfo?.contacts, 'phone')
             return phone && phone.trim() ? (
               <Text style={styles.signatureContact}>{phone}</Text>
-            ) : null;
+            ) : null
           })()}
           {(() => {
-            const email = getContactByType(personalInfo?.contacts, 'email');
+            const email = getContactByType(personalInfo?.contacts, 'email')
             return email && email.trim() ? (
               <Link style={styles.signatureLink} src={`mailto:${email}`}>
                 {email}
               </Link>
-            ) : null;
+            ) : null
           })()}
         </View>
       </Page>
     </Document>
-  );
+  )
 }
 
-export default CoverLetterPDFDocument;
+export default CoverLetterPDFDocument

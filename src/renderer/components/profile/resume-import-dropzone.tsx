@@ -156,7 +156,7 @@ export function ResumeImportDropzone({
   return (
     <div
       className={cn(
-        'relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+        'focus:ring-ring relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none',
         state === 'idle' && 'border-muted-foreground/25 hover:border-muted-foreground/50',
         state === 'dragover' && 'border-primary bg-primary/5',
         state === 'processing' && 'border-muted-foreground/25 bg-muted/50 cursor-wait',
@@ -185,24 +185,26 @@ export function ResumeImportDropzone({
 
       {state === 'idle' && (
         <>
-          <Upload className="mb-4 h-10 w-10 text-muted-foreground" />
+          <Upload className="text-muted-foreground mb-4 h-10 w-10" />
           <p className="mb-2 text-sm font-medium">Drop your resume here or click to browse</p>
-          <p className="text-xs text-muted-foreground">Supports PDF, Word (.docx), and plain text files</p>
+          <p className="text-muted-foreground text-xs">
+            Supports PDF, Word (.docx), and plain text files
+          </p>
         </>
       )}
 
       {state === 'dragover' && (
         <>
-          <FileText className="mb-4 h-10 w-10 text-primary" />
-          <p className="text-sm font-medium text-primary">Drop to import</p>
+          <FileText className="text-primary mb-4 h-10 w-10" />
+          <p className="text-primary text-sm font-medium">Drop to import</p>
         </>
       )}
 
       {state === 'processing' && (
         <>
-          <Loader2 className="mb-4 h-10 w-10 animate-spin text-muted-foreground" />
+          <Loader2 className="text-muted-foreground mb-4 h-10 w-10 animate-spin" />
           <p className="text-sm font-medium">Extracting resume data...</p>
-          <p className="text-xs text-muted-foreground">This may take a moment</p>
+          <p className="text-muted-foreground text-xs">This may take a moment</p>
         </>
       )}
 
@@ -217,9 +219,11 @@ export function ResumeImportDropzone({
 
       {state === 'error' && (
         <>
-          <XCircle className="mb-4 h-10 w-10 text-destructive" />
-          <p className="mb-2 text-sm font-medium text-destructive">Import failed</p>
-          <p className="mb-4 text-xs text-muted-foreground text-center max-w-[280px]">{errorMessage}</p>
+          <XCircle className="text-destructive mb-4 h-10 w-10" />
+          <p className="text-destructive mb-2 text-sm font-medium">Import failed</p>
+          <p className="text-muted-foreground mb-4 max-w-[280px] text-center text-xs">
+            {errorMessage}
+          </p>
           <Button variant="outline" size="sm" onClick={handleTryAgain}>
             Try again
           </Button>

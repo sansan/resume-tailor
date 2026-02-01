@@ -7,31 +7,31 @@
 /**
  * Supported document types for resume import.
  */
-export type SupportedDocumentType = 'pdf' | 'docx' | 'txt';
+export type SupportedDocumentType = 'pdf' | 'docx' | 'txt'
 
 /**
  * Result of successful document text extraction.
  */
 export interface DocumentExtractionResult {
-  success: true;
-  text: string;
-  documentType: SupportedDocumentType;
+  success: true
+  text: string
+  documentType: SupportedDocumentType
   metadata?: {
-    pageCount?: number;
-    title?: string;
-  };
+    pageCount?: number
+    title?: string
+  }
 }
 
 /**
  * Error result from document extraction.
  */
 export interface DocumentExtractionError {
-  success: false;
+  success: false
   error: {
-    code: DocumentExtractionErrorCode;
-    message: string;
-    details?: Record<string, unknown>;
-  };
+    code: DocumentExtractionErrorCode
+    message: string
+    details?: Record<string, unknown>
+  }
 }
 
 /**
@@ -47,4 +47,4 @@ export enum DocumentExtractionErrorCode {
 /**
  * Combined response type for document extraction.
  */
-export type DocumentExtractionResponse = DocumentExtractionResult | DocumentExtractionError;
+export type DocumentExtractionResponse = DocumentExtractionResult | DocumentExtractionError

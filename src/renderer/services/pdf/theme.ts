@@ -6,8 +6,8 @@
  */
 
 // Re-export the shared PDFTheme type
-export type { PDFTheme, PartialPDFTheme } from '@app-types/pdf-theme.types';
-import type { PDFTheme } from '@app-types/pdf-theme.types';
+export type { PDFTheme, PartialPDFTheme } from '@app-types/pdf-theme.types'
+import type { PDFTheme } from '@app-types/pdf-theme.types'
 
 /**
  * Default PDF theme - Editorial style with warm gray accents.
@@ -46,16 +46,16 @@ export const defaultPDFTheme: PDFTheme = {
     sidebarWidth: 170,
     gutter: 30,
   },
-};
+}
 
-import type { PartialPDFTheme } from '@app-types/pdf-theme.types';
+import type { PartialPDFTheme } from '@app-types/pdf-theme.types'
 
 /**
  * Creates a PDF theme by merging user overrides with defaults.
  */
 export function createPDFTheme(overrides?: PartialPDFTheme): PDFTheme {
   if (!overrides) {
-    return defaultPDFTheme;
+    return defaultPDFTheme
   }
 
   return {
@@ -79,21 +79,21 @@ export function createPDFTheme(overrides?: PartialPDFTheme): PDFTheme {
       ...defaultPDFTheme.layout,
       ...overrides.layout,
     },
-  };
+  }
 }
 
-export const pdfTheme: PDFTheme = defaultPDFTheme;
-export default pdfTheme;
+export const pdfTheme: PDFTheme = defaultPDFTheme
+export default pdfTheme
 
 /**
  * Color palette interface for theme creation.
  */
 export interface ColorPalette {
-  id: string;
-  name: string;
-  primary: string;
-  secondary: string;
-  accent: string;
+  id: string
+  name: string
+  primary: string
+  secondary: string
+  accent: string
 }
 
 /**
@@ -102,19 +102,19 @@ export interface ColorPalette {
  */
 function adjustColorOpacity(hexColor: string, opacity: number): string {
   // Parse hex color
-  const hex = hexColor.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
+  const hex = hexColor.replace('#', '')
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
 
   // Blend with white based on opacity
-  const blend = 1 - opacity;
-  const newR = Math.round(r * opacity + 255 * blend);
-  const newG = Math.round(g * opacity + 255 * blend);
-  const newB = Math.round(b * opacity + 255 * blend);
+  const blend = 1 - opacity
+  const newR = Math.round(r * opacity + 255 * blend)
+  const newG = Math.round(g * opacity + 255 * blend)
+  const newB = Math.round(b * opacity + 255 * blend)
 
   // Convert back to hex
-  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`
 }
 
 /**
@@ -133,5 +133,5 @@ export function createThemeFromPalette(palette: ColorPalette): PDFTheme {
       // Use secondary as sidebar background tint
       sidebarBackground: adjustColorOpacity(palette.accent, 0.15),
     },
-  };
+  }
 }

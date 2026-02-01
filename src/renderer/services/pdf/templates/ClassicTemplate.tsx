@@ -6,19 +6,12 @@
  * Supports multi-page with "Other Experience" on page 2+.
  */
 
-import React, { useMemo } from 'react';
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Link,
-} from '@react-pdf/renderer';
-import type { Skill } from '@schemas/resume.schema';
-import { getContactByType } from '@schemas/resume.schema';
-import type { TemplateProps } from './template-factory';
-import type { PDFTheme } from '@app-types/pdf-theme.types';
+import React, { useMemo } from 'react'
+import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer'
+import type { Skill } from '@schemas/resume.schema'
+import { getContactByType } from '@schemas/resume.schema'
+import type { TemplateProps } from './template-factory'
+import type { PDFTheme } from '@app-types/pdf-theme.types'
 
 // =============================================================================
 // LAYOUT CONSTANTS
@@ -38,7 +31,7 @@ const LAYOUT = {
   headingToContent: 10,
   itemGap: 14,
   bulletGap: 4,
-};
+}
 
 // =============================================================================
 // STYLE FACTORY
@@ -260,7 +253,7 @@ function createStyles(theme: PDFTheme) {
       color: theme.colors.body,
       lineHeight: 1.45,
     },
-  });
+  })
 }
 
 // =============================================================================
@@ -268,19 +261,19 @@ function createStyles(theme: PDFTheme) {
 // =============================================================================
 function groupSkillsByCategory(skills: Skill[]): Record<string, Skill[]> {
   return skills.reduce<Record<string, Skill[]>>((acc, skill) => {
-    const category = skill.category || 'Other';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(skill);
-    return acc;
-  }, {});
+    const category = skill.category || 'Other'
+    if (!acc[category]) acc[category] = []
+    acc[category].push(skill)
+    return acc
+  }, {})
 }
 
 function formatDateRange(start: string, end?: string | null): string {
-  return `${start} – ${end || 'Present'}`;
+  return `${start} – ${end || 'Present'}`
 }
 
 // Number of experiences to show on page 1
-const PAGE_1_EXPERIENCE_COUNT = 3;
+const PAGE_1_EXPERIENCE_COUNT = 3
 
 // =============================================================================
 // COMPONENT
@@ -290,16 +283,16 @@ export function ClassicTemplate({
   theme,
   targetJobTitle,
 }: TemplateProps): React.JSX.Element {
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const { personalInfo, education, skills, certifications, workExperience } = resume;
+  const styles = useMemo(() => createStyles(theme), [theme])
+  const { personalInfo, education, skills, certifications, workExperience } = resume
 
-  const displayTitle = targetJobTitle || workExperience[0]?.title || '';
-  const skillsByCategory = groupSkillsByCategory(skills);
-  const about = personalInfo.summary?.trim() || '';
+  const displayTitle = targetJobTitle || workExperience[0]?.title || ''
+  const skillsByCategory = groupSkillsByCategory(skills)
+  const about = personalInfo.summary?.trim() || ''
 
   // Split experience into page 1 and other pages
-  const page1Experience = workExperience.slice(0, PAGE_1_EXPERIENCE_COUNT);
-  const otherExperience = workExperience.slice(PAGE_1_EXPERIENCE_COUNT);
+  const page1Experience = workExperience.slice(0, PAGE_1_EXPERIENCE_COUNT)
+  const otherExperience = workExperience.slice(PAGE_1_EXPERIENCE_COUNT)
 
   return (
     <Document>
@@ -500,5 +493,5 @@ export function ClassicTemplate({
         </Page>
       )}
     </Document>
-  );
+  )
 }

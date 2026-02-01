@@ -1,7 +1,17 @@
 {
-  "name": "resume-creator",
+  "name": "resume-tailor",
   "version": "1.0.0",
-  "description": "A desktop application for creating professional resumes and cover letters",
+  "description": "A desktop application for creating professional resumes and cover letters with AI",
+  "author": "Resume Tailor Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/resume-tailor.git"
+  },
+  "homepage": "https://github.com/your-username/resume-tailor",
+  "bugs": {
+    "url": "https://github.com/your-username/resume-tailor/issues"
+  },
   "main": "dist-electron/src/main/main.js",
   "scripts": {
     "dev": "concurrently \"vite\" \"tsc -p tsconfig.electron.json --watch\" \"electron .\"",
@@ -9,10 +19,17 @@
     "dev:electron": "tsc -p tsconfig.electron.json && electron .",
     "build": "tsc -p tsconfig.electron.json && vite build",
     "build:electron": "npm run build && electron-builder",
+    "release": "npm run build && electron-builder --publish always",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
     "test:integration": "npm run build && node dist-electron/src/main/services/claude-code.integration.test.js",
-    "test:integration:live": "npm run build && node dist-electron/src/main/services/claude-code.integration.test.js --live"
+    "test:integration:live": "npm run build && node dist-electron/src/main/services/claude-code.integration.test.js --live",
+    "prepare": "husky",
+    "version": "npm run build"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
@@ -63,6 +80,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.17.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^20.14.10",
@@ -73,14 +93,24 @@
     "concurrently": "^8.2.2",
     "electron": "^31.2.1",
     "electron-builder": "^24.13.3",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
     "shadcn": "^3.7.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.5.3",
+    "typescript-eslint": "^8.18.2",
     "vite": "^5.3.3"
   },
   "build": {
     "appId": "com.resume-tailor.app",
     "productName": "Resume Tailor",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },
@@ -88,14 +118,70 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    },
     "mac": {
-      "target": "dmg"
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns"
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
     },
     "linux": {
-      "target": "AppImage"
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Office",
+      "icon": "build/icons"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
     }
   }
 }

@@ -1,12 +1,13 @@
-import { z } from 'zod';
-import type { PDFTheme } from '../types/pdf-theme.types';
+import { z } from 'zod'
+import type { PDFTheme } from '../types/pdf-theme.types'
+import { ApplicationStatusSchema, DEFAULT_APPLICATION_STATUSES } from './applications.schema'
 
 /**
  * Schema for AI provider selection.
  * Includes both CLI-based providers and API-based providers.
  */
-export const AIProviderTypeSchema = z.enum(['claude', 'codex', 'gemini', 'openai']);
-export type AIProviderTypeSetting = z.infer<typeof AIProviderTypeSchema>;
+export const AIProviderTypeSchema = z.enum(['claude', 'codex', 'gemini', 'openai'])
+export type AIProviderTypeSetting = z.infer<typeof AIProviderTypeSchema>
 
 /**
  * PDF Theme Settings Schema
@@ -16,15 +17,42 @@ export type AIProviderTypeSetting = z.infer<typeof AIProviderTypeSchema>;
  */
 export const PDFThemeSettingsSchema = z.object({
   colors: z.object({
-    pageBackground: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#FFFFFF'),
-    sidebarBackground: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#E9E6E1'),
-    primary: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#2A2A2A'),
-    body: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#3A3A3A'),
-    titleText: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#4A4A4A'),
-    muted: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#8A8A8A'),
-    light: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#A6A6A6'),
-    accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#1C1C1C'),
-    white: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').default('#FFFFFF'),
+    pageBackground: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#FFFFFF'),
+    sidebarBackground: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#E9E6E1'),
+    primary: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#2A2A2A'),
+    body: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#3A3A3A'),
+    titleText: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#4A4A4A'),
+    muted: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#8A8A8A'),
+    light: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#A6A6A6'),
+    accent: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#1C1C1C'),
+    white: z
+      .string()
+      .regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color')
+      .default('#FFFFFF'),
   }),
   fonts: z.object({
     primary: z.string().default('Helvetica'),
@@ -48,16 +76,17 @@ export const PDFThemeSettingsSchema = z.object({
     sidebarWidth: z.number().min(100).max(250).default(170),
     gutter: z.number().min(10).max(60).default(30),
   }),
-});
+})
 
 /**
  * File naming pattern variables schema.
  * Available variables: {company}, {date}, {title}, {name}
  */
-export const FileNamingPatternSchema = z.string()
+export const FileNamingPatternSchema = z
+  .string()
   .min(1, 'File naming pattern is required')
   .max(200, 'File naming pattern is too long')
-  .default('{company}-resume-{date}');
+  .default('{company}-resume-{date}')
 
 /**
  * Custom prompt template schema for resume refinement.
@@ -66,10 +95,12 @@ export const ResumePromptTemplateSettingsSchema = z.object({
   maxSummaryLength: z.number().min(100).max(1000).default(500),
   maxHighlightsPerExperience: z.number().min(1).max(10).default(6),
   tone: z.enum(['professional', 'conversational', 'technical']).default('professional'),
-  focusAreas: z.array(z.enum(['skills', 'experience', 'achievements', 'education'])).default(['skills', 'experience', 'achievements']),
+  focusAreas: z
+    .array(z.enum(['skills', 'experience', 'achievements', 'education']))
+    .default(['skills', 'experience', 'achievements']),
   customInstructions: z.string().max(2000).default(''),
   preserveAllContent: z.boolean().default(false),
-});
+})
 
 /**
  * Custom prompt template schema for cover letter generation.
@@ -78,30 +109,38 @@ export const CoverLetterPromptTemplateSettingsSchema = z.object({
   maxOpeningLength: z.number().min(100).max(500).default(300),
   maxBodyParagraphs: z.number().min(1).max(5).default(3),
   tone: z.enum(['formal', 'conversational', 'enthusiastic']).default('formal'),
-  focusAreas: z.array(z.enum(['technical-skills', 'leadership', 'achievements', 'culture-fit', 'career-growth'])).default(['achievements', 'technical-skills']),
+  focusAreas: z
+    .array(
+      z.enum(['technical-skills', 'leadership', 'achievements', 'culture-fit', 'career-growth'])
+    )
+    .default(['achievements', 'technical-skills']),
   customInstructions: z.string().max(2000).default(''),
   style: z.enum(['concise', 'detailed', 'storytelling']).default('detailed'),
   emphasizeCompanyKnowledge: z.boolean().default(true),
-});
+})
 
 /**
  * Template ID schema.
  */
-export const TemplateIdSchema = z.enum(['classic', 'modern', 'creative', 'executive']).default('classic');
-export type TemplateId = z.infer<typeof TemplateIdSchema>;
+export const TemplateIdSchema = z
+  .enum(['classic', 'modern', 'creative', 'executive'])
+  .default('classic')
+export type TemplateId = z.infer<typeof TemplateIdSchema>
 
 /**
  * Palette ID schema.
  */
-export const PaletteIdSchema = z.enum([
-  'professional-blue',
-  'modern-teal',
-  'bold-red',
-  'classic-gray',
-  'forest-green',
-  'royal-purple',
-]).default('classic-gray');
-export type PaletteId = z.infer<typeof PaletteIdSchema>;
+export const PaletteIdSchema = z
+  .enum([
+    'professional-blue',
+    'modern-teal',
+    'bold-red',
+    'classic-gray',
+    'forest-green',
+    'royal-purple',
+  ])
+  .default('classic-gray')
+export type PaletteId = z.infer<typeof PaletteIdSchema>
 
 /**
  * Main App Settings Schema
@@ -110,7 +149,7 @@ export type PaletteId = z.infer<typeof PaletteIdSchema>;
  */
 export const AppSettingsSchema = z.object({
   // Output folder configuration
-  outputFolderPath: z.string().default(''),  // Empty string means use default (Documents/cv-rebu-exports)
+  outputFolderPath: z.string().default(''), // Empty string means use default (Documents/cv-rebu-exports)
   createCompanySubfolders: z.boolean().default(true),
   fileNamingPattern: FileNamingPatternSchema,
 
@@ -129,25 +168,30 @@ export const AppSettingsSchema = z.object({
   onboardingComplete: z.boolean().default(false),
 
   // AI provider selection
-  selectedProvider: AIProviderTypeSchema.nullable().default(null),  // null means auto-select first available
+  selectedProvider: AIProviderTypeSchema.nullable().default(null), // null means auto-select first available
 
   // Settings metadata
-  version: z.number().default(1),  // Schema version for migrations
-});
+  version: z.number().default(1), // Schema version for migrations
+
+  // Application tracking statuses
+  applicationStatuses: z.array(ApplicationStatusSchema).default(DEFAULT_APPLICATION_STATUSES),
+})
 
 /**
  * Partial settings schema for updates (all fields optional).
  */
-export const PartialAppSettingsSchema = AppSettingsSchema.partial();
+export const PartialAppSettingsSchema = AppSettingsSchema.partial()
 
 /**
  * TypeScript types inferred from Zod schemas.
  */
-export type PDFThemeSettings = z.infer<typeof PDFThemeSettingsSchema>;
-export type ResumePromptTemplateSettings = z.infer<typeof ResumePromptTemplateSettingsSchema>;
-export type CoverLetterPromptTemplateSettings = z.infer<typeof CoverLetterPromptTemplateSettingsSchema>;
-export type AppSettings = z.infer<typeof AppSettingsSchema>;
-export type PartialAppSettings = z.infer<typeof PartialAppSettingsSchema>;
+export type PDFThemeSettings = z.infer<typeof PDFThemeSettingsSchema>
+export type ResumePromptTemplateSettings = z.infer<typeof ResumePromptTemplateSettingsSchema>
+export type CoverLetterPromptTemplateSettings = z.infer<
+  typeof CoverLetterPromptTemplateSettingsSchema
+>
+export type AppSettings = z.infer<typeof AppSettingsSchema>
+export type PartialAppSettings = z.infer<typeof PartialAppSettingsSchema>
 
 /**
  * Default settings values.
@@ -214,7 +258,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
     },
   },
   version: 1,
-};
+  applicationStatuses: DEFAULT_APPLICATION_STATUSES,
+}
 
 /**
  * Available file naming pattern variables with descriptions.
@@ -224,7 +269,7 @@ export const FILE_NAMING_VARIABLES = [
   { variable: '{date}', description: 'Current date (YYYY-MM-DD format)' },
   { variable: '{title}', description: 'Job title from job posting' },
   { variable: '{name}', description: 'Candidate name from resume' },
-] as const;
+] as const
 
 /**
  * List of supported fonts for PDF generation.
@@ -243,7 +288,7 @@ export const SUPPORTED_PDF_FONTS = [
   'Courier-Bold',
   'Courier-Oblique',
   'Courier-BoldOblique',
-] as const;
+] as const
 
 /**
  * Validates that theme settings are compatible with PDFTheme interface.
@@ -283,5 +328,5 @@ export function convertToPDFTheme(settings: PDFThemeSettings): PDFTheme {
       sidebarWidth: settings.layout.sidebarWidth,
       gutter: settings.layout.gutter,
     },
-  };
+  }
 }

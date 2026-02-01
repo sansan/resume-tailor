@@ -1,15 +1,15 @@
-import React from 'react';
-import JobPostingInput from './JobPostingInput';
-import ProcessingStatus from './ProcessingStatus';
-import ProcessingError from './ProcessingError';
-import RefinedResumeReview from './RefinedResumeReview';
-import CoverLetterReview from './CoverLetterReview';
-import ExportPanel from './ExportPanel';
-import type { Resume } from '@schemas/resume.schema';
+import React from 'react'
+import JobPostingInput from './JobPostingInput'
+import ProcessingStatus from './ProcessingStatus'
+import ProcessingError from './ProcessingError'
+import RefinedResumeReview from './RefinedResumeReview'
+import CoverLetterReview from './CoverLetterReview'
+import ExportPanel from './ExportPanel'
+import type { Resume } from '@schemas/resume.schema'
 import type {
   UseJobApplicationState,
   UseJobApplicationActions,
-} from '../../hooks/useJobApplication';
+} from '../../hooks/useJobApplication'
 
 type JobApplicationViewProps = UseJobApplicationState &
   Pick<
@@ -26,8 +26,8 @@ type JobApplicationViewProps = UseJobApplicationState &
     | 'acceptCoverLetter'
     | 'updateCoverLetter'
   > & {
-    resume: Resume | null;
-  };
+    resume: Resume | null
+  }
 
 function JobApplicationView({
   currentStep,
@@ -57,9 +57,9 @@ function JobApplicationView({
       { key: 'processing', label: 'Processing' },
       { key: 'review', label: 'Review' },
       { key: 'export', label: 'Export' },
-    ];
+    ]
 
-    const currentIndex = steps.findIndex((s) => s.key === currentStep);
+    const currentIndex = steps.findIndex(s => s.key === currentStep)
 
     return (
       <div className="job-application__steps">
@@ -77,8 +77,8 @@ function JobApplicationView({
           </div>
         ))}
       </div>
-    );
-  };
+    )
+  }
 
   const renderInputStep = () => (
     <JobPostingInput
@@ -88,38 +88,32 @@ function JobApplicationView({
       hasResume={resume !== null}
       isAIAvailable={isAIAvailable}
     />
-  );
+  )
 
   const handleBackToInput = () => {
-    clearError();
-    resetWorkflow();
-  };
+    clearError()
+    resetWorkflow()
+  }
 
   const renderProcessingStep = () => (
     <div className="job-application__processing">
       <ProcessingStatus aiState={aiState} onCancel={cancelOperation} />
 
-      {error && (
-        <ProcessingError
-          error={error}
-          onRetry={retry}
-          onBackToInput={handleBackToInput}
-        />
-      )}
+      {error && <ProcessingError error={error} onRetry={retry} onBackToInput={handleBackToInput} />}
     </div>
-  );
+  )
 
   const handleRegenerate = () => {
-    refineResume();
-  };
+    refineResume()
+  }
 
   const handleRegenerateCoverLetter = () => {
-    generateCoverLetter();
-  };
+    generateCoverLetter()
+  }
 
   const renderReviewStep = () => {
     // Get the original resume from the hook state or fallback to prop
-    const original = originalResume ?? resume;
+    const original = originalResume ?? resume
 
     return (
       <div className="job-application__review">
@@ -160,8 +154,8 @@ function JobApplicationView({
           </button>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const renderExportStep = () => {
     if (!refinedResume || !coverLetter) {
@@ -177,7 +171,7 @@ function JobApplicationView({
             Start Over
           </button>
         </div>
-      );
+      )
     }
 
     return (
@@ -188,32 +182,30 @@ function JobApplicationView({
         jobTitle={jobPosting.jobTitle}
         onStartOver={resetWorkflow}
       />
-    );
-  };
+    )
+  }
 
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'input':
-        return renderInputStep();
+        return renderInputStep()
       case 'processing':
-        return renderProcessingStep();
+        return renderProcessingStep()
       case 'review':
-        return renderReviewStep();
+        return renderReviewStep()
       case 'export':
-        return renderExportStep();
+        return renderExportStep()
       default:
-        return renderInputStep();
+        return renderInputStep()
     }
-  };
+  }
 
   return (
     <div className="job-application">
       {renderStepIndicator()}
-      <div className="job-application__content">
-        {renderCurrentStep()}
-      </div>
+      <div className="job-application__content">{renderCurrentStep()}</div>
     </div>
-  );
+  )
 }
 
-export default JobApplicationView;
+export default JobApplicationView

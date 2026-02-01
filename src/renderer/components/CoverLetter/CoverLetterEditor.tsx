@@ -58,7 +58,7 @@ function ToolbarButton({
       disabled={disabled}
       title={title}
       className={cn(
-        'p-1.5 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
+        'rounded p-1.5 transition-colors hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50',
         isActive && 'bg-gray-200 text-blue-600'
       )}
       style={{ color: isActive ? '#2563eb' : '#374151' }}
@@ -76,7 +76,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
 
   return (
     <div
-      className="flex items-center gap-1 px-2 py-1.5 border-b flex-wrap"
+      className="flex flex-wrap items-center gap-1 border-b px-2 py-1.5"
       style={{ backgroundColor: '#f3f4f6' }}
     >
       {/* Text formatting */}
@@ -104,7 +104,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
         <UnderlineIcon className="h-4 w-4" />
       </ToolbarButton>
 
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+      <div className="mx-1 h-5 w-px bg-gray-300" />
 
       {/* Lists */}
       <ToolbarButton
@@ -123,7 +123,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
         <ListOrdered className="h-4 w-4" />
       </ToolbarButton>
 
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+      <div className="mx-1 h-5 w-px bg-gray-300" />
 
       {/* Undo/Redo */}
       <ToolbarButton
@@ -174,10 +174,7 @@ function coverLetterToHtml(letter: GeneratedCoverLetter): string {
 /**
  * Parse HTML content back to cover letter structure
  */
-function htmlToCoverLetter(
-  html: string,
-  original: GeneratedCoverLetter
-): GeneratedCoverLetter {
+function htmlToCoverLetter(html: string, original: GeneratedCoverLetter): GeneratedCoverLetter {
   // Create a temporary element to parse HTML
   const temp = document.createElement('div')
   temp.innerHTML = html
@@ -222,9 +219,7 @@ function htmlToCoverLetter(
 }
 
 // Stable extensions array - StarterKit v3 includes Underline
-const editorExtensions = [
-  StarterKit,
-]
+const editorExtensions = [StarterKit]
 
 export function CoverLetterEditor({
   coverLetter,
@@ -262,23 +257,26 @@ export function CoverLetterEditor({
     }
   }, [coverLetter, editor, mode])
 
-  const handleModeChange = useCallback((newMode: EditorMode) => {
-    setMode(newMode)
-    // When switching to edit mode, ensure editor has latest content
-    if (newMode === 'edit' && editor) {
-      editor.commands.setContent(coverLetterToHtml(coverLetter))
-    }
-  }, [editor, coverLetter])
+  const handleModeChange = useCallback(
+    (newMode: EditorMode) => {
+      setMode(newMode)
+      // When switching to edit mode, ensure editor has latest content
+      if (newMode === 'edit' && editor) {
+        editor.commands.setContent(coverLetterToHtml(coverLetter))
+      }
+    },
+    [editor, coverLetter]
+  )
 
   return (
     <div className={cn('flex flex-col', className)}>
       {/* Mode toggle pills */}
-      <div className="flex justify-center mb-4">
-        <div className="inline-flex rounded-full bg-muted p-1">
+      <div className="mb-4 flex justify-center">
+        <div className="bg-muted inline-flex rounded-full p-1">
           <button
             onClick={() => handleModeChange('preview')}
             className={cn(
-              'px-4 py-1.5 text-sm font-medium rounded-full transition-colors',
+              'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
               mode === 'preview'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -289,7 +287,7 @@ export function CoverLetterEditor({
           <button
             onClick={() => handleModeChange('edit')}
             className={cn(
-              'px-4 py-1.5 text-sm font-medium rounded-full transition-colors',
+              'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
               mode === 'edit'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
@@ -302,14 +300,14 @@ export function CoverLetterEditor({
 
       {/* Content area */}
       {mode === 'preview' ? (
-        <CoverLetterPDFPreview
-          coverLetter={coverLetter}
-          personalInfo={personalInfo}
-        />
+        <CoverLetterPDFPreview coverLetter={coverLetter} personalInfo={personalInfo} />
       ) : (
-        <div className="rounded-lg shadow-sm border overflow-hidden" style={{ backgroundColor: 'white' }}>
+        <div
+          className="overflow-hidden rounded-lg border shadow-sm"
+          style={{ backgroundColor: 'white' }}
+        >
           {/* Editable header fields */}
-          <div className="border-b px-4 py-3 space-y-2" style={{ backgroundColor: '#f9fafb' }}>
+          <div className="space-y-2 border-b px-4 py-3" style={{ backgroundColor: '#f9fafb' }}>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <label style={{ color: '#6b7280' }}>From:</label>
@@ -321,21 +319,21 @@ export function CoverLetterEditor({
                 <label style={{ color: '#6b7280' }}>Date:</label>
                 <DatePicker
                   value={coverLetter.date}
-                  onChange={(value) => onUpdate({ ...coverLetter, date: value })}
+                  onChange={value => onUpdate({ ...coverLetter, date: value })}
                   placeholder="Pick a date"
-                  className="text-sm w-44"
+                  className="w-44 text-sm"
                 />
               </div>
             </div>
-            <div className="flex items-center gap-4 text-sm flex-wrap">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <label style={{ color: '#6b7280' }}>To:</label>
                 <input
                   type="text"
                   value={getDisplayValue(coverLetter.recipientName)}
-                  onChange={(e) => onUpdate({ ...coverLetter, recipientName: e.target.value })}
+                  onChange={e => onUpdate({ ...coverLetter, recipientName: e.target.value })}
                   placeholder="Hiring Manager"
-                  className="px-2 py-0.5 border-0 border-b border-gray-300 rounded-none text-sm w-36 bg-transparent focus:outline-none focus:border-blue-500"
+                  className="w-36 rounded-none border-0 border-b border-gray-300 bg-transparent px-2 py-0.5 text-sm focus:border-blue-500 focus:outline-none"
                   style={{ color: '#374151' }}
                 />
               </div>
@@ -344,9 +342,9 @@ export function CoverLetterEditor({
                 <input
                   type="text"
                   value={getDisplayValue(coverLetter.recipientTitle)}
-                  onChange={(e) => onUpdate({ ...coverLetter, recipientTitle: e.target.value })}
+                  onChange={e => onUpdate({ ...coverLetter, recipientTitle: e.target.value })}
                   placeholder="e.g. HR Director"
-                  className="px-2 py-0.5 border-0 border-b border-gray-300 rounded-none text-sm w-32 bg-transparent focus:outline-none focus:border-blue-500"
+                  className="w-32 rounded-none border-0 border-b border-gray-300 bg-transparent px-2 py-0.5 text-sm focus:border-blue-500 focus:outline-none"
                   style={{ color: '#374151' }}
                 />
               </div>
@@ -355,9 +353,9 @@ export function CoverLetterEditor({
                 <input
                   type="text"
                   value={getDisplayValue(coverLetter.companyName)}
-                  onChange={(e) => onUpdate({ ...coverLetter, companyName: e.target.value })}
+                  onChange={e => onUpdate({ ...coverLetter, companyName: e.target.value })}
                   placeholder="Company Name"
-                  className="px-2 py-0.5 border-0 border-b border-gray-300 rounded-none text-sm w-40 bg-transparent focus:outline-none focus:border-blue-500"
+                  className="w-40 rounded-none border-0 border-b border-gray-300 bg-transparent px-2 py-0.5 text-sm focus:border-blue-500 focus:outline-none"
                   style={{ color: '#374151' }}
                 />
               </div>
@@ -373,9 +371,13 @@ export function CoverLetterEditor({
           </div>
 
           {/* Character count */}
-          <div className="border-t px-4 py-2 text-sm" style={{ backgroundColor: '#f9fafb', color: '#6b7280' }}>
+          <div
+            className="border-t px-4 py-2 text-sm"
+            style={{ backgroundColor: '#f9fafb', color: '#6b7280' }}
+          >
             {(() => {
-              const charCount = (coverLetter.opening?.length || 0) +
+              const charCount =
+                (coverLetter.opening?.length || 0) +
                 (coverLetter.body?.join('').length || 0) +
                 (coverLetter.closing?.length || 0)
               const isOverLimit = charCount > 2000

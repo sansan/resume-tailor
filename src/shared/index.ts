@@ -13,4 +13,4 @@ export {
   sanitizeObject,
   sanitizeAIResponse,
   type SanitizeOptions,
-} from './sanitize';
+} from './sanitize'

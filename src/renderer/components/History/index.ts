@@ -1,1 +1,1 @@
-export { RecentExports, default } from './RecentExports';
+export { RecentExports, default } from './RecentExports'

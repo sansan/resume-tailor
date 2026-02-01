@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { CLITool } from '@app-types/electron.d';
+import { useState, useCallback, useEffect } from 'react'
+import type { CLITool } from '@app-types/electron.d'
 
 /**
  * Processing phases for resume import animation.
@@ -10,43 +10,43 @@ export type ProcessingPhase =
   | 'extracting'
   | 'organizing'
   | 'finalizing'
-  | 'complete';
+  | 'complete'
 
 /**
  * Onboarding steps.
  */
-export type OnboardingStep = 'provider' | 'resume' | 'template';
+export type OnboardingStep = 'provider' | 'resume' | 'template'
 
 /**
  * Return type for the useOnboarding hook.
  */
 export interface UseOnboardingReturn {
   // Step navigation
-  step: OnboardingStep;
-  nextStep: () => void;
-  prevStep: () => void;
-  canGoNext: boolean;
-  canGoPrev: boolean;
+  step: OnboardingStep
+  nextStep: () => void
+  prevStep: () => void
+  canGoNext: boolean
+  canGoPrev: boolean
 
   // Provider screen state
-  detectedCLIs: CLITool[];
-  isDetectingCLIs: boolean;
-  detectCLIs: () => Promise<void>;
+  detectedCLIs: CLITool[]
+  isDetectingCLIs: boolean
+  detectCLIs: () => Promise<void>
 
   // Resume processing phases (for animated progress)
-  processingPhase: ProcessingPhase;
-  setProcessingPhase: (phase: ProcessingPhase) => void;
+  processingPhase: ProcessingPhase
+  setProcessingPhase: (phase: ProcessingPhase) => void
 
   // Completion
-  completeOnboarding: () => Promise<void>;
-  isComplete: boolean;
-  isCompleting: boolean;
+  completeOnboarding: () => Promise<void>
+  isComplete: boolean
+  isCompleting: boolean
 }
 
 /**
  * Step order for navigation.
  */
-const STEP_ORDER: readonly OnboardingStep[] = ['provider', 'resume', 'template'] as const;
+const STEP_ORDER: readonly OnboardingStep[] = ['provider', 'resume', 'template'] as const
 
 /**
  * Hook for managing onboarding flow state.
@@ -56,122 +56,122 @@ const STEP_ORDER: readonly OnboardingStep[] = ['provider', 'resume', 'template']
  */
 export function useOnboarding(): UseOnboardingReturn {
   // Step navigation state
-  const [step, setStep] = useState<OnboardingStep>('provider');
+  const [step, setStep] = useState<OnboardingStep>('provider')
 
   // Provider screen state
-  const [detectedCLIs, setDetectedCLIs] = useState<CLITool[]>([]);
-  const [isDetectingCLIs, setIsDetectingCLIs] = useState(false);
+  const [detectedCLIs, setDetectedCLIs] = useState<CLITool[]>([])
+  const [isDetectingCLIs, setIsDetectingCLIs] = useState(false)
 
   // Resume processing phase
-  const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('idle');
+  const [processingPhase, setProcessingPhase] = useState<ProcessingPhase>('idle')
 
   // Completion state
-  const [isComplete, setIsComplete] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
+  const [isComplete, setIsComplete] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
 
   // Check if onboarding is already complete on mount
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       try {
-        const complete = await window.electronAPI.isOnboardingComplete();
-        setIsComplete(complete);
+        const complete = await window.electronAPI.isOnboardingComplete()
+        setIsComplete(complete)
       } catch (error) {
-        console.error('Failed to check onboarding status:', error);
+        console.error('Failed to check onboarding status:', error)
       }
-    };
-    checkOnboardingStatus();
-  }, []);
+    }
+    checkOnboardingStatus()
+  }, [])
 
   // Detect CLIs on mount
   useEffect(() => {
-    detectCLIsInternal();
-  }, []);
+    detectCLIsInternal()
+  }, [])
 
   /**
    * Internal CLI detection function.
    */
   const detectCLIsInternal = async () => {
-    setIsDetectingCLIs(true);
+    setIsDetectingCLIs(true)
     try {
-      const clis = await window.electronAPI.detectInstalledCLIs();
-      setDetectedCLIs(clis);
+      const clis = await window.electronAPI.detectInstalledCLIs()
+      setDetectedCLIs(clis)
     } catch (error) {
-      console.error('Failed to detect CLIs:', error);
-      setDetectedCLIs([]);
+      console.error('Failed to detect CLIs:', error)
+      setDetectedCLIs([])
     } finally {
-      setIsDetectingCLIs(false);
+      setIsDetectingCLIs(false)
     }
-  };
+  }
 
   /**
    * Detect installed AI CLIs.
    */
   const detectCLIs = useCallback(async () => {
-    await detectCLIsInternal();
-  }, []);
+    await detectCLIsInternal()
+  }, [])
 
   /**
    * Get current step index.
    */
   const getCurrentStepIndex = useCallback(() => {
-    return STEP_ORDER.indexOf(step);
-  }, [step]);
+    return STEP_ORDER.indexOf(step)
+  }, [step])
 
   /**
    * Navigate to the next step.
    */
   const nextStep = useCallback(() => {
-    const currentIndex = getCurrentStepIndex();
-    const nextIndex = currentIndex + 1;
+    const currentIndex = getCurrentStepIndex()
+    const nextIndex = currentIndex + 1
     if (nextIndex < STEP_ORDER.length) {
-      const nextStepValue = STEP_ORDER[nextIndex];
+      const nextStepValue = STEP_ORDER[nextIndex]
       if (nextStepValue !== undefined) {
-        setStep(nextStepValue);
+        setStep(nextStepValue)
       }
     }
-  }, [getCurrentStepIndex]);
+  }, [getCurrentStepIndex])
 
   /**
    * Navigate to the previous step.
    */
   const prevStep = useCallback(() => {
-    const currentIndex = getCurrentStepIndex();
-    const prevIndex = currentIndex - 1;
+    const currentIndex = getCurrentStepIndex()
+    const prevIndex = currentIndex - 1
     if (prevIndex >= 0) {
-      const prevStepValue = STEP_ORDER[prevIndex];
+      const prevStepValue = STEP_ORDER[prevIndex]
       if (prevStepValue !== undefined) {
-        setStep(prevStepValue);
+        setStep(prevStepValue)
       }
     }
-  }, [getCurrentStepIndex]);
+  }, [getCurrentStepIndex])
 
   /**
    * Check if we can navigate to the next step.
    */
-  const canGoNext = getCurrentStepIndex() < STEP_ORDER.length - 1;
+  const canGoNext = getCurrentStepIndex() < STEP_ORDER.length - 1
 
   /**
    * Check if we can navigate to the previous step.
    */
-  const canGoPrev = getCurrentStepIndex() > 0;
+  const canGoPrev = getCurrentStepIndex() > 0
 
   /**
    * Complete the onboarding process.
    */
   const completeOnboarding = useCallback(async () => {
-    if (isCompleting) return;
+    if (isCompleting) return
 
-    setIsCompleting(true);
+    setIsCompleting(true)
     try {
-      await window.electronAPI.completeOnboarding();
-      setIsComplete(true);
+      await window.electronAPI.completeOnboarding()
+      setIsComplete(true)
     } catch (error) {
-      console.error('Failed to complete onboarding:', error);
-      throw error;
+      console.error('Failed to complete onboarding:', error)
+      throw error
     } finally {
-      setIsCompleting(false);
+      setIsCompleting(false)
     }
-  }, [isCompleting]);
+  }, [isCompleting])
 
   return {
     // Step navigation
@@ -194,5 +194,5 @@ export function useOnboarding(): UseOnboardingReturn {
     completeOnboarding,
     isComplete,
     isCompleting,
-  };
+  }
 }

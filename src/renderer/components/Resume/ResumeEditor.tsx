@@ -1,16 +1,16 @@
-import React, { useCallback } from 'react';
-import type { ValidationError } from '../../hooks/useResume';
+import React, { useCallback } from 'react'
+import type { ValidationError } from '../../hooks/useResume'
 
 interface ResumeEditorProps {
-  jsonText: string;
-  onJsonTextChange: (text: string) => void;
-  onValidate: () => boolean;
-  onLoadFromFile: () => Promise<void>;
-  onSaveToFile: (saveAs?: boolean) => Promise<void>;
-  validationErrors: ValidationError[];
-  isValid: boolean;
-  filePath: string | null;
-  isDirty: boolean;
+  jsonText: string
+  onJsonTextChange: (text: string) => void
+  onValidate: () => boolean
+  onLoadFromFile: () => Promise<void>
+  onSaveToFile: (saveAs?: boolean) => Promise<void>
+  validationErrors: ValidationError[]
+  isValid: boolean
+  filePath: string | null
+  isDirty: boolean
 }
 
 function ResumeEditor({
@@ -26,38 +26,38 @@ function ResumeEditor({
 }: ResumeEditorProps): React.JSX.Element {
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      onJsonTextChange(e.target.value);
+      onJsonTextChange(e.target.value)
     },
     [onJsonTextChange]
-  );
+  )
 
   const handleValidate = useCallback(() => {
-    onValidate();
-  }, [onValidate]);
+    onValidate()
+  }, [onValidate])
 
   const handleLoad = useCallback(async () => {
     try {
-      await onLoadFromFile();
+      await onLoadFromFile()
     } catch (error) {
-      console.error('Failed to load file:', error);
+      console.error('Failed to load file:', error)
     }
-  }, [onLoadFromFile]);
+  }, [onLoadFromFile])
 
   const handleSave = useCallback(async () => {
     try {
-      await onSaveToFile(false);
+      await onSaveToFile(false)
     } catch (error) {
-      console.error('Failed to save file:', error);
+      console.error('Failed to save file:', error)
     }
-  }, [onSaveToFile]);
+  }, [onSaveToFile])
 
   const handleSaveAs = useCallback(async () => {
     try {
-      await onSaveToFile(true);
+      await onSaveToFile(true)
     } catch (error) {
-      console.error('Failed to save file:', error);
+      console.error('Failed to save file:', error)
     }
-  }, [onSaveToFile]);
+  }, [onSaveToFile])
 
   return (
     <div className="resume-editor">
@@ -134,13 +134,9 @@ function ResumeEditor({
         </div>
       )}
 
-      {isValid && (
-        <div className="resume-editor__success">
-          Resume JSON is valid!
-        </div>
-      )}
+      {isValid && <div className="resume-editor__success">Resume JSON is valid!</div>}
     </div>
-  );
+  )
 }
 
-export default ResumeEditor;
+export default ResumeEditor

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import type { AIOperationError } from '../../hooks/useJobApplication';
+import React, { useState } from 'react'
+import type { AIOperationError } from '../../hooks/useJobApplication'
 
 interface ProcessingErrorProps {
-  error: AIOperationError;
-  onRetry: () => void;
-  onBackToInput: () => void;
+  error: AIOperationError
+  onRetry: () => void
+  onBackToInput: () => void
 }
 
 function ProcessingError({
@@ -12,26 +12,26 @@ function ProcessingError({
   onRetry,
   onBackToInput,
 }: ProcessingErrorProps): React.JSX.Element {
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(false)
 
-  const hasDetails = error.details !== undefined || error.rawResponse !== undefined;
+  const hasDetails = error.details !== undefined || error.rawResponse !== undefined
 
   const formatDetails = (): string => {
-    const parts: string[] = [];
+    const parts: string[] = []
 
     if (error.details) {
-      parts.push(JSON.stringify(error.details, null, 2));
+      parts.push(JSON.stringify(error.details, null, 2))
     }
 
     if (error.rawResponse) {
       if (parts.length > 0) {
-        parts.push('\n--- Raw Response ---\n');
+        parts.push('\n--- Raw Response ---\n')
       }
-      parts.push(error.rawResponse);
+      parts.push(error.rawResponse)
     }
 
-    return parts.join('');
-  };
+    return parts.join('')
+  }
 
   return (
     <div className="processing-error">
@@ -45,7 +45,7 @@ function ProcessingError({
         <details
           className="processing-error__details"
           open={showDetails}
-          onToggle={(e) => setShowDetails((e.target as HTMLDetailsElement).open)}
+          onToggle={e => setShowDetails((e.target as HTMLDetailsElement).open)}
         >
           <summary>Technical Details</summary>
           <pre>{formatDetails()}</pre>
@@ -69,7 +69,7 @@ function ProcessingError({
         </button>
       </div>
     </div>
-  );
+  )
 }
 
-export default ProcessingError;
+export default ProcessingError

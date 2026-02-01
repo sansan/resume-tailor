@@ -5,7 +5,7 @@ export {
   generateSchemaInstructions,
   getResumeSchemaInstructions,
   getCoverLetterSchemaInstructions,
-} from './schema-instructions';
+} from './schema-instructions'
 
 // Resume refinement prompt templates
 export {
@@ -16,7 +16,7 @@ export {
   DEFAULT_RESUME_TEMPLATES,
   type ResumeRefinementOptions,
   type ResumePromptTemplate,
-} from './resume-refinement.prompt';
+} from './resume-refinement.prompt'
 
 // Cover letter generation prompt templates
 export {
@@ -28,16 +28,13 @@ export {
   type CoverLetterGenerationOptions,
   type CoverLetterPromptTemplate,
   type CompanyInfo,
-} from './cover-letter.prompt';
+} from './cover-letter.prompt'
 
 // Resume extraction prompt templates
 export {
   buildResumeExtractionPrompt,
   type ResumeExtractionOptions,
-} from './resume-extraction.prompt';
+} from './resume-extraction.prompt'
 
 // Job extraction prompt templates
-export {
-  buildJobExtractionPrompt,
-  type JobExtractionOptions,
-} from './job-extraction.prompt';
+export { buildJobExtractionPrompt, type JobExtractionOptions } from './job-extraction.prompt'

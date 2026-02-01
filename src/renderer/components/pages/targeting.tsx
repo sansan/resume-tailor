@@ -39,8 +39,13 @@ import { useJobApplication } from '@/hooks/useJobApplication'
 import ResumePDFPreview from '@/components/Resume/ResumePDFPreview'
 import { CoverLetterEditor } from '@/components/CoverLetter/CoverLetterEditor'
 import { useTemplates } from '@/hooks/useTemplates'
-import type { GeneratedCoverLetter, ExtractedJobPosting, RefinedResume } from '@schemas/ai-output.schema'
+import type {
+  GeneratedCoverLetter,
+  ExtractedJobPosting,
+  RefinedResume,
+} from '@schemas/ai-output.schema'
 import type { Resume, WorkExperience } from '@schemas/resume.schema'
+import { createJobApplication } from '@schemas/applications.schema'
 
 type Step = 'input' | 'extracting' | 'details' | 'tailoring' | 'review' | 'export'
 
@@ -130,9 +135,12 @@ export function TargetingPage() {
       if (result.success && result.content) {
         setJobPosting({ rawText: result.content })
       } else {
-        setFetchError(result.error || 'Unable to fetch job posting. The page may be protected or require authentication.')
+        setFetchError(
+          result.error ||
+            'Unable to fetch job posting. The page may be protected or require authentication.'
+        )
       }
-    } catch (err) {
+    } catch (_err) {
       setFetchError('Unable to fetch job posting. Please paste the description manually.')
     } finally {
       setIsFetching(false)
@@ -165,8 +173,8 @@ export function TargetingPage() {
         setExtractionError(result.error.message)
         setCurrentStep('input')
       }
-    } catch (err) {
-      setExtractionError(err instanceof Error ? err.message : 'Failed to extract job details')
+    } catch (_err) {
+      setExtractionError(_err instanceof Error ? _err.message : 'Failed to extract job details')
       setCurrentStep('input')
     }
   }, [jobPosting.rawText, setJobPosting])
@@ -210,15 +218,43 @@ export function TargetingPage() {
         baseFolderPath,
         subfolderName: settings.createCompanySubfolders ? sanitizedCompany : '',
         resumeBlob: await renderResumeToPDFBlob(refinedResume, { templateId: selectedTemplate }),
-        coverLetterBlob: await renderCoverLetterToPDFBlob(coverLetter, { personalInfo: refinedResume.personalInfo }),
+        coverLetterBlob: await renderCoverLetterToPDFBlob(coverLetter, {
+          personalInfo: refinedResume.personalInfo,
+        }),
         resumeFileName,
         coverLetterFileName,
       })
 
       if (result.success) {
+        const folderPath = result.folderPath || baseFolderPath
+        const subfolderPath = settings.createCompanySubfolders ? `${folderPath}` : folderPath
+
+        // Create job application entry for tracking
+        try {
+          const application = createJobApplication({
+            companyName: jobPosting.companyName || coverLetter.companyName || 'Unknown Company',
+            jobTitle: jobPosting.jobTitle || extractedJob?.jobTitle || 'Unknown Position',
+            jobDescription:
+              jobPosting.rawText.length > 500
+                ? jobPosting.rawText.substring(0, 500) + '...'
+                : jobPosting.rawText,
+            jobUrl: jobUrl || undefined,
+            location: extractedJob?.location || undefined,
+            employmentType: extractedJob?.employmentType || undefined,
+            salaryRange: extractedJob?.salaryRange || undefined,
+            resumePath: `${subfolderPath}/${resumeFileName}`,
+            coverLetterPath: `${subfolderPath}/${coverLetterFileName}`,
+            folderPath: subfolderPath,
+          })
+          await window.electronAPI.addApplication(application)
+        } catch (_err) {
+          console.error('Failed to create application entry:', _err)
+          // Don't fail the export if tracking fails
+        }
+
         setExportState({
           status: 'success',
-          exportedPath: result.folderPath || baseFolderPath,
+          exportedPath: folderPath,
           error: null,
         })
         setCurrentStep('export')
@@ -229,14 +265,23 @@ export function TargetingPage() {
           error: result.error || 'Failed to export PDFs',
         })
       }
-    } catch (err) {
+    } catch (_err) {
       setExportState({
         status: 'error',
         exportedPath: null,
-        error: err instanceof Error ? err.message : 'Export failed',
+        error: _err instanceof Error ? _err.message : 'Export failed',
       })
     }
-  }, [refinedResume, coverLetter, jobPosting.companyName])
+  }, [
+    refinedResume,
+    coverLetter,
+    jobPosting.companyName,
+    jobPosting.jobTitle,
+    jobPosting.rawText,
+    jobUrl,
+    extractedJob,
+    selectedTemplate,
+  ])
 
   // Handle open folder
   const handleOpenFolder = useCallback(async () => {
@@ -246,63 +291,84 @@ export function TargetingPage() {
   }, [exportState.exportedPath])
 
   // Handle cover letter update
-  const handleCoverLetterUpdate = useCallback((updated: GeneratedCoverLetter) => {
-    updateCoverLetter(updated)
-  }, [updateCoverLetter])
+  const handleCoverLetterUpdate = useCallback(
+    (updated: GeneratedCoverLetter) => {
+      updateCoverLetter(updated)
+    },
+    [updateCoverLetter]
+  )
 
   // Handle refined resume updates
-  const handleResumeUpdate = useCallback((updates: Partial<RefinedResume>) => {
-    if (!refinedResume) return
-    updateRefinedResume({ ...refinedResume, ...updates })
-  }, [refinedResume, updateRefinedResume])
+  const handleResumeUpdate = useCallback(
+    (updates: Partial<RefinedResume>) => {
+      if (!refinedResume) return
+      updateRefinedResume({ ...refinedResume, ...updates })
+    },
+    [refinedResume, updateRefinedResume]
+  )
 
-  const handleSummaryUpdate = useCallback((summary: string) => {
-    if (!refinedResume) return
-    handleResumeUpdate({
-      personalInfo: { ...refinedResume.personalInfo, summary }
-    })
-  }, [refinedResume, handleResumeUpdate])
+  const handleSummaryUpdate = useCallback(
+    (summary: string) => {
+      if (!refinedResume) return
+      handleResumeUpdate({
+        personalInfo: { ...refinedResume.personalInfo, summary },
+      })
+    },
+    [refinedResume, handleResumeUpdate]
+  )
 
-  const handleExperienceUpdate = useCallback((index: number, updates: Partial<WorkExperience>) => {
-    if (!refinedResume) return
-    const newExperiences = [...refinedResume.workExperience]
-    const experience = newExperiences[index]
-    if (!experience) return
-    newExperiences[index] = { ...experience, ...updates }
-    handleResumeUpdate({ workExperience: newExperiences })
-  }, [refinedResume, handleResumeUpdate])
+  const handleExperienceUpdate = useCallback(
+    (index: number, updates: Partial<WorkExperience>) => {
+      if (!refinedResume) return
+      const newExperiences = [...refinedResume.workExperience]
+      const experience = newExperiences[index]
+      if (!experience) return
+      newExperiences[index] = { ...experience, ...updates }
+      handleResumeUpdate({ workExperience: newExperiences })
+    },
+    [refinedResume, handleResumeUpdate]
+  )
 
-  const handleHighlightUpdate = useCallback((expIndex: number, highlightIndex: number, value: string) => {
-    if (!refinedResume) return
-    const newExperiences = [...refinedResume.workExperience]
-    const experience = newExperiences[expIndex]
-    if (!experience) return
-    const highlights = [...(experience.highlights || [])]
-    highlights[highlightIndex] = value
-    newExperiences[expIndex] = { ...experience, highlights }
-    handleResumeUpdate({ workExperience: newExperiences })
-  }, [refinedResume, handleResumeUpdate])
+  const handleHighlightUpdate = useCallback(
+    (expIndex: number, highlightIndex: number, value: string) => {
+      if (!refinedResume) return
+      const newExperiences = [...refinedResume.workExperience]
+      const experience = newExperiences[expIndex]
+      if (!experience) return
+      const highlights = [...(experience.highlights || [])]
+      highlights[highlightIndex] = value
+      newExperiences[expIndex] = { ...experience, highlights }
+      handleResumeUpdate({ workExperience: newExperiences })
+    },
+    [refinedResume, handleResumeUpdate]
+  )
 
-  const handleAddHighlight = useCallback((expIndex: number) => {
-    if (!refinedResume) return
-    const newExperiences = [...refinedResume.workExperience]
-    const experience = newExperiences[expIndex]
-    if (!experience) return
-    const highlights = [...(experience.highlights || []), '']
-    newExperiences[expIndex] = { ...experience, highlights }
-    handleResumeUpdate({ workExperience: newExperiences })
-  }, [refinedResume, handleResumeUpdate])
+  const handleAddHighlight = useCallback(
+    (expIndex: number) => {
+      if (!refinedResume) return
+      const newExperiences = [...refinedResume.workExperience]
+      const experience = newExperiences[expIndex]
+      if (!experience) return
+      const highlights = [...(experience.highlights || []), '']
+      newExperiences[expIndex] = { ...experience, highlights }
+      handleResumeUpdate({ workExperience: newExperiences })
+    },
+    [refinedResume, handleResumeUpdate]
+  )
 
-  const handleRemoveHighlight = useCallback((expIndex: number, highlightIndex: number) => {
-    if (!refinedResume) return
-    const newExperiences = [...refinedResume.workExperience]
-    const experience = newExperiences[expIndex]
-    if (!experience) return
-    const highlights = [...(experience.highlights || [])]
-    highlights.splice(highlightIndex, 1)
-    newExperiences[expIndex] = { ...experience, highlights }
-    handleResumeUpdate({ workExperience: newExperiences })
-  }, [refinedResume, handleResumeUpdate])
+  const handleRemoveHighlight = useCallback(
+    (expIndex: number, highlightIndex: number) => {
+      if (!refinedResume) return
+      const newExperiences = [...refinedResume.workExperience]
+      const experience = newExperiences[expIndex]
+      if (!experience) return
+      const highlights = [...(experience.highlights || [])]
+      highlights.splice(highlightIndex, 1)
+      newExperiences[expIndex] = { ...experience, highlights }
+      handleResumeUpdate({ workExperience: newExperiences })
+    },
+    [refinedResume, handleResumeUpdate]
+  )
 
   // Handle start over
   const handleStartOver = useCallback(() => {
@@ -317,8 +383,8 @@ export function TargetingPage() {
   // Show loading state while profile loads
   if (isLoadingProfile) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
       </div>
     )
   }
@@ -365,7 +431,7 @@ export function TargetingPage() {
 
   // Render input step
   const renderInputStep = () => (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -381,7 +447,7 @@ export function TargetingPage() {
               <Input
                 placeholder="https://example.com/job/software-engineer"
                 value={jobUrl}
-                onChange={(e) => setJobUrl(e.target.value)}
+                onChange={e => setJobUrl(e.target.value)}
                 className="flex-1"
               />
               <Button onClick={handleFetch} disabled={isFetching || !jobUrl.trim()}>
@@ -400,7 +466,7 @@ export function TargetingPage() {
 
           <div className="flex items-center gap-4">
             <Separator className="flex-1" />
-            <span className="text-sm text-muted-foreground">or paste description</span>
+            <span className="text-muted-foreground text-sm">or paste description</span>
             <Separator className="flex-1" />
           </div>
 
@@ -410,10 +476,10 @@ export function TargetingPage() {
             <Textarea
               placeholder="Paste the full job description here..."
               value={jobPosting.rawText}
-              onChange={(e) => setJobPosting({ rawText: e.target.value })}
+              onChange={e => setJobPosting({ rawText: e.target.value })}
               className="min-h-[300px]"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               {jobPosting.rawText.length} characters
               {jobPosting.rawText.length < 50 && jobPosting.rawText.length > 0 && (
                 <span className="text-destructive"> (minimum 50 required)</span>
@@ -430,7 +496,14 @@ export function TargetingPage() {
           <AlertTitle>Error</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>{error?.message || extractionError}</p>
-            <Button variant="outline" size="sm" onClick={() => { clearError(); setExtractionError(null); }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                clearError()
+                setExtractionError(null)
+              }}
+            >
               Dismiss
             </Button>
           </AlertDescription>
@@ -465,11 +538,11 @@ export function TargetingPage() {
 
   // Render extracting step
   const renderExtractingStep = () => (
-    <div className="max-w-lg mx-auto space-y-6">
+    <div className="mx-auto max-w-lg space-y-6">
       <Card>
-        <CardContent className="pt-6 space-y-6">
-          <div className="text-center space-y-2">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+        <CardContent className="space-y-6 pt-6">
+          <div className="space-y-2 text-center">
+            <Loader2 className="text-primary mx-auto h-12 w-12 animate-spin" />
             <h3 className="text-lg font-semibold">Analyzing Job Posting</h3>
             <p className="text-muted-foreground">
               Extracting company info, requirements, and responsibilities...
@@ -489,14 +562,14 @@ export function TargetingPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={handleStartOver}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column - Job Summary */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Basic Info */}
             <Card>
               <CardHeader>
@@ -511,7 +584,7 @@ export function TargetingPage() {
                     <Label>Company Name</Label>
                     <Input
                       value={jobPosting.companyName}
-                      onChange={(e) => setJobPosting({ companyName: e.target.value })}
+                      onChange={e => setJobPosting({ companyName: e.target.value })}
                       placeholder="Company name"
                     />
                   </div>
@@ -519,7 +592,7 @@ export function TargetingPage() {
                     <Label>Job Title</Label>
                     <Input
                       value={jobPosting.jobTitle}
-                      onChange={(e) => setJobPosting({ jobTitle: e.target.value })}
+                      onChange={e => setJobPosting({ jobTitle: e.target.value })}
                       placeholder="Job title"
                     />
                   </div>
@@ -547,15 +620,17 @@ export function TargetingPage() {
                   {extractedJob.teamInfo && (
                     <Badge variant="secondary" className="gap-1">
                       <Users className="h-3 w-3" />
-                      {extractedJob.teamInfo.length > 30 ? extractedJob.teamInfo.slice(0, 30) + '...' : extractedJob.teamInfo}
+                      {extractedJob.teamInfo.length > 30
+                        ? extractedJob.teamInfo.slice(0, 30) + '...'
+                        : extractedJob.teamInfo}
                     </Badge>
                   )}
                 </div>
 
                 {extractedJob.companyDescription && (
                   <div className="pt-2">
-                    <Label className="text-sm text-muted-foreground">About the Company</Label>
-                    <p className="text-sm mt-1">{extractedJob.companyDescription}</p>
+                    <Label className="text-muted-foreground text-sm">About the Company</Label>
+                    <p className="mt-1 text-sm">{extractedJob.companyDescription}</p>
                   </div>
                 )}
               </CardContent>
@@ -565,7 +640,7 @@ export function TargetingPage() {
             {(extractedJob.requirements.length > 0 || extractedJob.qualifications.length > 0) && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <CheckCircle2 className="h-4 w-4" />
                     Requirements & Qualifications
                   </CardTitle>
@@ -580,7 +655,10 @@ export function TargetingPage() {
                         </li>
                       ))}
                       {extractedJob.qualifications.map((qual, i) => (
-                        <li key={`qual-${i}`} className="flex items-start gap-2 text-muted-foreground">
+                        <li
+                          key={`qual-${i}`}
+                          className="text-muted-foreground flex items-start gap-2"
+                        >
                           <span>○</span>
                           <span>{qual}</span>
                         </li>
@@ -595,7 +673,7 @@ export function TargetingPage() {
             {extractedJob.responsibilities.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
                     <FileText className="h-4 w-4" />
                     Responsibilities
                   </CardTitle>
@@ -627,7 +705,9 @@ export function TargetingPage() {
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {extractedJob.requiredSkills.map((skill, i) => (
-                      <Badge key={i} variant="default">{skill}</Badge>
+                      <Badge key={i} variant="default">
+                        {skill}
+                      </Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -643,7 +723,9 @@ export function TargetingPage() {
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {extractedJob.preferredSkills.map((skill, i) => (
-                      <Badge key={i} variant="secondary">{skill}</Badge>
+                      <Badge key={i} variant="secondary">
+                        {skill}
+                      </Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -660,7 +742,7 @@ export function TargetingPage() {
                   <ul className="space-y-1 text-sm">
                     {extractedJob.benefits.map((benefit, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-3 w-3 text-green-500 mt-1 shrink-0" />
+                        <CheckCircle2 className="mt-1 h-3 w-3 shrink-0 text-green-500" />
                         <span>{benefit}</span>
                       </li>
                     ))}
@@ -674,7 +756,7 @@ export function TargetingPage() {
         {/* Action Buttons */}
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => setCurrentStep('input')}>
-            <Pencil className="h-4 w-4 mr-2" />
+            <Pencil className="mr-2 h-4 w-4" />
             Edit Job Posting
           </Button>
           <Button size="lg" onClick={handleTailor} disabled={aiState.isLoading} className="gap-2">
@@ -688,17 +770,17 @@ export function TargetingPage() {
 
   // Render tailoring step
   const renderTailoringStep = () => (
-    <div className="max-w-lg mx-auto space-y-6">
+    <div className="mx-auto max-w-lg space-y-6">
       <Card>
-        <CardContent className="pt-6 space-y-6">
-          <div className="text-center space-y-2">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+        <CardContent className="space-y-6 pt-6">
+          <div className="space-y-2 text-center">
+            <Loader2 className="text-primary mx-auto h-12 w-12 animate-spin" />
             <h3 className="text-lg font-semibold">
-              {aiState.currentOperation === 'refine' ? 'Tailoring Your Resume' : 'Generating Cover Letter'}
+              {aiState.currentOperation === 'refine'
+                ? 'Tailoring Your Resume'
+                : 'Generating Cover Letter'}
             </h3>
-            <p className="text-muted-foreground">
-              {aiState.statusMessage || 'Please wait...'}
-            </p>
+            <p className="text-muted-foreground">{aiState.statusMessage || 'Please wait...'}</p>
           </div>
 
           <Progress value={aiState.progress} className="h-2" />
@@ -722,26 +804,24 @@ export function TargetingPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={handleStartOver}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Start Over
             </Button>
             <Badge variant="outline" className="gap-1">
               <Building2 className="h-3 w-3" />
               {jobPosting.companyName || 'Application'}
             </Badge>
-            {jobPosting.jobTitle && (
-              <Badge variant="secondary">{jobPosting.jobTitle}</Badge>
-            )}
+            {jobPosting.jobTitle && <Badge variant="secondary">{jobPosting.jobTitle}</Badge>}
           </div>
           <Button onClick={handleExport} disabled={exportState.status === 'exporting'}>
             {exportState.status === 'exporting' ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Exporting...
               </>
             ) : (
               <>
-                <FolderOpen className="h-4 w-4 mr-2" />
+                <FolderOpen className="mr-2 h-4 w-4" />
                 Export PDFs
               </>
             )}
@@ -751,18 +831,18 @@ export function TargetingPage() {
         <Tabs defaultValue="resume" className="w-full">
           <TabsList>
             <TabsTrigger value="resume">
-              <FileText className="h-4 w-4 mr-2" />
+              <FileText className="mr-2 h-4 w-4" />
               Tailored Resume
             </TabsTrigger>
             <TabsTrigger value="coverLetter">
-              <Mail className="h-4 w-4 mr-2" />
+              <Mail className="mr-2 h-4 w-4" />
               Cover Letter
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="resume" className="mt-4">
             {/* Preview/Edit Toggle */}
-            <div className="flex justify-center mb-4">
+            <div className="mb-4 flex justify-center">
               <div className="inline-flex rounded-lg border p-1">
                 <Button
                   variant={resumeViewMode === 'preview' ? 'default' : 'ghost'}
@@ -798,11 +878,11 @@ export function TargetingPage() {
               </div>
             ) : (
               <ScrollArea className="h-[calc(100vh-300px)]">
-                <div className="max-w-3xl mx-auto space-y-6 pr-4">
+                <div className="mx-auto max-w-3xl space-y-6 pr-4">
                   {/* Summary Section */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <FileText className="h-4 w-4" />
                         Professional Summary
                       </CardTitle>
@@ -810,7 +890,7 @@ export function TargetingPage() {
                     <CardContent>
                       <Textarea
                         value={refinedResume.personalInfo.summary || ''}
-                        onChange={(e) => handleSummaryUpdate(e.target.value)}
+                        onChange={e => handleSummaryUpdate(e.target.value)}
                         placeholder="Professional summary..."
                         className="min-h-[100px]"
                       />
@@ -820,40 +900,49 @@ export function TargetingPage() {
                   {/* Work Experience Section */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <Briefcase className="h-4 w-4" />
                         Work Experience
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {refinedResume.workExperience.map((exp, expIndex) => (
-                        <div key={expIndex} className="space-y-3 pb-4 border-b last:border-0 last:pb-0">
+                        <div
+                          key={expIndex}
+                          className="space-y-3 border-b pb-4 last:border-0 last:pb-0"
+                        >
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div>
-                              <Label className="text-xs text-muted-foreground">Company</Label>
+                              <Label className="text-muted-foreground text-xs">Company</Label>
                               <Input
                                 value={exp.company}
-                                onChange={(e) => handleExperienceUpdate(expIndex, { company: e.target.value })}
+                                onChange={e =>
+                                  handleExperienceUpdate(expIndex, { company: e.target.value })
+                                }
                                 className="mt-1"
                               />
                             </div>
                             <div>
-                              <Label className="text-xs text-muted-foreground">Position</Label>
+                              <Label className="text-muted-foreground text-xs">Position</Label>
                               <Input
                                 value={exp.title}
-                                onChange={(e) => handleExperienceUpdate(expIndex, { title: e.target.value })}
+                                onChange={e =>
+                                  handleExperienceUpdate(expIndex, { title: e.target.value })
+                                }
                                 className="mt-1"
                               />
                             </div>
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Highlights</Label>
-                            <div className="space-y-2 mt-1">
+                            <Label className="text-muted-foreground text-xs">Highlights</Label>
+                            <div className="mt-1 space-y-2">
                               {(exp.highlights || []).map((highlight, hIndex) => (
                                 <div key={hIndex} className="flex gap-2">
                                   <Input
                                     value={highlight}
-                                    onChange={(e) => handleHighlightUpdate(expIndex, hIndex, e.target.value)}
+                                    onChange={e =>
+                                      handleHighlightUpdate(expIndex, hIndex, e.target.value)
+                                    }
                                     placeholder="Achievement or responsibility..."
                                   />
                                   <Button
@@ -862,7 +951,7 @@ export function TargetingPage() {
                                     onClick={() => handleRemoveHighlight(expIndex, hIndex)}
                                     className="shrink-0"
                                   >
-                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                    <Trash2 className="text-muted-foreground h-4 w-4" />
                                   </Button>
                                 </div>
                               ))}
@@ -885,7 +974,7 @@ export function TargetingPage() {
                   {/* Skills Section */}
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <Wrench className="h-4 w-4" />
                         Skills
                       </CardTitle>
@@ -896,12 +985,14 @@ export function TargetingPage() {
                           <Badge key={index} variant="secondary" className="gap-1">
                             {skill.name}
                             {skill.category && (
-                              <span className="text-xs text-muted-foreground">({skill.category})</span>
+                              <span className="text-muted-foreground text-xs">
+                                ({skill.category})
+                              </span>
                             )}
                           </Badge>
                         ))}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
+                      <p className="text-muted-foreground mt-2 text-xs">
                         Skills are automatically tailored based on the job requirements.
                       </p>
                     </CardContent>
@@ -911,7 +1002,7 @@ export function TargetingPage() {
                   {refinedResume.education.length > 0 && (
                     <Card>
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle className="flex items-center gap-2 text-base">
                           <GraduationCap className="h-4 w-4" />
                           Education
                         </CardTitle>
@@ -934,7 +1025,7 @@ export function TargetingPage() {
           </TabsContent>
 
           <TabsContent value="coverLetter" className="mt-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="mx-auto max-w-4xl">
               <CoverLetterEditor
                 coverLetter={coverLetter}
                 personalInfo={refinedResume.personalInfo}
@@ -949,11 +1040,11 @@ export function TargetingPage() {
 
   // Render export success step
   const renderExportStep = () => (
-    <div className="max-w-lg mx-auto space-y-6">
+    <div className="mx-auto max-w-lg space-y-6">
       <Card>
-        <CardContent className="pt-6 space-y-6">
-          <div className="text-center space-y-4">
-            <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+        <CardContent className="space-y-6 pt-6">
+          <div className="space-y-4 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
               <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
             <div>
@@ -966,17 +1057,17 @@ export function TargetingPage() {
 
           {exportState.exportedPath && (
             <div className="bg-muted rounded-lg p-3">
-              <p className="text-sm font-mono break-all">{exportState.exportedPath}</p>
+              <p className="font-mono text-sm break-all">{exportState.exportedPath}</p>
             </div>
           )}
 
           <div className="flex flex-col gap-2">
             <Button onClick={handleOpenFolder} className="w-full">
-              <FolderOpen className="h-4 w-4 mr-2" />
+              <FolderOpen className="mr-2 h-4 w-4" />
               Open Folder
             </Button>
             <Button variant="outline" onClick={handleStartOver} className="w-full">
-              <RotateCcw className="h-4 w-4 mr-2" />
+              <RotateCcw className="mr-2 h-4 w-4" />
               Tailor for Another Job
             </Button>
           </div>
@@ -995,7 +1086,7 @@ export function TargetingPage() {
       </div>
 
       {/* Step Indicator */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="mb-6 flex items-center gap-2">
         {steps.map((step, index) => {
           const currentIndex = getStepIndex(currentStep)
           const isActive = index === currentIndex
@@ -1003,19 +1094,15 @@ export function TargetingPage() {
 
           return (
             <div key={step.id} className="flex items-center">
-              {index > 0 && <div className={`w-8 h-0.5 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />}
-              <div className={`
-                flex items-center gap-2 px-3 py-1.5 rounded-full text-sm
-                ${isActive ? 'bg-primary text-primary-foreground' : ''}
-                ${isCompleted && !isActive ? 'text-primary' : ''}
-                ${!isActive && !isCompleted ? 'text-muted-foreground' : ''}
-              `}>
-                <span className={`
-                  w-5 h-5 rounded-full flex items-center justify-center text-xs
-                  ${isActive ? 'bg-primary-foreground text-primary' : ''}
-                  ${isCompleted && !isActive ? 'bg-primary text-primary-foreground' : ''}
-                  ${!isActive && !isCompleted ? 'bg-muted' : ''}
-                `}>
+              {index > 0 && (
+                <div className={`h-0.5 w-8 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />
+              )}
+              <div
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${isActive ? 'bg-primary text-primary-foreground' : ''} ${isCompleted && !isActive ? 'text-primary' : ''} ${!isActive && !isCompleted ? 'text-muted-foreground' : ''} `}
+              >
+                <span
+                  className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${isActive ? 'bg-primary-foreground text-primary' : ''} ${isCompleted && !isActive ? 'bg-primary text-primary-foreground' : ''} ${!isActive && !isCompleted ? 'bg-muted' : ''} `}
+                >
                   {isCompleted && !isActive ? '✓' : index + 1}
                 </span>
                 <span className="hidden sm:inline">{step.label}</span>

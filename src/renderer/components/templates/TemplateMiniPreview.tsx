@@ -20,10 +20,7 @@ export function TemplateMiniPreview({
       return (
         <div className="flex h-full w-full overflow-hidden rounded bg-white p-1.5">
           {/* Sidebar */}
-          <div
-            className="mr-1 w-[35%] rounded-sm"
-            style={{ backgroundColor: `${accentColor}30` }}
-          >
+          <div className="mr-1 w-[35%] rounded-sm" style={{ backgroundColor: `${accentColor}30` }}>
             <div
               className="mx-1 mt-1.5 h-1 rounded-full"
               style={{ backgroundColor: primaryColor }}
@@ -39,10 +36,7 @@ export function TemplateMiniPreview({
           </div>
           {/* Main content */}
           <div className="flex-1 pt-1">
-            <div
-              className="h-1.5 w-3/4 rounded-sm"
-              style={{ backgroundColor: primaryColor }}
-            />
+            <div className="h-1.5 w-3/4 rounded-sm" style={{ backgroundColor: primaryColor }} />
             <div className="mt-2 space-y-0.5">
               <div className="h-0.5 w-full rounded-full bg-gray-200" />
               <div className="h-0.5 w-5/6 rounded-full bg-gray-200" />
@@ -62,10 +56,7 @@ export function TemplateMiniPreview({
         <div className="flex h-full w-full flex-col overflow-hidden rounded bg-white p-2">
           {/* Centered header */}
           <div className="flex flex-col items-center">
-            <div
-              className="h-1.5 w-1/2 rounded-sm"
-              style={{ backgroundColor: primaryColor }}
-            />
+            <div className="h-1.5 w-1/2 rounded-sm" style={{ backgroundColor: primaryColor }} />
             <div className="mt-0.5 h-0.5 w-1/4 rounded-full bg-gray-300" />
             <div className="mt-1 h-px w-2/3 bg-gray-200" />
           </div>
@@ -106,10 +97,7 @@ export function TemplateMiniPreview({
       return (
         <div className="flex h-full w-full flex-col overflow-hidden rounded bg-white">
           {/* Full-width header banner */}
-          <div
-            className="px-2 py-1.5"
-            style={{ backgroundColor: primaryColor }}
-          >
+          <div className="px-2 py-1.5" style={{ backgroundColor: primaryColor }}>
             <div className="h-1.5 w-1/2 rounded-sm bg-white/90" />
             <div className="mt-0.5 h-0.5 w-1/3 rounded-full bg-white/60" />
           </div>
@@ -118,10 +106,7 @@ export function TemplateMiniPreview({
             {/* Main */}
             <div className="flex-[2]">
               <div className="flex items-center gap-0.5">
-                <div
-                  className="h-2 w-0.5 rounded-full"
-                  style={{ backgroundColor: primaryColor }}
-                />
+                <div className="h-2 w-0.5 rounded-full" style={{ backgroundColor: primaryColor }} />
                 <div
                   className="h-0.5 w-1/2 rounded-full"
                   style={{ backgroundColor: primaryColor }}
@@ -159,34 +144,19 @@ export function TemplateMiniPreview({
         <div className="flex h-full w-full flex-col overflow-hidden rounded bg-white p-2">
           {/* Elegant centered header */}
           <div className="flex flex-col items-center">
-            <div
-              className="h-1 w-2/5 rounded-sm"
-              style={{ backgroundColor: primaryColor }}
-            />
+            <div className="h-1 w-2/5 rounded-sm" style={{ backgroundColor: primaryColor }} />
             <div className="mt-0.5 h-0.5 w-1/4 rounded-full bg-gray-300 italic" />
             {/* Decorative line with diamond */}
             <div className="mt-1 flex w-3/4 items-center gap-0.5">
-              <div
-                className="h-px flex-1"
-                style={{ backgroundColor: primaryColor }}
-              />
-              <div
-                className="h-1 w-1 rotate-45"
-                style={{ backgroundColor: primaryColor }}
-              />
-              <div
-                className="h-px flex-1"
-                style={{ backgroundColor: primaryColor }}
-              />
+              <div className="h-px flex-1" style={{ backgroundColor: primaryColor }} />
+              <div className="h-1 w-1 rotate-45" style={{ backgroundColor: primaryColor }} />
+              <div className="h-px flex-1" style={{ backgroundColor: primaryColor }} />
             </div>
           </div>
           {/* Content */}
           <div className="mt-2 flex-1">
             <div className="flex items-center gap-1">
-              <div
-                className="h-0.5 w-1/4 rounded-full"
-                style={{ backgroundColor: primaryColor }}
-              />
+              <div className="h-0.5 w-1/4 rounded-full" style={{ backgroundColor: primaryColor }} />
               <div className="h-px flex-1 bg-gray-200" />
             </div>
             <div className="mt-1 space-y-0.5">
@@ -220,8 +190,8 @@ export function TemplateMiniPreview({
 
     default:
       return (
-        <div className="flex h-full w-full items-center justify-center rounded bg-muted">
-          <span className="text-lg font-bold text-muted-foreground/30">CV</span>
+        <div className="bg-muted flex h-full w-full items-center justify-center rounded">
+          <span className="text-muted-foreground/30 text-lg font-bold">CV</span>
         </div>
       )
   }

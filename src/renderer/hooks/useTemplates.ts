@@ -1,24 +1,24 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
-import type { TemplateId, PaletteId } from '@schemas/settings.schema';
+import { useState, useCallback, useEffect, useMemo } from 'react'
+import type { TemplateId, PaletteId } from '@schemas/settings.schema'
 
 /**
  * Color palette definition.
  */
 export interface ColorPalette {
-  id: string;
-  name: string;
-  primary: string;
-  secondary: string;
-  accent: string;
+  id: string
+  name: string
+  primary: string
+  secondary: string
+  accent: string
 }
 
 /**
  * Template definition.
  */
 export interface Template {
-  id: string;
-  name: string;
-  description: string;
+  id: string
+  name: string
+  description: string
 }
 
 /**
@@ -26,24 +26,24 @@ export interface Template {
  */
 export interface UseTemplatesReturn {
   // Templates
-  templates: Template[];
-  selectedTemplate: string;
-  setSelectedTemplate: (id: string) => void;
+  templates: Template[]
+  selectedTemplate: string
+  setSelectedTemplate: (id: string) => void
 
   // Palettes
-  palettes: ColorPalette[];
-  selectedPalette: string;
-  setSelectedPalette: (id: string) => void;
+  palettes: ColorPalette[]
+  selectedPalette: string
+  setSelectedPalette: (id: string) => void
 
   // Get selected items
-  getSelectedTemplate: () => Template | undefined;
-  getSelectedPalette: () => ColorPalette | undefined;
+  getSelectedTemplate: () => Template | undefined
+  getSelectedPalette: () => ColorPalette | undefined
 
   // Persistence
-  savePreferences: () => Promise<void>;
-  loadPreferences: () => Promise<void>;
-  isSaving: boolean;
-  isLoading: boolean;
+  savePreferences: () => Promise<void>
+  loadPreferences: () => Promise<void>
+  isSaving: boolean
+  isLoading: boolean
 }
 
 /**
@@ -92,7 +92,7 @@ export const PREDEFINED_PALETTES: ColorPalette[] = [
     secondary: '#a78bfa',
     accent: '#c4b5fd',
   },
-];
+]
 
 /**
  * Available resume templates.
@@ -118,13 +118,13 @@ export const AVAILABLE_TEMPLATES: Template[] = [
     name: 'Executive',
     description: 'Sophisticated design for senior professionals.',
   },
-];
+]
 
 /**
  * Default values matching the settings schema.
  */
-const DEFAULT_TEMPLATE = 'classic';
-const DEFAULT_PALETTE = 'classic-gray';
+const DEFAULT_TEMPLATE = 'classic'
+const DEFAULT_PALETTE = 'classic-gray'
 
 /**
  * Hook for managing template and palette selection.
@@ -134,68 +134,68 @@ const DEFAULT_PALETTE = 'classic-gray';
  */
 export function useTemplates(): UseTemplatesReturn {
   // Template state
-  const [selectedTemplate, setSelectedTemplateInternal] = useState<string>(DEFAULT_TEMPLATE);
+  const [selectedTemplate, setSelectedTemplateInternal] = useState<string>(DEFAULT_TEMPLATE)
 
   // Palette state
-  const [selectedPalette, setSelectedPaletteInternal] = useState<string>(DEFAULT_PALETTE);
+  const [selectedPalette, setSelectedPaletteInternal] = useState<string>(DEFAULT_PALETTE)
 
   // Loading/saving state
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Memoized template and palette lists
-  const templates = useMemo(() => AVAILABLE_TEMPLATES, []);
-  const palettes = useMemo(() => PREDEFINED_PALETTES, []);
+  const templates = useMemo(() => AVAILABLE_TEMPLATES, [])
+  const palettes = useMemo(() => PREDEFINED_PALETTES, [])
 
   /**
    * Set selected template with validation.
    */
   const setSelectedTemplate = useCallback((id: string) => {
-    const exists = AVAILABLE_TEMPLATES.some((t) => t.id === id);
+    const exists = AVAILABLE_TEMPLATES.some(t => t.id === id)
     if (exists) {
-      setSelectedTemplateInternal(id);
+      setSelectedTemplateInternal(id)
     } else {
-      console.warn(`Template with id "${id}" not found`);
+      console.warn(`Template with id "${id}" not found`)
     }
-  }, []);
+  }, [])
 
   /**
    * Set selected palette with validation.
    */
   const setSelectedPalette = useCallback((id: string) => {
-    const exists = PREDEFINED_PALETTES.some((p) => p.id === id);
+    const exists = PREDEFINED_PALETTES.some(p => p.id === id)
     if (exists) {
-      setSelectedPaletteInternal(id);
+      setSelectedPaletteInternal(id)
     } else {
-      console.warn(`Palette with id "${id}" not found`);
+      console.warn(`Palette with id "${id}" not found`)
     }
-  }, []);
+  }, [])
 
   /**
    * Get the currently selected template object.
    */
   const getSelectedTemplate = useCallback(() => {
-    return AVAILABLE_TEMPLATES.find((t) => t.id === selectedTemplate);
-  }, [selectedTemplate]);
+    return AVAILABLE_TEMPLATES.find(t => t.id === selectedTemplate)
+  }, [selectedTemplate])
 
   /**
    * Get the currently selected palette object.
    */
   const getSelectedPalette = useCallback(() => {
-    return PREDEFINED_PALETTES.find((p) => p.id === selectedPalette);
-  }, [selectedPalette]);
+    return PREDEFINED_PALETTES.find(p => p.id === selectedPalette)
+  }, [selectedPalette])
 
   /**
    * Save preferences to backend (settings).
    */
   const savePreferences = useCallback(async () => {
-    setIsSaving(true);
+    setIsSaving(true)
     try {
       // Get current settings
-      const currentSettings = await window.electronAPI.getSettings();
+      const currentSettings = await window.electronAPI.getSettings()
 
       // Get selected palette for theme colors
-      const palette = PREDEFINED_PALETTES.find((p) => p.id === selectedPalette);
+      const palette = PREDEFINED_PALETTES.find(p => p.id === selectedPalette)
 
       // Build updated settings
       const updatedSettings = {
@@ -212,55 +212,51 @@ export function useTemplates(): UseTemplatesReturn {
             },
           },
         }),
-      };
+      }
 
-      await window.electronAPI.saveSettings(updatedSettings);
+      await window.electronAPI.saveSettings(updatedSettings)
     } catch (error) {
-      console.error('Failed to save template preferences:', error);
-      throw error;
+      console.error('Failed to save template preferences:', error)
+      throw error
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  }, [selectedTemplate, selectedPalette]);
+  }, [selectedTemplate, selectedPalette])
 
   /**
    * Load preferences from backend (settings).
    */
   const loadPreferences = useCallback(async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      const settings = await window.electronAPI.getSettings();
+      const settings = await window.electronAPI.getSettings()
 
       // Load template if valid
       if (settings.selectedTemplate) {
-        const templateExists = AVAILABLE_TEMPLATES.some(
-          (t) => t.id === settings.selectedTemplate
-        );
+        const templateExists = AVAILABLE_TEMPLATES.some(t => t.id === settings.selectedTemplate)
         if (templateExists) {
-          setSelectedTemplateInternal(settings.selectedTemplate);
+          setSelectedTemplateInternal(settings.selectedTemplate)
         }
       }
 
       // Load palette if valid
       if (settings.selectedPalette) {
-        const paletteExists = PREDEFINED_PALETTES.some(
-          (p) => p.id === settings.selectedPalette
-        );
+        const paletteExists = PREDEFINED_PALETTES.some(p => p.id === settings.selectedPalette)
         if (paletteExists) {
-          setSelectedPaletteInternal(settings.selectedPalette);
+          setSelectedPaletteInternal(settings.selectedPalette)
         }
       }
     } catch (error) {
-      console.error('Failed to load template preferences:', error);
+      console.error('Failed to load template preferences:', error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   // Load preferences on mount
   useEffect(() => {
-    loadPreferences();
-  }, [loadPreferences]);
+    loadPreferences()
+  }, [loadPreferences])
 
   return {
     // Templates
@@ -282,5 +278,5 @@ export function useTemplates(): UseTemplatesReturn {
     loadPreferences,
     isSaving,
     isLoading,
-  };
+  }
 }

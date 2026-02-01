@@ -8,13 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import {
   Accordion,
   AccordionContent,
@@ -30,7 +24,14 @@ import { saveResumePDF, createThemeFromPalette } from '@/services/pdf'
 import { TemplateMiniPreview } from '@/components/templates/TemplateMiniPreview'
 import { useTemplates, type ColorPalette, type Template } from '@/hooks/useTemplates'
 import { cn } from '@/lib/utils'
-import type { Resume, PersonalInfo, WorkExperience, Education, Skill, Contact } from '@schemas/resume.schema'
+import type {
+  Resume,
+  PersonalInfo,
+  WorkExperience,
+  Education,
+  Skill,
+  Contact,
+} from '@schemas/resume.schema'
 
 const SUMMARY_MAX_LENGTH = 500
 const AUTO_SAVE_DELAY = 1000 // 1 second debounce
@@ -60,7 +61,7 @@ function TemplateList({
 }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      {templates.map((template) => {
+      {templates.map(template => {
         const isSelected = template.id === selectedTemplate
         return (
           <button
@@ -74,11 +75,8 @@ function TemplateList({
             )}
           >
             {/* Mini preview */}
-            <div className="mb-1.5 aspect-[3/4] w-full overflow-hidden rounded border border-border/50 bg-muted">
-              <TemplateMiniPreview
-                templateId={template.id}
-                palette={selectedPalette}
-              />
+            <div className="border-border/50 bg-muted mb-1.5 aspect-[3/4] w-full overflow-hidden rounded border">
+              <TemplateMiniPreview templateId={template.id} palette={selectedPalette} />
             </div>
             {/* Name */}
             <span
@@ -91,8 +89,8 @@ function TemplateList({
             </span>
             {/* Selection indicator */}
             {isSelected && (
-              <div className="absolute -right-1 -top-1 rounded-full bg-primary p-0.5">
-                <Check className="size-3 text-primary-foreground" />
+              <div className="bg-primary absolute -top-1 -right-1 rounded-full p-0.5">
+                <Check className="text-primary-foreground size-3" />
               </div>
             )}
           </button>
@@ -116,7 +114,7 @@ function PaletteList({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      {palettes.map((palette) => {
+      {palettes.map(palette => {
         const isSelected = palette.id === selectedPalette
         return (
           <button
@@ -129,7 +127,7 @@ function PaletteList({
               isSelected ? 'border-primary bg-primary/5' : 'border-border'
             )}
           >
-            <div className="flex gap-1 shrink-0">
+            <div className="flex shrink-0 gap-1">
               <div
                 className="h-5 w-5 rounded ring-1 ring-black/10"
                 style={{ backgroundColor: palette.primary }}
@@ -143,10 +141,12 @@ function PaletteList({
                 style={{ backgroundColor: palette.accent }}
               />
             </div>
-            <span className={cn('flex-1 text-sm text-left', isSelected && 'font-medium text-primary')}>
+            <span
+              className={cn('flex-1 text-left text-sm', isSelected && 'text-primary font-medium')}
+            >
               {palette.name}
             </span>
-            {isSelected ? <Check className="h-4 w-4 text-primary shrink-0" /> : null}
+            {isSelected ? <Check className="text-primary h-4 w-4 shrink-0" /> : null}
           </button>
         )
       })}
@@ -205,18 +205,24 @@ export function ProfileForm({
   }, [isDirty, jsonText, onSave])
 
   // Handle template selection with auto-save
-  const handleTemplateSelect = useCallback(async (id: string) => {
-    setSelectedTemplate(id)
-    // Save preferences immediately
-    setTimeout(() => savePreferences(), 0)
-  }, [setSelectedTemplate, savePreferences])
+  const handleTemplateSelect = useCallback(
+    async (id: string) => {
+      setSelectedTemplate(id)
+      // Save preferences immediately
+      setTimeout(() => savePreferences(), 0)
+    },
+    [setSelectedTemplate, savePreferences]
+  )
 
   // Handle palette selection with auto-save
-  const handlePaletteSelect = useCallback(async (id: string) => {
-    setSelectedPalette(id)
-    // Save preferences immediately
-    setTimeout(() => savePreferences(), 0)
-  }, [setSelectedPalette, savePreferences])
+  const handlePaletteSelect = useCallback(
+    async (id: string) => {
+      setSelectedPalette(id)
+      // Save preferences immediately
+      setTimeout(() => savePreferences(), 0)
+    },
+    [setSelectedPalette, savePreferences]
+  )
 
   const handlePersonalInfoChange = useCallback(
     (field: keyof PersonalInfo, value: string) => {
@@ -297,7 +303,7 @@ export function ProfileForm({
   return (
     <Tabs defaultValue="preview" className="w-full">
       {/* Header with tabs toggle and customize button */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <TabsList>
           <TabsTrigger value="preview">
             <Eye className="mr-1.5 h-4 w-4" />
@@ -329,46 +335,46 @@ export function ProfileForm({
                 Customize
               </Button>
             </SheetTrigger>
-          <SheetContent side="right" className="w-80 sm:w-96 overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Customize Resume</SheetTitle>
-            </SheetHeader>
-            <div className="mt-6">
-              <Accordion type="multiple" defaultValue={['template', 'colors']} className="w-full">
-                <AccordionItem value="template">
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      <Layout className="h-4 w-4" />
-                      Template Style
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <TemplateList
-                      templates={templates}
-                      selectedTemplate={selectedTemplate}
-                      selectedPalette={currentPalette}
-                      onSelect={handleTemplateSelect}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="colors">
-                  <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                      <Palette className="h-4 w-4" />
-                      Color Scheme
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <PaletteList
-                      palettes={palettes}
-                      selectedPalette={selectedPalette}
-                      onSelect={handlePaletteSelect}
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-          </SheetContent>
+            <SheetContent side="right" className="w-80 overflow-y-auto sm:w-96">
+              <SheetHeader>
+                <SheetTitle>Customize Resume</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">
+                <Accordion type="multiple" defaultValue={['template', 'colors']} className="w-full">
+                  <AccordionItem value="template">
+                    <AccordionTrigger>
+                      <div className="flex items-center gap-2">
+                        <Layout className="h-4 w-4" />
+                        Template Style
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <TemplateList
+                        templates={templates}
+                        selectedTemplate={selectedTemplate}
+                        selectedPalette={currentPalette}
+                        onSelect={handleTemplateSelect}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="colors">
+                    <AccordionTrigger>
+                      <div className="flex items-center gap-2">
+                        <Palette className="h-4 w-4" />
+                        Color Scheme
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <PaletteList
+                        palettes={palettes}
+                        selectedPalette={selectedPalette}
+                        onSelect={handlePaletteSelect}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </SheetContent>
           </Sheet>
         </div>
       </div>
@@ -396,7 +402,7 @@ export function ProfileForm({
                   <Textarea
                     id="summary"
                     value={summary}
-                    onChange={(e) => handlePersonalInfoChange('summary', e.target.value)}
+                    onChange={e => handlePersonalInfoChange('summary', e.target.value)}
                     placeholder="Write a brief professional summary highlighting your key qualifications and career objectives..."
                     className="min-h-[120px] resize-none"
                     maxLength={SUMMARY_MAX_LENGTH}
@@ -410,14 +416,14 @@ export function ProfileForm({
             {/* Personal Info Section */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-                <div className="grid gap-4 sm:grid-cols-2 mb-6">
+                <h3 className="mb-4 text-lg font-semibold">Personal Information</h3>
+                <div className="mb-6 grid gap-4 sm:grid-cols-2">
                   <div>
                     <Label htmlFor="name">Full Name</Label>
                     <Input
                       id="name"
                       value={resume.personalInfo.name}
-                      onChange={(e) => handlePersonalInfoChange('name', e.target.value)}
+                      onChange={e => handlePersonalInfoChange('name', e.target.value)}
                       placeholder="John Doe"
                     />
                   </div>
@@ -426,7 +432,7 @@ export function ProfileForm({
                     <Input
                       id="location"
                       value={resume.personalInfo.location ?? ''}
-                      onChange={(e) => handlePersonalInfoChange('location', e.target.value)}
+                      onChange={e => handlePersonalInfoChange('location', e.target.value)}
                       placeholder="San Francisco, CA"
                     />
                   </div>
@@ -453,10 +459,7 @@ export function ProfileForm({
             <Separator />
 
             {/* Education Section */}
-            <EducationSection
-              education={resume.education}
-              onChange={handleEducationChange}
-            />
+            <EducationSection education={resume.education} onChange={handleEducationChange} />
 
             <Separator />
 
@@ -472,8 +475,8 @@ export function ProfileForm({
           <CardContent className="pt-6">
             <Textarea
               value={jsonText}
-              onChange={(e) => onJsonChange(e.target.value)}
-              className="min-h-[calc(100vh-340px)] font-mono text-sm resize-none"
+              onChange={e => onJsonChange(e.target.value)}
+              className="min-h-[calc(100vh-340px)] resize-none font-mono text-sm"
               placeholder="Paste or edit your resume JSON here..."
             />
           </CardContent>
@@ -492,8 +495,8 @@ export function ProfileForm({
                 palette={currentPalette}
               />
             ) : (
-              <div className="aspect-[210/297] w-full rounded-lg border bg-muted/30 flex items-center justify-center">
-                <span className="text-sm text-muted-foreground">Loading preview...</span>
+              <div className="bg-muted/30 flex aspect-[210/297] w-full items-center justify-center rounded-lg border">
+                <span className="text-muted-foreground text-sm">Loading preview...</span>
               </div>
             )}
           </div>

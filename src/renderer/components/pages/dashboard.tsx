@@ -11,12 +11,15 @@ import {
   Sparkles,
   Upload,
   FileText,
-  Clock
+  Clock,
+  ClipboardList,
 } from 'lucide-react'
 import { useResume } from '@/hooks/useResume'
 import { ResumeImportDropzone } from '@/components/profile/resume-import-dropzone'
 import type { Resume } from '@schemas/resume.schema'
 import { getContactByType } from '@schemas/resume.schema'
+import type { ApplicationStatistics, ApplicationStatus } from '@schemas/applications.schema'
+import { DEFAULT_APPLICATION_STATUSES } from '@schemas/applications.schema'
 import { APP_PAGES } from '@config/constants'
 import { toast } from 'sonner'
 
@@ -61,20 +64,42 @@ function calculateCompleteness(resume: Resume): number {
   return completeness
 }
 
-
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const { resume, isValid, loadFromFile, setJsonText, validate } = useResume()
   const [hasPersistedProfile, setHasPersistedProfile] = useState<boolean | null>(null)
+  const [applicationStats, setApplicationStats] = useState<ApplicationStatistics | null>(null)
+  const [applicationStatuses, setApplicationStatuses] = useState<ApplicationStatus[]>(
+    DEFAULT_APPLICATION_STATUSES
+  )
 
   // Check if there's a persisted profile on mount
   useEffect(() => {
     window.electronAPI.hasProfile().then(setHasPersistedProfile)
   }, [])
 
+  // Load application statistics
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const [stats, settings] = await Promise.all([
+          window.electronAPI.getApplicationStatistics(),
+          window.electronAPI.getSettings(),
+        ])
+        setApplicationStats(stats)
+        if (settings.applicationStatuses && settings.applicationStatuses.length > 0) {
+          setApplicationStatuses(settings.applicationStatuses)
+        }
+      } catch (error) {
+        console.error('Failed to load application stats:', error)
+      }
+    }
+    loadStats()
+  }, [])
+
   // Load profile from persistence if it exists and current resume is empty
   useEffect(() => {
     if (hasPersistedProfile && !isValid) {
-      window.electronAPI.loadProfile().then((profile) => {
+      window.electronAPI.loadProfile().then(profile => {
         if (profile) {
           setJsonText(JSON.stringify(profile.resume, null, 2))
           validate()
@@ -101,13 +126,13 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         email: '',
         phone: '',
         location: '',
-        summary: ''
+        summary: '',
       },
       workExperience: [],
       education: [],
       skills: [],
       projects: [],
-      certifications: []
+      certifications: [],
     }
     setJsonText(JSON.stringify(emptyResume, null, 2))
     validate()
@@ -121,7 +146,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           description: 'Your resume data has been extracted and saved.',
         })
         // Reload profile and navigate to edit
-        window.electronAPI.loadProfile().then((profile) => {
+        window.electronAPI.loadProfile().then(profile => {
           if (profile) {
             setJsonText(JSON.stringify(profile.resume, null, 2))
             validate()
@@ -147,19 +172,18 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage your resume tailoring progress.
-          </p>
+          <p className="text-muted-foreground">Manage your resume tailoring progress.</p>
         </div>
 
         <Card>
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <FileText className="h-6 w-6 text-primary" />
+          <CardHeader className="pb-2 text-center">
+            <div className="bg-primary/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <FileText className="text-primary h-6 w-6" />
             </div>
             <CardTitle>Welcome to Resume Tailor</CardTitle>
             <CardDescription>
-              Get started by importing your existing resume. AI will extract your information automatically.
+              Get started by importing your existing resume. AI will extract your information
+              automatically.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pt-4">
@@ -174,11 +198,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                 <Separator />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or</span>
+                <span className="bg-card text-muted-foreground px-2">Or</span>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <Button variant="outline" onClick={handleImportResume} className="gap-2">
                 <Upload className="h-4 w-4" />
                 Import JSON Resume
@@ -199,28 +223,26 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Manage your resume tailoring progress.
-        </p>
+        <p className="text-muted-foreground">Manage your resume tailoring progress.</p>
       </div>
 
       {/* Status Cards Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Profile Status Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Profile Status</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-2xl font-bold">{completeness}%</span>
               <Badge variant={completeness === 100 ? 'default' : 'secondary'}>
                 {completeness === 100 ? 'Complete' : 'In Progress'}
               </Badge>
             </div>
             <Progress value={completeness} className="h-2" />
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 text-xs">
               {completeness === 100
                 ? 'Your profile is complete!'
                 : 'Complete your profile for best results'}
@@ -232,19 +254,19 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cover Letter Status</CardTitle>
-            <Palette className="h-4 w-4 text-muted-foreground" />
+            <Palette className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-2xl font-bold">Modern</span>
               <Badge variant="outline">Active</Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 text-xs">
               Professional template with clean design
             </p>
             <Button
               variant="link"
-              className="p-0 h-auto text-xs mt-1"
+              className="mt-1 h-auto p-0 text-xs"
               onClick={() => onNavigate?.(APP_PAGES.COVER_LETTER)}
             >
               Browse templates
@@ -256,31 +278,73 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tailoring Status</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <Target className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-2xl font-bold">Ready</span>
               <Badge variant="secondary">
-                <Clock className="h-3 w-3 mr-1" />
+                <Clock className="mr-1 h-3 w-3" />
                 Idle
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              No active tailoring jobs
-            </p>
+            <p className="text-muted-foreground mt-2 text-xs">No active tailoring jobs</p>
             <Button
               variant="link"
-              className="p-0 h-auto text-xs mt-1"
+              className="mt-1 h-auto p-0 text-xs"
               onClick={() => onNavigate?.(APP_PAGES.TARGETING)}
             >
               Start tailoring
             </Button>
           </CardContent>
         </Card>
-      </div>
 
-     
+        {/* Applications Status Card */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Applications</CardTitle>
+            <ClipboardList className="text-muted-foreground h-4 w-4" />
+          </CardHeader>
+          <CardContent>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-2xl font-bold">{applicationStats?.total ?? 0}</span>
+              {applicationStats && applicationStats.thisMonth > 0 && (
+                <Badge variant="secondary">+{applicationStats.thisMonth} this month</Badge>
+              )}
+            </div>
+            {applicationStats && applicationStats.total > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {applicationStatuses.slice(0, 4).map(status => {
+                  const count = applicationStats.byStatus[status.id] || 0
+                  if (count === 0) return null
+                  return (
+                    <Badge
+                      key={status.id}
+                      variant="outline"
+                      className="py-0 text-xs"
+                      style={{
+                        borderColor: status.color,
+                        color: status.color,
+                      }}
+                    >
+                      {count} {status.label.toLowerCase()}
+                    </Badge>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-muted-foreground mt-2 text-xs">No applications tracked yet</p>
+            )}
+            <Button
+              variant="link"
+              className="mt-1 h-auto p-0 text-xs"
+              onClick={() => onNavigate?.(APP_PAGES.TRACKING)}
+            >
+              View all applications
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

@@ -1,20 +1,31 @@
-import { ipcMain, dialog, shell, BrowserWindow } from 'electron';
-import * as fs from 'fs';
-import * as path from 'path';
-import { aiProcessorService } from './services/ai-processor.service';
-import { AIProcessorError, AIProcessorErrorCode } from '../types/ai-processor.types';
-import { settingsService, SettingsError, SettingsErrorCode } from './services/settings.service';
-import { historyService } from './services/history.service';
-import { profileService } from './services/profile.service';
-import { documentExtractorService } from './services/document-extractor.service';
-import { apiKeyService } from './services/api-key.service';
-import type { AIProvider, CLITool } from './services/api-key.service';
-import type { RefineResumeOptions, GenerateCoverLetterOptions } from '../types/ai-processor.types';
-import type { ResumeRefinementOptions, } from '../prompts/resume-refinement.prompt';
-import type { CoverLetterGenerationOptions, CompanyInfo } from '../prompts/cover-letter.prompt';
-import type { RefinedResume, GeneratedCoverLetter, ExtractedJobPosting } from '../schemas/ai-output.schema';
-import type { AppSettings, PartialAppSettings, ResumePromptTemplateSettings, CoverLetterPromptTemplateSettings } from '../schemas/settings.schema';
-import type { ExportHistory, HistoryEntry } from '../schemas/history.schema';
+import { ipcMain, dialog, shell, BrowserWindow } from 'electron'
+import * as fs from 'fs'
+import * as path from 'path'
+import { aiProcessorService } from './services/ai-processor.service'
+import { AIProcessorError, AIProcessorErrorCode } from '../types/ai-processor.types'
+import { settingsService, SettingsError, SettingsErrorCode } from './services/settings.service'
+import { historyService } from './services/history.service'
+import { applicationsService } from './services/applications.service'
+import { profileService } from './services/profile.service'
+import { documentExtractorService } from './services/document-extractor.service'
+import { apiKeyService } from './services/api-key.service'
+import type { AIProvider, CLITool } from './services/api-key.service'
+import type { RefineResumeOptions, GenerateCoverLetterOptions } from '../types/ai-processor.types'
+import type { ResumeRefinementOptions } from '../prompts/resume-refinement.prompt'
+import type { CoverLetterGenerationOptions, CompanyInfo } from '../prompts/cover-letter.prompt'
+import type {
+  RefinedResume,
+  GeneratedCoverLetter,
+  ExtractedJobPosting,
+} from '../schemas/ai-output.schema'
+import type {
+  AppSettings,
+  PartialAppSettings,
+  ResumePromptTemplateSettings,
+  CoverLetterPromptTemplateSettings,
+} from '../schemas/settings.schema'
+import type { ExportHistory, HistoryEntry } from '../schemas/history.schema'
+import type { JobApplication, ApplicationStatistics } from '../schemas/applications.schema'
 
 // Import shared types from the single source of truth
 import type {
@@ -30,40 +41,42 @@ import type {
   CheckExportFilesResult,
   ImportResumeResponse,
   FetchJobPostingResult,
-} from '../types/electron';
-import type { Resume, UserProfile } from '../schemas/resume.schema';
+} from '../types/electron'
+import type { Resume, UserProfile } from '../schemas/resume.schema'
 
 // IPC-specific param types (may differ slightly from renderer types)
 interface RefineResumeIPCParams {
-  resume: Resume;
-  jobPosting: string;
-  options?: RefineResumeOptions;
+  resume: Resume
+  jobPosting: string
+  options?: RefineResumeOptions
 }
 
 interface GenerateCoverLetterIPCParams {
-  resume: Resume;
-  jobPosting: string;
-  companyInfo?: CompanyInfo;
-  options?: GenerateCoverLetterOptions;
+  resume: Resume
+  jobPosting: string
+  companyInfo?: CompanyInfo
+  options?: GenerateCoverLetterOptions
 }
 
 interface ShortenCoverLetterIPCParams {
-  coverLetter: GeneratedCoverLetter;
-  currentCharCount: number;
-  targetCharCount: number;
+  coverLetter: GeneratedCoverLetter
+  currentCharCount: number
+  targetCharCount: number
 }
 
 interface ExtractJobPostingIPCParams {
-  jobPostingText: string;
+  jobPostingText: string
   options?: {
-    inferSalary?: boolean;
-  };
+    inferSalary?: boolean
+  }
 }
 
 /**
  * Converts resume prompt settings to ResumeRefinementOptions for the AI processor.
  */
-function convertResumeSettingsToOptions(settings: ResumePromptTemplateSettings): ResumeRefinementOptions {
+function convertResumeSettingsToOptions(
+  settings: ResumePromptTemplateSettings
+): ResumeRefinementOptions {
   return {
     maxSummaryLength: settings.maxSummaryLength,
     maxHighlightsPerExperience: settings.maxHighlightsPerExperience,
@@ -71,13 +84,15 @@ function convertResumeSettingsToOptions(settings: ResumePromptTemplateSettings):
     focusAreas: settings.focusAreas,
     customInstructions: settings.customInstructions,
     preserveAllContent: settings.preserveAllContent,
-  };
+  }
 }
 
 /**
  * Converts cover letter prompt settings to CoverLetterGenerationOptions for the AI processor.
  */
-function convertCoverLetterSettingsToOptions(settings: CoverLetterPromptTemplateSettings): CoverLetterGenerationOptions {
+function convertCoverLetterSettingsToOptions(
+  settings: CoverLetterPromptTemplateSettings
+): CoverLetterGenerationOptions {
   return {
     maxOpeningLength: settings.maxOpeningLength,
     maxBodyParagraphs: settings.maxBodyParagraphs,
@@ -86,28 +101,31 @@ function convertCoverLetterSettingsToOptions(settings: CoverLetterPromptTemplate
     customInstructions: settings.customInstructions,
     style: settings.style,
     emphasizeCompanyKnowledge: settings.emphasizeCompanyKnowledge,
-  };
+  }
 }
 
 /**
  * Map to track active AI operations for cancellation support
  */
-const activeOperations = new Map<string, AbortController>();
+const activeOperations = new Map<string, AbortController>()
 
 /**
  * Generates a unique operation ID
  */
 function generateOperationId(): string {
-  return `op_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  return `op_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 }
 
 /**
  * Sends progress update to all renderer windows
  */
-function sendProgressUpdate(operationId: string, update: Omit<AIProgressUpdate, 'operationId'>): void {
-  const windows = BrowserWindow.getAllWindows();
+function sendProgressUpdate(
+  operationId: string,
+  update: Omit<AIProgressUpdate, 'operationId'>
+): void {
+  const windows = BrowserWindow.getAllWindows()
   for (const win of windows) {
-    win.webContents.send('ai:progress', { operationId, ...update });
+    win.webContents.send('ai:progress', { operationId, ...update })
   }
 }
 
@@ -122,11 +140,11 @@ function convertErrorToResult(error: unknown): AIOperationError {
         code: error.code,
         message: error.message,
       },
-    };
-    if (error.details !== undefined) {
-      result.error.details = error.details;
     }
-    return result;
+    if (error.details !== undefined) {
+      result.error.details = error.details
+    }
+    return result
   }
 
   return {
@@ -135,7 +153,7 @@ function convertErrorToResult(error: unknown): AIOperationError {
       code: 'UNKNOWN',
       message: error instanceof Error ? error.message : 'An unknown error occurred',
     },
-  };
+  }
 }
 
 /**
@@ -151,143 +169,157 @@ export function registerIPCHandlers(): void {
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
       filters: [{ name: 'JSON Files', extensions: ['json'] }],
-    });
+    })
 
     if (result.canceled || result.filePaths.length === 0) {
-      return null;
+      return null
     }
 
-    const filePath = result.filePaths[0];
+    const filePath = result.filePaths[0]
     if (filePath === undefined) {
-      return null;
+      return null
     }
 
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return { content, filePath };
-  });
+    const content = fs.readFileSync(filePath, 'utf-8')
+    return { content, filePath }
+  })
 
   ipcMain.handle('save-resume', async (_event, data: SaveResumeData): Promise<string | null> => {
-    let targetPath = data.filePath;
+    let targetPath = data.filePath
 
     if (!targetPath) {
       const result = await dialog.showSaveDialog({
         filters: [{ name: 'JSON Files', extensions: ['json'] }],
         defaultPath: 'resume.json',
-      });
+      })
 
       if (result.canceled || !result.filePath) {
-        return null;
+        return null
       }
-      targetPath = result.filePath;
+      targetPath = result.filePath
     }
 
-    fs.writeFileSync(targetPath, data.content, 'utf-8');
-    return targetPath;
-  });
+    fs.writeFileSync(targetPath, data.content, 'utf-8')
+    return targetPath
+  })
 
-  ipcMain.handle('generate-pdf', async (_event, pdfData: Buffer, defaultFileName?: string): Promise<string | null> => {
-    const result = await dialog.showSaveDialog({
-      filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
-      defaultPath: defaultFileName ?? 'resume.pdf',
-    });
+  ipcMain.handle(
+    'generate-pdf',
+    async (_event, pdfData: Buffer, defaultFileName?: string): Promise<string | null> => {
+      const result = await dialog.showSaveDialog({
+        filters: [{ name: 'PDF Files', extensions: ['pdf'] }],
+        defaultPath: defaultFileName ?? 'resume.pdf',
+      })
 
-    if (result.canceled || !result.filePath) {
-      return null;
+      if (result.canceled || !result.filePath) {
+        return null
+      }
+
+      fs.writeFileSync(result.filePath, pdfData)
+      return result.filePath
     }
-
-    fs.writeFileSync(result.filePath, pdfData);
-    return result.filePath;
-  });
+  )
 
   ipcMain.handle('open-folder', async (_event, folderPath: string): Promise<void> => {
-    await shell.openPath(folderPath);
-  });
+    await shell.openPath(folderPath)
+  })
 
   ipcMain.handle('select-folder', async (): Promise<string | null> => {
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory', 'createDirectory'],
-    });
+    })
 
     if (result.canceled || result.filePaths.length === 0) {
-      return null;
+      return null
     }
 
-    return result.filePaths[0] ?? null;
-  });
+    return result.filePaths[0] ?? null
+  })
 
   // ============================================
   // Job Posting Fetch Handler
   // ============================================
 
-  ipcMain.handle('fetch-job-posting', async (_event, url: string): Promise<FetchJobPostingResult> => {
-    try {
-      // Validate URL
-      const parsedUrl = new URL(url);
-      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        return { success: false, error: 'Only HTTP and HTTPS URLs are supported' };
-      }
-
-      // Fetch the page content
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-        },
-        signal: AbortSignal.timeout(15000), // 15 second timeout
-      });
-
-      if (!response.ok) {
-        return { success: false, error: `Failed to fetch: ${response.status} ${response.statusText}` };
-      }
-
-      const html = await response.text();
-
-      // Extract text content from HTML
-      // Remove script and style content
-      let text = html
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
-        .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, ' ');
-
-      // Convert common block elements to newlines
-      text = text
-        .replace(/<\/?(p|div|br|h[1-6]|li|tr|section|article|header|footer)[^>]*>/gi, '\n')
-        .replace(/<\/?[^>]+(>|$)/g, ' ') // Remove remaining HTML tags
-        .replace(/&nbsp;/gi, ' ')
-        .replace(/&amp;/gi, '&')
-        .replace(/&lt;/gi, '<')
-        .replace(/&gt;/gi, '>')
-        .replace(/&quot;/gi, '"')
-        .replace(/&#39;/gi, "'")
-        .replace(/&[a-z]+;/gi, ' ') // Remove other HTML entities
-        .replace(/\s+/g, ' ') // Normalize whitespace
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .join('\n');
-
-      if (text.length < 100) {
-        return {
-          success: false,
-          error: 'Could not extract meaningful content from the page. The page may require authentication or use JavaScript to load content.',
-        };
-      }
-
-      return { success: true, content: text };
-    } catch (error) {
-      if (error instanceof TypeError && error.message.includes('URL')) {
-        return { success: false, error: 'Invalid URL format' };
-      }
-      if (error instanceof Error) {
-        if (error.name === 'AbortError' || error.name === 'TimeoutError') {
-          return { success: false, error: 'Request timed out. The page may be too slow or unavailable.' };
+  ipcMain.handle(
+    'fetch-job-posting',
+    async (_event, url: string): Promise<FetchJobPostingResult> => {
+      try {
+        // Validate URL
+        const parsedUrl = new URL(url)
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          return { success: false, error: 'Only HTTP and HTTPS URLs are supported' }
         }
-        return { success: false, error: error.message };
+
+        // Fetch the page content
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+          },
+          signal: AbortSignal.timeout(15000), // 15 second timeout
+        })
+
+        if (!response.ok) {
+          return {
+            success: false,
+            error: `Failed to fetch: ${response.status} ${response.statusText}`,
+          }
+        }
+
+        const html = await response.text()
+
+        // Extract text content from HTML
+        // Remove script and style content
+        let text = html
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+          .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, ' ')
+
+        // Convert common block elements to newlines
+        text = text
+          .replace(/<\/?(p|div|br|h[1-6]|li|tr|section|article|header|footer)[^>]*>/gi, '\n')
+          .replace(/<\/?[^>]+(>|$)/g, ' ') // Remove remaining HTML tags
+          .replace(/&nbsp;/gi, ' ')
+          .replace(/&amp;/gi, '&')
+          .replace(/&lt;/gi, '<')
+          .replace(/&gt;/gi, '>')
+          .replace(/&quot;/gi, '"')
+          .replace(/&#39;/gi, "'")
+          .replace(/&[a-z]+;/gi, ' ') // Remove other HTML entities
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .join('\n')
+
+        if (text.length < 100) {
+          return {
+            success: false,
+            error:
+              'Could not extract meaningful content from the page. The page may require authentication or use JavaScript to load content.',
+          }
+        }
+
+        return { success: true, content: text }
+      } catch (error) {
+        if (error instanceof TypeError && error.message.includes('URL')) {
+          return { success: false, error: 'Invalid URL format' }
+        }
+        if (error instanceof Error) {
+          if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+            return {
+              success: false,
+              error: 'Request timed out. The page may be too slow or unavailable.',
+            }
+          }
+          return { success: false, error: error.message }
+        }
+        return { success: false, error: 'Failed to fetch job posting' }
       }
-      return { success: false, error: 'Failed to fetch job posting' };
     }
-  });
+  )
 
   // ============================================
   // PDF Export Handlers
@@ -296,101 +328,101 @@ export function registerIPCHandlers(): void {
   ipcMain.handle(
     'check-export-files',
     async (_event, params: CheckExportFilesParams): Promise<CheckExportFilesResult> => {
-      const folderPath = path.join(params.baseFolderPath, params.subfolderName);
-      const existingFiles: string[] = [];
+      const folderPath = path.join(params.baseFolderPath, params.subfolderName)
+      const existingFiles: string[] = []
 
       for (const fileName of params.fileNames) {
-        const filePath = path.join(folderPath, fileName);
+        const filePath = path.join(folderPath, fileName)
         if (fs.existsSync(filePath)) {
-          existingFiles.push(fileName);
+          existingFiles.push(fileName)
         }
       }
 
       return {
         exists: existingFiles.length > 0,
         existingFiles,
-      };
+      }
     }
-  );
+  )
 
   ipcMain.handle(
     'export-application-pdfs',
     async (_event, params: ExportApplicationPDFsIPCParams): Promise<ExportPDFResult> => {
       try {
-        const folderPath = path.join(params.baseFolderPath, params.subfolderName);
+        const folderPath = path.join(params.baseFolderPath, params.subfolderName)
 
         if (!fs.existsSync(folderPath)) {
-          fs.mkdirSync(folderPath, { recursive: true });
+          fs.mkdirSync(folderPath, { recursive: true })
         }
 
-        const resumeBuffer = Buffer.from(params.resumeData);
-        fs.writeFileSync(path.join(folderPath, params.resumeFileName), resumeBuffer);
+        const resumeBuffer = Buffer.from(params.resumeData)
+        fs.writeFileSync(path.join(folderPath, params.resumeFileName), resumeBuffer)
 
-        const coverLetterBuffer = Buffer.from(params.coverLetterData);
-        fs.writeFileSync(path.join(folderPath, params.coverLetterFileName), coverLetterBuffer);
+        const coverLetterBuffer = Buffer.from(params.coverLetterData)
+        fs.writeFileSync(path.join(folderPath, params.coverLetterFileName), coverLetterBuffer)
 
-        return { success: true, folderPath };
+        return { success: true, folderPath }
       } catch (error) {
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Failed to export PDFs',
-        };
+        }
       }
     }
-  );
+  )
 
   ipcMain.handle(
     'export-single-pdf',
     async (_event, params: ExportSinglePDFIPCParams): Promise<ExportPDFResult> => {
       try {
-        const folderPath = path.join(params.baseFolderPath, params.subfolderName);
+        const folderPath = path.join(params.baseFolderPath, params.subfolderName)
 
         if (!fs.existsSync(folderPath)) {
-          fs.mkdirSync(folderPath, { recursive: true });
+          fs.mkdirSync(folderPath, { recursive: true })
         }
 
-        const buffer = Buffer.from(params.pdfData);
-        fs.writeFileSync(path.join(folderPath, params.fileName), buffer);
+        const buffer = Buffer.from(params.pdfData)
+        fs.writeFileSync(path.join(folderPath, params.fileName), buffer)
 
-        return { success: true, folderPath };
+        return { success: true, folderPath }
       } catch (error) {
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Failed to export PDF',
-        };
+        }
       }
     }
-  );
+  )
 
   // ============================================
   // Settings Handlers
   // ============================================
 
   ipcMain.handle('settings:get', async (): Promise<AppSettings> => {
-    return settingsService.loadSettings();
-  });
+    return settingsService.loadSettings()
+  })
 
   ipcMain.handle(
     'settings:save',
     async (_event, settings: PartialAppSettings): Promise<AppSettings> => {
-      return settingsService.saveSettings(settings);
+      return settingsService.saveSettings(settings)
     }
-  );
+  )
 
   ipcMain.handle('settings:select-folder', async (): Promise<string | null> => {
     const result = await dialog.showOpenDialog({
       title: 'Select Output Folder',
       properties: ['openDirectory', 'createDirectory'],
       message: 'Choose the folder where exported PDFs will be saved',
-    });
+    })
 
     if (result.canceled || result.filePaths.length === 0) {
-      return null;
+      return null
     }
 
-    const selectedPath = result.filePaths[0];
+    const selectedPath = result.filePaths[0]
     if (selectedPath === undefined) {
-      return null;
+      return null
     }
 
     if (!settingsService.isValidOutputFolder(selectedPath)) {
@@ -398,78 +430,132 @@ export function registerIPCHandlers(): void {
         SettingsErrorCode.FOLDER_VALIDATION_ERROR,
         'Selected folder is not writable',
         { folderPath: selectedPath }
-      );
+      )
     }
 
-    return selectedPath;
-  });
+    return selectedPath
+  })
 
   ipcMain.handle('settings:reset', async (): Promise<AppSettings> => {
-    return settingsService.resetSettings();
-  });
+    return settingsService.resetSettings()
+  })
 
   ipcMain.handle('settings:validate', async (_event, settings: PartialAppSettings) => {
-    return settingsService.validateSettings(settings);
-  });
+    return settingsService.validateSettings(settings)
+  })
 
   ipcMain.handle('settings:get-default-folder', async (): Promise<string> => {
-    return settingsService.getDefaultExportFolderPath();
-  });
+    return settingsService.getDefaultExportFolderPath()
+  })
 
   // ============================================
   // History Handlers
   // ============================================
 
   ipcMain.handle('history:get', async (): Promise<ExportHistory> => {
-    return historyService.loadHistory();
-  });
+    return historyService.loadHistory()
+  })
 
   ipcMain.handle('history:get-recent', async (_event, limit?: number): Promise<HistoryEntry[]> => {
-    return historyService.getRecentEntries(limit);
-  });
+    return historyService.getRecentEntries(limit)
+  })
 
   ipcMain.handle('history:add', async (_event, entry: HistoryEntry): Promise<void> => {
-    return historyService.addEntry(entry);
-  });
+    return historyService.addEntry(entry)
+  })
 
   ipcMain.handle('history:delete', async (_event, entryId: string): Promise<void> => {
-    return historyService.deleteEntry(entryId);
-  });
+    return historyService.deleteEntry(entryId)
+  })
 
   ipcMain.handle('history:clear', async (): Promise<void> => {
-    return historyService.clearHistory();
-  });
+    return historyService.clearHistory()
+  })
 
   ipcMain.handle('history:open-file', async (_event, filePath: string): Promise<boolean> => {
     try {
       if (!fs.existsSync(filePath)) {
-        return false;
+        return false
       }
-      await shell.openPath(filePath);
-      return true;
+      await shell.openPath(filePath)
+      return true
     } catch {
-      return false;
+      return false
     }
-  });
+  })
+
+  // ============================================
+  // Applications Handlers
+  // ============================================
+
+  ipcMain.handle('applications:get-all', async (): Promise<JobApplication[]> => {
+    return applicationsService.getAllApplications()
+  })
+
+  ipcMain.handle(
+    'applications:get',
+    async (_event, applicationId: string): Promise<JobApplication | null> => {
+      return applicationsService.getApplication(applicationId)
+    }
+  )
+
+  ipcMain.handle('applications:add', async (_event, application: JobApplication): Promise<void> => {
+    return applicationsService.addApplication(application)
+  })
+
+  ipcMain.handle(
+    'applications:update',
+    async (
+      _event,
+      applicationId: string,
+      updates: Partial<JobApplication>
+    ): Promise<JobApplication> => {
+      return applicationsService.updateApplication(applicationId, updates)
+    }
+  )
+
+  ipcMain.handle('applications:delete', async (_event, applicationId: string): Promise<void> => {
+    return applicationsService.deleteApplication(applicationId)
+  })
+
+  ipcMain.handle(
+    'applications:update-status',
+    async (
+      _event,
+      applicationId: string,
+      statusId: string,
+      note?: string
+    ): Promise<JobApplication> => {
+      return applicationsService.updateStatus(applicationId, statusId, note)
+    }
+  )
+
+  ipcMain.handle('applications:get-statistics', async (): Promise<ApplicationStatistics> => {
+    return applicationsService.getStatistics()
+  })
+
+  ipcMain.handle('applications:clear', async (): Promise<void> => {
+    return applicationsService.clearApplications()
+  })
 
   // ============================================
   // Profile Handlers
   // ============================================
 
   ipcMain.handle('profile:has', async (): Promise<boolean> => {
-    return profileService.hasProfile();
-  });
+    return profileService.hasProfile()
+  })
 
   ipcMain.handle('profile:load', async (): Promise<UserProfile | null> => {
-    return profileService.loadProfile();
-  });
+    return profileService.loadProfile()
+  })
 
   ipcMain.handle(
     'profile:import-file',
     async (_event, filePath: string): Promise<ImportResumeResponse> => {
       try {
         // Extract text from document
-        const extraction = await documentExtractorService.extractText(filePath);
+        const extraction = await documentExtractorService.extractText(filePath)
         if (!extraction.success) {
           return {
             success: false,
@@ -478,19 +564,19 @@ export function registerIPCHandlers(): void {
               message: extraction.error.message,
               ...(extraction.error.details ? { details: extraction.error.details } : {}),
             },
-          };
+          }
         }
 
         // Extract structured data using AI
-        const resume = await aiProcessorService.extractResume(extraction.text);
+        const resume = await aiProcessorService.extractResume(extraction.text)
 
         // Save to profile
-        const profile = await profileService.saveProfile(resume, filePath);
+        const profile = await profileService.saveProfile(resume, filePath)
 
         return {
           success: true,
           profile,
-        };
+        }
       } catch (error) {
         if (error instanceof AIProcessorError) {
           return {
@@ -500,7 +586,7 @@ export function registerIPCHandlers(): void {
               message: error.message,
               ...(error.details ? { details: error.details } : {}),
             },
-          };
+          }
         }
         return {
           success: false,
@@ -508,26 +594,37 @@ export function registerIPCHandlers(): void {
             code: 'IMPORT_FAILED',
             message: error instanceof Error ? error.message : 'Unknown error',
           },
-        };
+        }
       }
     }
-  );
+  )
 
   ipcMain.handle(
     'profile:import-text',
-    async (_event, content: string | Uint8Array, fileName?: string): Promise<ImportResumeResponse> => {
-      const isBuffer = content instanceof Uint8Array || ArrayBuffer.isView(content);
-      console.log(`[profile:import-text] Input: ${isBuffer ? 'binary' : 'text'}, length: ${isBuffer ? (content as Uint8Array).length : (content as string).length}, file: ${fileName}`);
+    async (
+      _event,
+      content: string | Uint8Array,
+      fileName?: string
+    ): Promise<ImportResumeResponse> => {
+      const isBuffer = content instanceof Uint8Array || ArrayBuffer.isView(content)
+      console.log(
+        `[profile:import-text] Input: ${isBuffer ? 'binary' : 'text'}, length: ${isBuffer ? (content as Uint8Array).length : (content as string).length}, file: ${fileName}`
+      )
 
       try {
-        let extractedText: string;
+        let extractedText: string
 
         // Check if we need to extract text from binary document (PDF, DOCX)
-        const ext = fileName ? fileName.toLowerCase().split('.').pop() : '';
+        const ext = fileName ? fileName.toLowerCase().split('.').pop() : ''
         if (isBuffer || ext === 'pdf' || ext === 'docx') {
-          console.log('[profile:import-text] Extracting text from document...');
-          const buffer = isBuffer ? Buffer.from(content as Uint8Array) : Buffer.from(content, 'binary');
-          const extraction = await documentExtractorService.extractFromContent(buffer, fileName || 'document.pdf');
+          console.log('[profile:import-text] Extracting text from document...')
+          const buffer = isBuffer
+            ? Buffer.from(content as Uint8Array)
+            : Buffer.from(content, 'binary')
+          const extraction = await documentExtractorService.extractFromContent(
+            buffer,
+            fileName || 'document.pdf'
+          )
 
           if (!extraction.success) {
             return {
@@ -537,55 +634,56 @@ export function registerIPCHandlers(): void {
                 message: extraction.error.message,
                 ...(extraction.error.details ? { details: extraction.error.details } : {}),
               },
-            };
+            }
           }
-          extractedText = extraction.text;
-          console.log(`[profile:import-text] Extracted ${extractedText.length} chars of text`);
+          extractedText = extraction.text
+          console.log(`[profile:import-text] Extracted ${extractedText.length} chars of text`)
         } else {
           // Plain text file
-          extractedText = content as string;
+          extractedText = content as string
         }
 
         // Use the selected provider from settings
-        const settings = await settingsService.loadSettings();
+        const settings = await settingsService.loadSettings()
         if (settings.selectedProvider) {
-          aiProcessorService.setProvider(settings.selectedProvider);
+          aiProcessorService.setProvider(settings.selectedProvider)
         }
 
         // Extract structured data using AI
-        console.log('[profile:import-text] Calling extractResume...');
-        const resume = await aiProcessorService.extractResume(extractedText);
-        console.log('[profile:import-text] extractResume succeeded');
+        console.log('[profile:import-text] Calling extractResume...')
+        const resume = await aiProcessorService.extractResume(extractedText)
+        console.log('[profile:import-text] extractResume succeeded')
 
         // Save to profile
-        const profile = await profileService.saveProfile(resume, fileName);
+        const profile = await profileService.saveProfile(resume, fileName)
 
         return {
           success: true,
           profile,
-        };
+        }
       } catch (error) {
         // Log full error details to console for debugging
-        console.error('[profile:import-text] Error:', error);
+        console.error('[profile:import-text] Error:', error)
         if (error instanceof AIProcessorError) {
           console.error('[profile:import-text] AI Error Details:', {
             code: error.code,
             message: error.message,
             details: error.details,
-          });
+          })
 
           // Provide more user-friendly error messages
-          let userMessage = error.message;
+          let userMessage = error.message
           if (error.code === AIProcessorErrorCode.CLI_NOT_AVAILABLE) {
-            userMessage = 'AI service is not available. Please check your AI provider configuration.';
+            userMessage =
+              'AI service is not available. Please check your AI provider configuration.'
           } else if (error.code === AIProcessorErrorCode.EXECUTION_FAILED) {
             // CLI execution failed - show actual error for debugging
-            const details = error.details as Record<string, unknown> | undefined;
-            const cliOutput = details?.stderr || details?.stdout || '';
+            const details = error.details as Record<string, unknown> | undefined
+            const cliOutput = details?.stderr || details?.stdout || ''
             if (cliOutput) {
-              userMessage = `AI processing failed: ${String(cliOutput).trim().substring(0, 200)}`;
+              userMessage = `AI processing failed: ${String(cliOutput).trim().substring(0, 200)}`
             } else {
-              userMessage = `AI processing failed: ${error.message}`;
+              userMessage = `AI processing failed: ${error.message}`
             }
           }
 
@@ -596,7 +694,7 @@ export function registerIPCHandlers(): void {
               message: userMessage,
               ...(error.details ? { details: error.details } : {}),
             },
-          };
+          }
         }
         return {
           success: false,
@@ -604,18 +702,18 @@ export function registerIPCHandlers(): void {
             code: 'IMPORT_FAILED',
             message: error instanceof Error ? error.message : 'Unknown error',
           },
-        };
+        }
       }
     }
-  );
+  )
 
   ipcMain.handle('profile:save', async (_event, resume: Resume): Promise<UserProfile> => {
-    return profileService.saveProfile(resume);
-  });
+    return profileService.saveProfile(resume)
+  })
 
   ipcMain.handle('profile:clear', async (): Promise<void> => {
-    return profileService.clearProfile();
-  });
+    return profileService.clearProfile()
+  })
 
   // ============================================
   // Onboarding & API Key Handlers
@@ -623,150 +721,177 @@ export function registerIPCHandlers(): void {
 
   ipcMain.handle('onboarding:is-complete', async (): Promise<boolean> => {
     try {
-      const settings = await settingsService.loadSettings();
-      return settings.onboardingComplete === true;
+      const settings = await settingsService.loadSettings()
+      return settings.onboardingComplete === true
     } catch {
-      return false;
+      return false
     }
-  });
+  })
 
   ipcMain.handle('onboarding:complete', async (): Promise<void> => {
-    await settingsService.saveSettings({ onboardingComplete: true });
-  });
+    await settingsService.saveSettings({ onboardingComplete: true })
+  })
 
   ipcMain.handle('onboarding:detect-clis', async (): Promise<CLITool[]> => {
-    return apiKeyService.detectInstalledCLIs();
-  });
+    return apiKeyService.detectInstalledCLIs()
+  })
 
-  ipcMain.handle('onboarding:save-api-key', async (_event, provider: AIProvider, key: string): Promise<void> => {
-    apiKeyService.saveAPIKey(provider, key);
-  });
+  ipcMain.handle(
+    'onboarding:save-api-key',
+    async (_event, provider: AIProvider, key: string): Promise<void> => {
+      apiKeyService.saveAPIKey(provider, key)
+    }
+  )
 
-  ipcMain.handle('onboarding:has-api-key', async (_event, provider: AIProvider): Promise<boolean> => {
-    return apiKeyService.hasAPIKey(provider);
-  });
+  ipcMain.handle(
+    'onboarding:has-api-key',
+    async (_event, provider: AIProvider): Promise<boolean> => {
+      return apiKeyService.hasAPIKey(provider)
+    }
+  )
 
-  ipcMain.handle('onboarding:delete-api-key', async (_event, provider: AIProvider): Promise<void> => {
-    apiKeyService.deleteAPIKey(provider);
-  });
+  ipcMain.handle(
+    'onboarding:delete-api-key',
+    async (_event, provider: AIProvider): Promise<void> => {
+      apiKeyService.deleteAPIKey(provider)
+    }
+  )
 
   ipcMain.handle('onboarding:get-selected-provider', async (): Promise<string | null> => {
-    const settings = await settingsService.loadSettings();
-    return settings.selectedProvider;
-  });
+    const settings = await settingsService.loadSettings()
+    return settings.selectedProvider
+  })
 
-  ipcMain.handle('onboarding:set-selected-provider', async (_event, provider: string | null): Promise<void> => {
-    await settingsService.saveSettings({ selectedProvider: provider as 'claude' | 'codex' | 'gemini' | 'openai' | null });
-    // Update the AI processor to use the new provider
-    if (provider) {
-      aiProcessorService.setProvider(provider as 'claude' | 'codex' | 'gemini' | 'openai');
+  ipcMain.handle(
+    'onboarding:set-selected-provider',
+    async (_event, provider: string | null): Promise<void> => {
+      await settingsService.saveSettings({
+        selectedProvider: provider as 'claude' | 'codex' | 'gemini' | 'openai' | null,
+      })
+      // Update the AI processor to use the new provider
+      if (provider) {
+        aiProcessorService.setProvider(provider as 'claude' | 'codex' | 'gemini' | 'openai')
+      }
     }
-  });
+  )
 
   /**
    * Get all available providers - both detected CLIs and configured API keys.
    * Returns a list of provider objects with type and availability info.
    */
-  ipcMain.handle('onboarding:get-available-providers', async (): Promise<Array<{
-    id: string;
-    name: string;
-    type: 'cli' | 'api';
-    available: boolean;
-  }>> => {
-    const detectedCLIs = await apiKeyService.detectInstalledCLIs();
+  ipcMain.handle(
+    'onboarding:get-available-providers',
+    async (): Promise<
+      Array<{
+        id: string
+        name: string
+        type: 'cli' | 'api'
+        available: boolean
+      }>
+    > => {
+      const detectedCLIs = await apiKeyService.detectInstalledCLIs()
 
-    const providers: Array<{
-      id: string;
-      name: string;
-      type: 'cli' | 'api';
-      available: boolean;
-    }> = [];
+      const providers: Array<{
+        id: string
+        name: string
+        type: 'cli' | 'api'
+        available: boolean
+      }> = []
 
-    // Add CLI providers
-    const cliProviders = [
-      { id: 'claude' as const, name: 'Claude CLI' },
-      { id: 'codex' as const, name: 'Codex CLI' },
-      { id: 'gemini' as const, name: 'Gemini CLI' },
-    ];
+      // Add CLI providers
+      const cliProviders = [
+        { id: 'claude' as const, name: 'Claude CLI' },
+        { id: 'codex' as const, name: 'Codex CLI' },
+        { id: 'gemini' as const, name: 'Gemini CLI' },
+      ]
 
-    for (const cli of cliProviders) {
-      providers.push({
-        id: cli.id,
-        name: cli.name,
-        type: 'cli',
-        available: detectedCLIs.includes(cli.id),
-      });
-    }
-
-    // Add API providers (openai maps to the 'openai' provider)
-    const apiInfo: Record<string, { id: string; name: string }> = {
-      claude: { id: 'claude', name: 'Claude API' },
-      openai: { id: 'openai', name: 'OpenAI API' },
-      google: { id: 'gemini', name: 'Google AI API' },
-    };
-
-    for (const [apiKey, info] of Object.entries(apiInfo)) {
-      const hasKey = apiKeyService.hasAPIKey(apiKey as AIProvider);
-      // Only add if not already added as CLI or if it's a different provider (like openai)
-      const existingIndex = providers.findIndex(p => p.id === info.id && p.type === 'api');
-      if (existingIndex === -1) {
+      for (const cli of cliProviders) {
         providers.push({
-          id: info.id,
-          name: info.name,
-          type: 'api',
-          available: hasKey,
-        });
+          id: cli.id,
+          name: cli.name,
+          type: 'cli',
+          available: detectedCLIs.includes(cli.id),
+        })
       }
-    }
 
-    return providers;
-  });
+      // Add API providers (openai maps to the 'openai' provider)
+      const apiInfo: Record<string, { id: string; name: string }> = {
+        claude: { id: 'claude', name: 'Claude API' },
+        openai: { id: 'openai', name: 'OpenAI API' },
+        google: { id: 'gemini', name: 'Google AI API' },
+      }
+
+      for (const [apiKey, info] of Object.entries(apiInfo)) {
+        const hasKey = apiKeyService.hasAPIKey(apiKey as AIProvider)
+        // Only add if not already added as CLI or if it's a different provider (like openai)
+        const existingIndex = providers.findIndex(p => p.id === info.id && p.type === 'api')
+        if (existingIndex === -1) {
+          providers.push({
+            id: info.id,
+            name: info.name,
+            type: 'api',
+            available: hasKey,
+          })
+        }
+      }
+
+      return providers
+    }
+  )
 
   // ============================================
   // AI Operation Handlers
   // ============================================
 
   ipcMain.handle('ai:check-availability', async (): Promise<boolean> => {
-    return aiProcessorService.isAvailable();
-  });
+    return aiProcessorService.isAvailable()
+  })
 
   ipcMain.handle(
     'ai:refine-resume',
     async (_event, params: RefineResumeIPCParams): Promise<AIResult<RefinedResume>> => {
-      const operationId = generateOperationId();
-      const abortController = new AbortController();
-      activeOperations.set(operationId, abortController);
+      const operationId = generateOperationId()
+      const abortController = new AbortController()
+      activeOperations.set(operationId, abortController)
 
-      const startTime = Date.now();
+      const startTime = Date.now()
 
       try {
         sendProgressUpdate(operationId, {
           status: 'started',
           message: 'Starting resume refinement...',
           progress: 0,
-        });
+        })
 
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
+          sendProgressUpdate(operationId, {
+            status: 'cancelled',
+            message: 'Operation was cancelled',
+          })
           return {
             success: false,
-            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
-          };
+            error: {
+              code: AIProcessorErrorCode.CANCELLED,
+              message: 'Operation was cancelled by user',
+            },
+          }
         }
 
-        const settings = await settingsService.loadSettings();
-        const promptOptionsFromSettings = convertResumeSettingsToOptions(settings.resumePromptTemplate);
+        const settings = await settingsService.loadSettings()
+        const promptOptionsFromSettings = convertResumeSettingsToOptions(
+          settings.resumePromptTemplate
+        )
 
         // Use the selected provider from settings
         if (settings.selectedProvider) {
-          aiProcessorService.setProvider(settings.selectedProvider);
+          aiProcessorService.setProvider(settings.selectedProvider)
         }
 
         sendProgressUpdate(operationId, {
           status: 'processing',
           message: 'Analyzing job posting and refining resume...',
           progress: 25,
-        });
+        })
 
         const mergedOptions: RefineResumeOptions = {
           ...params.options,
@@ -774,77 +899,94 @@ export function registerIPCHandlers(): void {
             ...promptOptionsFromSettings,
             ...params.options?.promptOptions,
           },
-        };
+        }
 
         const result = await aiProcessorService.refineResume(
           params.resume,
           params.jobPosting,
           mergedOptions
-        );
+        )
 
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
+          sendProgressUpdate(operationId, {
+            status: 'cancelled',
+            message: 'Operation was cancelled',
+          })
           return {
             success: false,
-            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
-          };
+            error: {
+              code: AIProcessorErrorCode.CANCELLED,
+              message: 'Operation was cancelled by user',
+            },
+          }
         }
 
-        const processingTimeMs = Date.now() - startTime;
+        const processingTimeMs = Date.now() - startTime
         sendProgressUpdate(operationId, {
           status: 'completed',
           message: 'Resume refinement completed successfully',
           progress: 100,
-        });
+        })
 
-        return { success: true, data: result, processingTimeMs };
+        return { success: true, data: result, processingTimeMs }
       } catch (error) {
-        const errorResult = convertErrorToResult(error);
-        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
-        return errorResult;
+        const errorResult = convertErrorToResult(error)
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message })
+        return errorResult
       } finally {
-        activeOperations.delete(operationId);
+        activeOperations.delete(operationId)
       }
     }
-  );
+  )
 
   ipcMain.handle(
     'ai:generate-cover-letter',
-    async (_event, params: GenerateCoverLetterIPCParams): Promise<AIResult<GeneratedCoverLetter>> => {
-      const operationId = generateOperationId();
-      const abortController = new AbortController();
-      activeOperations.set(operationId, abortController);
+    async (
+      _event,
+      params: GenerateCoverLetterIPCParams
+    ): Promise<AIResult<GeneratedCoverLetter>> => {
+      const operationId = generateOperationId()
+      const abortController = new AbortController()
+      activeOperations.set(operationId, abortController)
 
-      const startTime = Date.now();
+      const startTime = Date.now()
 
       try {
         sendProgressUpdate(operationId, {
           status: 'started',
           message: 'Starting cover letter generation...',
           progress: 0,
-        });
+        })
 
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
+          sendProgressUpdate(operationId, {
+            status: 'cancelled',
+            message: 'Operation was cancelled',
+          })
           return {
             success: false,
-            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
-          };
+            error: {
+              code: AIProcessorErrorCode.CANCELLED,
+              message: 'Operation was cancelled by user',
+            },
+          }
         }
 
-        const settings = await settingsService.loadSettings();
-        const promptOptionsFromSettings = convertCoverLetterSettingsToOptions(settings.coverLetterPromptTemplate);
+        const settings = await settingsService.loadSettings()
+        const promptOptionsFromSettings = convertCoverLetterSettingsToOptions(
+          settings.coverLetterPromptTemplate
+        )
 
         // Use the selected provider from settings
         if (settings.selectedProvider) {
-          aiProcessorService.setProvider(settings.selectedProvider);
+          aiProcessorService.setProvider(settings.selectedProvider)
         }
 
         sendProgressUpdate(operationId, {
           status: 'processing',
           message: 'Analyzing resume and job posting, generating cover letter...',
           progress: 25,
-        });
+        })
 
         const coverLetterOptions: GenerateCoverLetterOptions = {
           ...params.options,
@@ -852,134 +994,142 @@ export function registerIPCHandlers(): void {
             ...promptOptionsFromSettings,
             ...params.options?.promptOptions,
           },
-        };
+        }
         if (params.companyInfo !== undefined) {
-          coverLetterOptions.companyInfo = params.companyInfo;
+          coverLetterOptions.companyInfo = params.companyInfo
         }
 
         const result = await aiProcessorService.generateCoverLetter(
           params.resume,
           params.jobPosting,
           coverLetterOptions
-        );
+        )
 
         if (abortController.signal.aborted) {
-          sendProgressUpdate(operationId, { status: 'cancelled', message: 'Operation was cancelled' });
+          sendProgressUpdate(operationId, {
+            status: 'cancelled',
+            message: 'Operation was cancelled',
+          })
           return {
             success: false,
-            error: { code: AIProcessorErrorCode.CANCELLED, message: 'Operation was cancelled by user' },
-          };
+            error: {
+              code: AIProcessorErrorCode.CANCELLED,
+              message: 'Operation was cancelled by user',
+            },
+          }
         }
 
-        const processingTimeMs = Date.now() - startTime;
+        const processingTimeMs = Date.now() - startTime
         sendProgressUpdate(operationId, {
           status: 'completed',
           message: 'Cover letter generation completed successfully',
           progress: 100,
-        });
+        })
 
-        return { success: true, data: result, processingTimeMs };
+        return { success: true, data: result, processingTimeMs }
       } catch (error) {
-        const errorResult = convertErrorToResult(error);
-        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
-        return errorResult;
+        const errorResult = convertErrorToResult(error)
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message })
+        return errorResult
       } finally {
-        activeOperations.delete(operationId);
+        activeOperations.delete(operationId)
       }
     }
-  );
+  )
 
   ipcMain.handle(
     'ai:shorten-cover-letter',
-    async (_event, params: ShortenCoverLetterIPCParams): Promise<AIResult<GeneratedCoverLetter>> => {
-      const operationId = generateOperationId();
-      const startTime = Date.now();
+    async (
+      _event,
+      params: ShortenCoverLetterIPCParams
+    ): Promise<AIResult<GeneratedCoverLetter>> => {
+      const operationId = generateOperationId()
+      const startTime = Date.now()
 
       try {
         sendProgressUpdate(operationId, {
           status: 'started',
           message: 'Shortening cover letter...',
           progress: 0,
-        });
+        })
 
         const result = await aiProcessorService.shortenCoverLetter(
           params.coverLetter,
           params.currentCharCount,
           params.targetCharCount
-        );
+        )
 
-        const processingTimeMs = Date.now() - startTime;
+        const processingTimeMs = Date.now() - startTime
         sendProgressUpdate(operationId, {
           status: 'completed',
           message: 'Cover letter shortened successfully',
           progress: 100,
-        });
+        })
 
-        return { success: true, data: result, processingTimeMs };
+        return { success: true, data: result, processingTimeMs }
       } catch (error) {
-        const errorResult = convertErrorToResult(error);
-        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
-        return errorResult;
+        const errorResult = convertErrorToResult(error)
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message })
+        return errorResult
       }
     }
-  );
+  )
 
   ipcMain.handle(
     'ai:extract-job-posting',
     async (_event, params: ExtractJobPostingIPCParams): Promise<AIResult<ExtractedJobPosting>> => {
-      const operationId = generateOperationId();
-      const startTime = Date.now();
+      const operationId = generateOperationId()
+      const startTime = Date.now()
 
       try {
         sendProgressUpdate(operationId, {
           status: 'started',
           message: 'Extracting job posting details...',
           progress: 0,
-        });
+        })
 
-        const settings = await settingsService.loadSettings();
+        const settings = await settingsService.loadSettings()
 
         // Use the selected provider from settings
         if (settings.selectedProvider) {
-          aiProcessorService.setProvider(settings.selectedProvider);
+          aiProcessorService.setProvider(settings.selectedProvider)
         }
 
         sendProgressUpdate(operationId, {
           status: 'processing',
           message: 'Analyzing job posting...',
           progress: 50,
-        });
+        })
 
-        const result = await aiProcessorService.extractJobPosting(
-          params.jobPostingText,
-          { promptOptions: params.options }
-        );
+        const result = await aiProcessorService.extractJobPosting(params.jobPostingText, {
+          promptOptions: params.options,
+        })
 
-        const processingTimeMs = Date.now() - startTime;
+        const processingTimeMs = Date.now() - startTime
         sendProgressUpdate(operationId, {
           status: 'completed',
           message: 'Job posting extracted successfully',
           progress: 100,
-        });
+        })
 
-        return { success: true, data: result, processingTimeMs };
+        return { success: true, data: result, processingTimeMs }
       } catch (error) {
-        const errorResult = convertErrorToResult(error);
-        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message });
-        return errorResult;
+        const errorResult = convertErrorToResult(error)
+        sendProgressUpdate(operationId, { status: 'error', message: errorResult.error.message })
+        return errorResult
       }
     }
-  );
+  )
 
   ipcMain.handle('ai:cancel-operation', async (_event, operationId: string): Promise<boolean> => {
-    const controller = activeOperations.get(operationId);
+    const controller = activeOperations.get(operationId)
     if (controller) {
-      controller.abort();
-      activeOperations.delete(operationId);
-      return true;
+      controller.abort()
+      activeOperations.delete(operationId)
+      return true
     }
-    return false;
-  });
+    return false
+  })
 }
 
 /**
@@ -988,18 +1138,61 @@ export function registerIPCHandlers(): void {
  */
 export function removeIPCHandlers(): void {
   const handlers = [
-    'load-resume', 'save-resume', 'generate-pdf', 'open-folder', 'select-folder', 'fetch-job-posting',
-    'check-export-files', 'export-application-pdfs', 'export-single-pdf',
-    'settings:get', 'settings:save', 'settings:select-folder', 'settings:reset', 'settings:validate', 'settings:get-default-folder',
-    'history:get', 'history:get-recent', 'history:add', 'history:delete', 'history:clear', 'history:open-file',
-    'profile:has', 'profile:load', 'profile:import-file', 'profile:import-text', 'profile:save', 'profile:clear',
-    'onboarding:is-complete', 'onboarding:complete', 'onboarding:detect-clis', 'onboarding:save-api-key', 'onboarding:has-api-key', 'onboarding:delete-api-key', 'onboarding:get-selected-provider', 'onboarding:set-selected-provider', 'onboarding:get-available-providers',
-    'ai:check-availability', 'ai:refine-resume', 'ai:generate-cover-letter', 'ai:shorten-cover-letter', 'ai:extract-job-posting', 'ai:cancel-operation',
-  ];
+    'load-resume',
+    'save-resume',
+    'generate-pdf',
+    'open-folder',
+    'select-folder',
+    'fetch-job-posting',
+    'check-export-files',
+    'export-application-pdfs',
+    'export-single-pdf',
+    'settings:get',
+    'settings:save',
+    'settings:select-folder',
+    'settings:reset',
+    'settings:validate',
+    'settings:get-default-folder',
+    'history:get',
+    'history:get-recent',
+    'history:add',
+    'history:delete',
+    'history:clear',
+    'history:open-file',
+    'applications:get-all',
+    'applications:get',
+    'applications:add',
+    'applications:update',
+    'applications:delete',
+    'applications:update-status',
+    'applications:get-statistics',
+    'applications:clear',
+    'profile:has',
+    'profile:load',
+    'profile:import-file',
+    'profile:import-text',
+    'profile:save',
+    'profile:clear',
+    'onboarding:is-complete',
+    'onboarding:complete',
+    'onboarding:detect-clis',
+    'onboarding:save-api-key',
+    'onboarding:has-api-key',
+    'onboarding:delete-api-key',
+    'onboarding:get-selected-provider',
+    'onboarding:set-selected-provider',
+    'onboarding:get-available-providers',
+    'ai:check-availability',
+    'ai:refine-resume',
+    'ai:generate-cover-letter',
+    'ai:shorten-cover-letter',
+    'ai:extract-job-posting',
+    'ai:cancel-operation',
+  ]
 
   for (const handler of handlers) {
-    ipcMain.removeHandler(handler);
+    ipcMain.removeHandler(handler)
   }
 
-  activeOperations.clear();
+  activeOperations.clear()
 }

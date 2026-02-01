@@ -1,28 +1,23 @@
 // Type declarations for the Electron API exposed via contextBridge
 
-import type { Resume, UserProfile } from '../schemas/resume.schema';
+import type { Resume, UserProfile } from '../schemas/resume.schema'
 import type {
   RefinedResume,
   GeneratedCoverLetter,
   ExtractedJobPosting,
-} from '../schemas/ai-output.schema';
-import type {
-  AppSettings,
-  PartialAppSettings,
-} from '../schemas/settings.schema';
-import type {
-  ExportHistory,
-  HistoryEntry,
-} from '../schemas/history.schema';
+} from '../schemas/ai-output.schema'
+import type { AppSettings, PartialAppSettings } from '../schemas/settings.schema'
+import type { ExportHistory, HistoryEntry } from '../schemas/history.schema'
+import type { JobApplication, ApplicationStatistics } from '../schemas/applications.schema'
 
 // ============================================
 // Settings Types
 // ============================================
 
 export interface SettingsValidationResult {
-  isValid: boolean;
-  errors?: string[];
-  warnings?: string[];
+  isValid: boolean
+  errors?: string[]
+  warnings?: string[]
 }
 
 // ============================================
@@ -30,27 +25,27 @@ export interface SettingsValidationResult {
 // ============================================
 
 export interface AIOperationResult<T> {
-  success: true;
-  data: T;
-  processingTimeMs?: number;
+  success: true
+  data: T
+  processingTimeMs?: number
 }
 
 export interface AIOperationError {
-  success: false;
+  success: false
   error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
+    code: string
+    message: string
+    details?: Record<string, unknown>
+  }
 }
 
-export type AIResult<T> = AIOperationResult<T> | AIOperationError;
+export type AIResult<T> = AIOperationResult<T> | AIOperationError
 
 export interface AIProgressUpdate {
-  operationId: string;
-  status: 'started' | 'processing' | 'validating' | 'completed' | 'cancelled' | 'error';
-  message?: string;
-  progress?: number;
+  operationId: string
+  status: 'started' | 'processing' | 'validating' | 'completed' | 'cancelled' | 'error'
+  message?: string
+  progress?: number
 }
 
 // ============================================
@@ -58,41 +53,41 @@ export interface AIProgressUpdate {
 // ============================================
 
 export interface RefineResumeParams {
-  resume: Resume;
-  jobPosting: string;
+  resume: Resume
+  jobPosting: string
   options?: {
-    maxRetries?: number;
-    includeMetadata?: boolean;
-  };
+    maxRetries?: number
+    includeMetadata?: boolean
+  }
 }
 
 export interface GenerateCoverLetterParams {
-  resume: Resume;
-  jobPosting: string;
+  resume: Resume
+  jobPosting: string
   companyInfo?: {
-    name?: string;
-    address?: string;
-    hiringManager?: string;
-    hiringManagerTitle?: string;
-  };
+    name?: string
+    address?: string
+    hiringManager?: string
+    hiringManagerTitle?: string
+  }
   options?: {
-    maxRetries?: number;
-    includeMetadata?: boolean;
-    tone?: 'formal' | 'conversational' | 'enthusiastic';
-  };
+    maxRetries?: number
+    includeMetadata?: boolean
+    tone?: 'formal' | 'conversational' | 'enthusiastic'
+  }
 }
 
 export interface ShortenCoverLetterParams {
-  coverLetter: GeneratedCoverLetter;
-  currentCharCount: number;
-  targetCharCount: number;
+  coverLetter: GeneratedCoverLetter
+  currentCharCount: number
+  targetCharCount: number
 }
 
 export interface ExtractJobPostingParams {
-  jobPostingText: string;
+  jobPostingText: string
   options?: {
-    inferSalary?: boolean;
-  };
+    inferSalary?: boolean
+  }
 }
 
 // ============================================
@@ -100,36 +95,36 @@ export interface ExtractJobPostingParams {
 // ============================================
 
 export interface ExportApplicationPDFsParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  resumeBlob: Blob;
-  coverLetterBlob: Blob;
-  resumeFileName: string;
-  coverLetterFileName: string;
+  baseFolderPath: string
+  subfolderName: string
+  resumeBlob: Blob
+  coverLetterBlob: Blob
+  resumeFileName: string
+  coverLetterFileName: string
 }
 
 export interface ExportSinglePDFParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  pdfBlob: Blob;
-  fileName: string;
+  baseFolderPath: string
+  subfolderName: string
+  pdfBlob: Blob
+  fileName: string
 }
 
 export interface ExportPDFResult {
-  success: boolean;
-  folderPath?: string;
-  error?: string;
+  success: boolean
+  folderPath?: string
+  error?: string
 }
 
 export interface CheckExportFilesParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  fileNames: string[];
+  baseFolderPath: string
+  subfolderName: string
+  fileNames: string[]
 }
 
 export interface CheckExportFilesResult {
-  exists: boolean;
-  existingFiles: string[];
+  exists: boolean
+  existingFiles: string[]
 }
 
 // ============================================
@@ -137,9 +132,9 @@ export interface CheckExportFilesResult {
 // ============================================
 
 export interface FetchJobPostingResult {
-  success: boolean;
-  content?: string;
-  error?: string;
+  success: boolean
+  content?: string
+  error?: string
 }
 
 // ============================================
@@ -147,19 +142,19 @@ export interface FetchJobPostingResult {
 // ============================================
 
 export interface ExportApplicationPDFsIPCParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  resumeData: Uint8Array;
-  coverLetterData: Uint8Array;
-  resumeFileName: string;
-  coverLetterFileName: string;
+  baseFolderPath: string
+  subfolderName: string
+  resumeData: Uint8Array
+  coverLetterData: Uint8Array
+  resumeFileName: string
+  coverLetterFileName: string
 }
 
 export interface ExportSinglePDFIPCParams {
-  baseFolderPath: string;
-  subfolderName: string;
-  pdfData: Uint8Array;
-  fileName: string;
+  baseFolderPath: string
+  subfolderName: string
+  pdfData: Uint8Array
+  fileName: string
 }
 
 // ============================================
@@ -167,13 +162,13 @@ export interface ExportSinglePDFIPCParams {
 // ============================================
 
 export interface LoadResumeResult {
-  content: string;
-  filePath: string;
+  content: string
+  filePath: string
 }
 
 export interface SaveResumeData {
-  content: string;
-  filePath?: string;
+  content: string
+  filePath?: string
 }
 
 // ============================================
@@ -181,20 +176,20 @@ export interface SaveResumeData {
 // ============================================
 
 export interface ImportResumeResult {
-  success: true;
-  profile: UserProfile;
+  success: true
+  profile: UserProfile
 }
 
 export interface ImportResumeError {
-  success: false;
+  success: false
   error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
+    code: string
+    message: string
+    details?: Record<string, unknown>
+  }
 }
 
-export type ImportResumeResponse = ImportResumeResult | ImportResumeError;
+export type ImportResumeResponse = ImportResumeResult | ImportResumeError
 
 // ============================================
 // Onboarding & API Key Types
@@ -203,21 +198,21 @@ export type ImportResumeResponse = ImportResumeResult | ImportResumeError;
 /**
  * Supported AI providers for API key storage.
  */
-export type AIProvider = 'claude' | 'openai' | 'google';
+export type AIProvider = 'claude' | 'openai' | 'google'
 
 /**
  * Supported CLI tools for detection.
  */
-export type CLITool = 'claude' | 'codex' | 'gemini';
+export type CLITool = 'claude' | 'codex' | 'gemini'
 
 /**
  * Represents an available AI provider (CLI or API).
  */
 export interface AvailableProvider {
-  id: string;
-  name: string;
-  type: 'cli' | 'api';
-  available: boolean;
+  id: string
+  name: string
+  type: 'cli' | 'api'
+  available: boolean
 }
 
 // ============================================
@@ -226,71 +221,93 @@ export interface AvailableProvider {
 
 export interface ElectronAPI {
   // File operations
-  loadResume: () => Promise<LoadResumeResult | null>;
-  saveResume: (data: SaveResumeData) => Promise<string | null>;
-  generatePDF: (pdfData: Uint8Array, defaultFileName?: string) => Promise<string | null>;
-  openFolder: (folderPath: string) => Promise<void>;
-  selectFolder: () => Promise<string | null>;
+  loadResume: () => Promise<LoadResumeResult | null>
+  saveResume: (data: SaveResumeData) => Promise<string | null>
+  generatePDF: (pdfData: Uint8Array, defaultFileName?: string) => Promise<string | null>
+  openFolder: (folderPath: string) => Promise<void>
+  selectFolder: () => Promise<string | null>
 
   // Export Operations
-  checkExportFiles: (params: CheckExportFilesParams) => Promise<CheckExportFilesResult>;
-  exportApplicationPDFs: (params: ExportApplicationPDFsParams) => Promise<ExportPDFResult>;
-  exportSinglePDF: (params: ExportSinglePDFParams) => Promise<ExportPDFResult>;
+  checkExportFiles: (params: CheckExportFilesParams) => Promise<CheckExportFilesResult>
+  exportApplicationPDFs: (params: ExportApplicationPDFsParams) => Promise<ExportPDFResult>
+  exportSinglePDF: (params: ExportSinglePDFParams) => Promise<ExportPDFResult>
 
   // Job Posting Operations
-  fetchJobPosting: (url: string) => Promise<FetchJobPostingResult>;
+  fetchJobPosting: (url: string) => Promise<FetchJobPostingResult>
 
   // AI Operations
-  refineResume: (params: RefineResumeParams) => Promise<AIResult<RefinedResume>>;
-  generateCoverLetter: (params: GenerateCoverLetterParams) => Promise<AIResult<GeneratedCoverLetter>>;
-  shortenCoverLetter: (params: ShortenCoverLetterParams) => Promise<AIResult<GeneratedCoverLetter>>;
-  extractJobPosting: (params: ExtractJobPostingParams) => Promise<AIResult<ExtractedJobPosting>>;
-  cancelAIOperation: (operationId: string) => Promise<boolean>;
-  checkAIAvailability: () => Promise<boolean>;
+  refineResume: (params: RefineResumeParams) => Promise<AIResult<RefinedResume>>
+  generateCoverLetter: (
+    params: GenerateCoverLetterParams
+  ) => Promise<AIResult<GeneratedCoverLetter>>
+  shortenCoverLetter: (params: ShortenCoverLetterParams) => Promise<AIResult<GeneratedCoverLetter>>
+  extractJobPosting: (params: ExtractJobPostingParams) => Promise<AIResult<ExtractedJobPosting>>
+  cancelAIOperation: (operationId: string) => Promise<boolean>
+  checkAIAvailability: () => Promise<boolean>
 
   // AI Progress events
-  onAIProgress: (callback: (update: AIProgressUpdate) => void) => () => void;
+  onAIProgress: (callback: (update: AIProgressUpdate) => void) => () => void
 
   // Settings Operations
-  getSettings: () => Promise<AppSettings>;
-  saveSettings: (settings: PartialAppSettings) => Promise<AppSettings>;
-  selectOutputFolder: () => Promise<string | null>;
-  resetSettings: () => Promise<AppSettings>;
-  validateSettings: (settings: PartialAppSettings) => Promise<SettingsValidationResult>;
-  getDefaultOutputFolder: () => Promise<string>;
+  getSettings: () => Promise<AppSettings>
+  saveSettings: (settings: PartialAppSettings) => Promise<AppSettings>
+  selectOutputFolder: () => Promise<string | null>
+  resetSettings: () => Promise<AppSettings>
+  validateSettings: (settings: PartialAppSettings) => Promise<SettingsValidationResult>
+  getDefaultOutputFolder: () => Promise<string>
 
   // History Operations
-  getExportHistory: () => Promise<ExportHistory>;
-  getRecentExports: (limit?: number) => Promise<HistoryEntry[]>;
-  addToHistory: (entry: HistoryEntry) => Promise<void>;
-  deleteHistoryEntry: (entryId: string) => Promise<void>;
-  clearHistory: () => Promise<void>;
-  openHistoryFile: (filePath: string) => Promise<boolean>;
+  getExportHistory: () => Promise<ExportHistory>
+  getRecentExports: (limit?: number) => Promise<HistoryEntry[]>
+  addToHistory: (entry: HistoryEntry) => Promise<void>
+  deleteHistoryEntry: (entryId: string) => Promise<void>
+  clearHistory: () => Promise<void>
+  openHistoryFile: (filePath: string) => Promise<boolean>
+
+  // Applications Operations
+  getAllApplications: () => Promise<JobApplication[]>
+  getApplication: (applicationId: string) => Promise<JobApplication | null>
+  addApplication: (application: JobApplication) => Promise<void>
+  updateApplication: (
+    applicationId: string,
+    updates: Partial<JobApplication>
+  ) => Promise<JobApplication>
+  deleteApplication: (applicationId: string) => Promise<void>
+  updateApplicationStatus: (
+    applicationId: string,
+    statusId: string,
+    note?: string
+  ) => Promise<JobApplication>
+  getApplicationStatistics: () => Promise<ApplicationStatistics>
+  clearApplications: () => Promise<void>
 
   // Profile Operations
-  hasProfile: () => Promise<boolean>;
-  loadProfile: () => Promise<UserProfile | null>;
-  importResumeFromFile: (filePath: string) => Promise<ImportResumeResponse>;
-  importResumeFromText: (content: string | Uint8Array, fileName?: string) => Promise<ImportResumeResponse>;
-  saveProfile: (resume: Resume) => Promise<UserProfile>;
-  clearProfile: () => Promise<void>;
+  hasProfile: () => Promise<boolean>
+  loadProfile: () => Promise<UserProfile | null>
+  importResumeFromFile: (filePath: string) => Promise<ImportResumeResponse>
+  importResumeFromText: (
+    content: string | Uint8Array,
+    fileName?: string
+  ) => Promise<ImportResumeResponse>
+  saveProfile: (resume: Resume) => Promise<UserProfile>
+  clearProfile: () => Promise<void>
 
   // Onboarding Operations
-  isOnboardingComplete: () => Promise<boolean>;
-  completeOnboarding: () => Promise<void>;
-  detectInstalledCLIs: () => Promise<CLITool[]>;
-  saveAPIKey: (provider: AIProvider, key: string) => Promise<void>;
-  hasAPIKey: (provider: AIProvider) => Promise<boolean>;
-  deleteAPIKey: (provider: AIProvider) => Promise<void>;
+  isOnboardingComplete: () => Promise<boolean>
+  completeOnboarding: () => Promise<void>
+  detectInstalledCLIs: () => Promise<CLITool[]>
+  saveAPIKey: (provider: AIProvider, key: string) => Promise<void>
+  hasAPIKey: (provider: AIProvider) => Promise<boolean>
+  deleteAPIKey: (provider: AIProvider) => Promise<void>
 
   // Provider Selection
-  getSelectedProvider: () => Promise<string | null>;
-  setSelectedProvider: (provider: string | null) => Promise<void>;
-  getAvailableProviders: () => Promise<AvailableProvider[]>;
+  getSelectedProvider: () => Promise<string | null>
+  setSelectedProvider: (provider: string | null) => Promise<void>
+  getAvailableProviders: () => Promise<AvailableProvider[]>
 }
 
 declare global {
   interface Window {
-    electronAPI: ElectronAPI;
+    electronAPI: ElectronAPI
   }
 }

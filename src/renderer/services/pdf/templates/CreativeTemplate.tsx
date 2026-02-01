@@ -5,19 +5,12 @@
  * accent icons, and a dynamic two-column layout.
  */
 
-import React, { useMemo } from 'react';
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Link,
-} from '@react-pdf/renderer';
-import type { Skill } from '@schemas/resume.schema';
-import { getContactByType } from '@schemas/resume.schema';
-import type { TemplateProps } from './template-factory';
-import type { PDFTheme } from '@app-types/pdf-theme.types';
+import React, { useMemo } from 'react'
+import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer'
+import type { Skill } from '@schemas/resume.schema'
+import { getContactByType } from '@schemas/resume.schema'
+import type { TemplateProps } from './template-factory'
+import type { PDFTheme } from '@app-types/pdf-theme.types'
 
 // =============================================================================
 // STYLE FACTORY
@@ -226,28 +219,28 @@ function createStyles(theme: PDFTheme) {
       fontFamily: theme.fonts.primary,
       color: theme.colors.muted,
     },
-  });
+  })
 }
 
 // =============================================================================
 // HELPERS
 // =============================================================================
 function formatDateRange(start: string, end?: string | null): string {
-  return `${start} – ${end || 'Present'}`;
+  return `${start} – ${end || 'Present'}`
 }
 
 function getSkillLevel(skill: Skill): number {
   switch (skill.level) {
     case 'expert':
-      return 100;
+      return 100
     case 'advanced':
-      return 80;
+      return 80
     case 'intermediate':
-      return 60;
+      return 60
     case 'beginner':
-      return 40;
+      return 40
     default:
-      return 70;
+      return 70
   }
 }
 
@@ -259,15 +252,15 @@ export function CreativeTemplate({
   theme,
   targetJobTitle,
 }: TemplateProps): React.JSX.Element {
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  const { personalInfo, education, skills, certifications, workExperience } = resume;
+  const styles = useMemo(() => createStyles(theme), [theme])
+  const { personalInfo, education, skills, certifications, workExperience } = resume
 
-  const displayTitle = targetJobTitle || workExperience[0]?.title || '';
-  const about = personalInfo.summary?.trim() || '';
+  const displayTitle = targetJobTitle || workExperience[0]?.title || ''
+  const about = personalInfo.summary?.trim() || ''
 
-  const email = getContactByType(personalInfo.contacts, 'email');
-  const phone = getContactByType(personalInfo.contacts, 'phone');
-  const linkedin = getContactByType(personalInfo.contacts, 'linkedin');
+  const email = getContactByType(personalInfo.contacts, 'email')
+  const phone = getContactByType(personalInfo.contacts, 'phone')
+  const linkedin = getContactByType(personalInfo.contacts, 'linkedin')
 
   return (
     <Document>
@@ -329,9 +322,7 @@ export function CreativeTemplate({
                       <Text style={styles.itemMeta}>
                         {job.company} · {formatDateRange(job.startDate, job.endDate)}
                       </Text>
-                      {job.location && (
-                        <Text style={styles.itemLocation}>{job.location}</Text>
-                      )}
+                      {job.location && <Text style={styles.itemLocation}>{job.location}</Text>}
                       {job.highlights && job.highlights.length > 0 && (
                         <View style={styles.bulletList}>
                           {job.highlights.map((h, hi) => (
@@ -362,10 +353,7 @@ export function CreativeTemplate({
                       <Text style={styles.skillName}>{skill.name}</Text>
                       <View style={styles.skillBarBg}>
                         <View
-                          style={[
-                            styles.skillBarFill,
-                            { width: `${getSkillLevel(skill)}%` },
-                          ]}
+                          style={[styles.skillBarFill, { width: `${getSkillLevel(skill)}%` }]}
                         />
                       </View>
                     </View>
@@ -418,5 +406,5 @@ export function CreativeTemplate({
         </View>
       </Page>
     </Document>
-  );
+  )
 }

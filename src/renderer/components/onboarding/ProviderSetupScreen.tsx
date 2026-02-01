@@ -160,9 +160,7 @@ export function ProviderSetupScreen({
   const [isSavingSelection, setIsSavingSelection] = useState(false)
 
   // Track state for each API provider card
-  const [providerStates, setProviderStates] = useState<
-    Record<AIProvider, ProviderCardState>
-  >({
+  const [providerStates, setProviderStates] = useState<Record<AIProvider, ProviderCardState>>({
     claude: {
       isOpen: false,
       apiKey: '',
@@ -203,7 +201,7 @@ export function ProviderSetupScreen({
           window.electronAPI.getSelectedProvider(),
         ])
 
-        setProviderStates((prev) => ({
+        setProviderStates(prev => ({
           ...prev,
           claude: { ...prev.claude, hasSavedKey: hasClaude },
           openai: { ...prev.openai, hasSavedKey: hasOpenAI },
@@ -260,7 +258,7 @@ export function ProviderSetupScreen({
    */
   const updateProviderState = useCallback(
     (provider: AIProvider, updates: Partial<ProviderCardState>) => {
-      setProviderStates((prev) => ({
+      setProviderStates(prev => ({
         ...prev,
         [provider]: { ...prev[provider], ...updates },
       }))
@@ -405,9 +403,7 @@ export function ProviderSetupScreen({
     <div className="flex min-h-full flex-col">
       {/* Header */}
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Choose your AI provider
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Choose your AI provider</h1>
         <p className="text-muted-foreground mt-2 text-lg">
           Select which AI service to use for resume tailoring and cover letters
         </p>
@@ -417,7 +413,7 @@ export function ProviderSetupScreen({
         {/* Detected CLIs Section */}
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <h2 className="text-muted-foreground flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
               <Terminal className="size-4" />
               CLI Tools
             </h2>
@@ -428,21 +424,19 @@ export function ProviderSetupScreen({
               disabled={isDetectingCLIs}
               className="h-7 gap-1.5 px-2 text-xs"
             >
-              <RefreshCw
-                className={cn('size-3', isDetectingCLIs && 'animate-spin')}
-              />
+              <RefreshCw className={cn('size-3', isDetectingCLIs && 'animate-spin')} />
               Refresh
             </Button>
           </div>
 
           {isDetectingCLIs ? (
-            <div className="flex items-center gap-2 rounded-lg border border-dashed p-4 text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-2 rounded-lg border border-dashed p-4">
               <Loader2 className="size-4 animate-spin" />
               <span>Detecting installed CLI tools...</span>
             </div>
           ) : (
             <div className="space-y-2">
-              {CLI_TOOLS.map((cli) => {
+              {CLI_TOOLS.map(cli => {
                 const isAvailable = isCLIAvailable(cli.id)
                 const isSelected = selectedProvider === cli.selectionId
                 return (
@@ -454,22 +448,20 @@ export function ProviderSetupScreen({
                     className={cn(
                       'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
                       isAvailable
-                        ? 'cursor-pointer hover:bg-accent/50'
+                        ? 'hover:bg-accent/50 cursor-pointer'
                         : 'cursor-not-allowed opacity-50',
                       isSelected && 'border-primary bg-primary/5'
                     )}
                   >
                     {isSelected ? (
-                      <CheckCircle2 className="size-5 shrink-0 text-primary" />
+                      <CheckCircle2 className="text-primary size-5 shrink-0" />
                     ) : (
-                      <Circle className="size-5 shrink-0 text-muted-foreground" />
+                      <Circle className="text-muted-foreground size-5 shrink-0" />
                     )}
                     <div className="flex-1">
                       <span className="font-medium">{cli.name}</span>
                       <span className="text-muted-foreground"> — </span>
-                      <span className="text-muted-foreground">
-                        {cli.description}
-                      </span>
+                      <span className="text-muted-foreground">{cli.description}</span>
                     </div>
                     {isAvailable ? (
                       <Badge
@@ -492,17 +484,17 @@ export function ProviderSetupScreen({
 
         {/* API Key Options Section */}
         <div>
-          <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-muted-foreground mb-1 flex items-center gap-2 text-sm font-semibold tracking-wider uppercase">
             <Key className="size-4" />
             API Keys
           </h2>
-          <p className="mb-3 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mb-3 text-xs">
             Keys are stored locally in your system's secure storage
           </p>
 
-          <div className="rounded-lg border bg-card">
+          <div className="bg-card rounded-lg border">
             <Accordion type="single" collapsible>
-              {API_PROVIDERS.map((provider) => {
+              {API_PROVIDERS.map(provider => {
                 const state = providerStates[provider.id]
                 const isAvailable = isAPIAvailable(provider.id)
                 const isSelected = selectedProvider === provider.selectionId
@@ -520,9 +512,9 @@ export function ProviderSetupScreen({
                         )}
                       >
                         {isSelected ? (
-                          <CheckCircle2 className="size-5 shrink-0 text-primary" />
+                          <CheckCircle2 className="text-primary size-5 shrink-0" />
                         ) : (
-                          <Circle className="size-5 shrink-0 text-muted-foreground" />
+                          <Circle className="text-muted-foreground size-5 shrink-0" />
                         )}
                       </button>
                       {/* Accordion trigger */}
@@ -530,13 +522,11 @@ export function ProviderSetupScreen({
                         <div className="flex flex-1 items-center gap-3">
                           <span className="font-medium">{provider.name}</span>
                           <span className="text-muted-foreground">—</span>
-                          <span className="text-muted-foreground">
-                            {provider.description}
-                          </span>
+                          <span className="text-muted-foreground">{provider.description}</span>
                           {state.hasSavedKey && (
                             <Badge
                               variant="secondary"
-                              className="ml-auto mr-2 bg-green-500/10 text-green-600 dark:text-green-400"
+                              className="mr-2 ml-auto bg-green-500/10 text-green-600 dark:text-green-400"
                             >
                               Configured
                             </Badge>
@@ -550,12 +540,10 @@ export function ProviderSetupScreen({
                           <Input
                             type={state.showKey ? 'text' : 'password'}
                             placeholder={
-                              state.hasSavedKey
-                                ? 'Enter new key to replace...'
-                                : 'Enter API key...'
+                              state.hasSavedKey ? 'Enter new key to replace...' : 'Enter API key...'
                             }
                             value={state.apiKey}
-                            onChange={(e) =>
+                            onChange={e =>
                               updateProviderState(provider.id, {
                                 apiKey: e.target.value,
                                 error: null,
@@ -568,7 +556,7 @@ export function ProviderSetupScreen({
                             type="button"
                             variant="ghost"
                             size="icon-sm"
-                            className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
+                            className="absolute top-1/2 right-1 size-7 -translate-y-1/2"
                             onClick={() =>
                               updateProviderState(provider.id, {
                                 showKey: !state.showKey,
@@ -603,11 +591,7 @@ export function ProviderSetupScreen({
                         {state.hasSavedKey && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                disabled={state.isDeleting}
-                              >
+                              <Button size="sm" variant="destructive" disabled={state.isDeleting}>
                                 {state.isDeleting ? (
                                   <Loader2 className="size-3.5 animate-spin" />
                                 ) : (
@@ -619,8 +603,8 @@ export function ProviderSetupScreen({
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete API Key?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This will permanently delete your {provider.name} key from secure storage.
-                                  You'll need to enter it again to use this provider.
+                                  This will permanently delete your {provider.name} key from secure
+                                  storage. You'll need to enter it again to use this provider.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -634,9 +618,7 @@ export function ProviderSetupScreen({
                         )}
                       </div>
                       {state.error && (
-                        <p className="mt-2 text-xs text-destructive">
-                          {state.error}
-                        </p>
+                        <p className="text-destructive mt-2 text-xs">{state.error}</p>
                       )}
                     </AccordionContent>
                   </AccordionItem>
@@ -651,25 +633,17 @@ export function ProviderSetupScreen({
       <div className="h-24" />
 
       {/* Footer Actions - fixed at bottom with full-width border */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed right-0 bottom-0 left-0 z-10 border-t backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-6 py-4">
-          <Button
-            variant="link"
-            onClick={onComplete}
-            className="text-muted-foreground"
-          >
+          <Button variant="link" onClick={onComplete} className="text-muted-foreground">
             Skip for now
           </Button>
           <div className="flex items-center gap-4">
             {!hasAnyProvider && (
-              <p className="text-sm text-muted-foreground">
-                Configure at least one AI provider
-              </p>
+              <p className="text-muted-foreground text-sm">Configure at least one AI provider</p>
             )}
             {hasAnyProvider && !selectedProvider && (
-              <p className="text-sm text-muted-foreground">
-                Select a provider to continue
-              </p>
+              <p className="text-muted-foreground text-sm">Select a provider to continue</p>
             )}
             <Button
               size="lg"

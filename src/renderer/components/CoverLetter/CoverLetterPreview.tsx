@@ -1,9 +1,9 @@
-import React from 'react';
-import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
+import React from 'react'
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema'
 
 interface CoverLetterPreviewProps {
-  coverLetter: GeneratedCoverLetter;
-  className?: string;
+  coverLetter: GeneratedCoverLetter
+  className?: string
 }
 
 /**
@@ -20,37 +20,27 @@ function CoverLetterPreview({
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-      });
+      })
     }
-    return dateStr;
-  };
+    return dateStr
+  }
 
   return (
     <div className={`cover-letter-preview ${className}`.trim()}>
       {/* Date */}
-      <div className="cover-letter-preview__date">
-        {formatDate(coverLetter.date)}
-      </div>
+      <div className="cover-letter-preview__date">{formatDate(coverLetter.date)}</div>
 
       {/* Recipient Info */}
       <div className="cover-letter-preview__recipient">
         {coverLetter.recipientName && (
-          <div className="cover-letter-preview__recipient-name">
-            {coverLetter.recipientName}
-          </div>
+          <div className="cover-letter-preview__recipient-name">{coverLetter.recipientName}</div>
         )}
         {coverLetter.recipientTitle && (
-          <div className="cover-letter-preview__recipient-title">
-            {coverLetter.recipientTitle}
-          </div>
+          <div className="cover-letter-preview__recipient-title">{coverLetter.recipientTitle}</div>
         )}
-        <div className="cover-letter-preview__company-name">
-          {coverLetter.companyName}
-        </div>
+        <div className="cover-letter-preview__company-name">{coverLetter.companyName}</div>
         {coverLetter.companyAddress && (
-          <div className="cover-letter-preview__company-address">
-            {coverLetter.companyAddress}
-          </div>
+          <div className="cover-letter-preview__company-address">{coverLetter.companyAddress}</div>
         )}
       </div>
 
@@ -75,11 +65,9 @@ function CoverLetterPreview({
       </div>
 
       {/* Signature */}
-      <div className="cover-letter-preview__signature">
-        {coverLetter.signature}
-      </div>
+      <div className="cover-letter-preview__signature">{coverLetter.signature}</div>
     </div>
-  );
+  )
 }
 
-export default CoverLetterPreview;
+export default CoverLetterPreview

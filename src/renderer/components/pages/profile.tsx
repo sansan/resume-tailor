@@ -4,14 +4,7 @@ import { useResume } from '@/hooks/useResume'
 import type { Resume } from '@schemas/resume.schema'
 
 export function ProfilePage() {
-  const {
-    resume,
-    jsonText,
-    setJsonText,
-    isDirty,
-    saveToFile,
-    validate,
-  } = useResume()
+  const { resume, jsonText, setJsonText, isDirty, saveToFile, validate } = useResume()
 
   // Validate JSON on mount and when jsonText changes
   useEffect(() => {

@@ -1,17 +1,13 @@
-"use client"
+'use client'
 
-import * as React from "react"
-import { format, parse } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import * as React from 'react'
+import { format, parse } from 'date-fns'
+import { Calendar as CalendarIcon } from 'lucide-react'
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface DatePickerProps {
   value?: string | null | undefined
@@ -27,7 +23,7 @@ interface DatePickerProps {
 export function DatePicker({
   value,
   onChange,
-  placeholder = "Pick a date",
+  placeholder = 'Pick a date',
   className,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
@@ -37,7 +33,7 @@ export function DatePicker({
     if (!value) return undefined
     try {
       // Try to parse "Month Day, Year" format
-      return parse(value, "MMMM d, yyyy", new Date())
+      return parse(value, 'MMMM d, yyyy', new Date())
     } catch {
       // Fallback: try native Date parsing
       const parsed = new Date(value)
@@ -48,7 +44,7 @@ export function DatePicker({
   const handleSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       // Format as "Month Day, Year"
-      onChange(format(selectedDate, "MMMM d, yyyy"))
+      onChange(format(selectedDate, 'MMMM d, yyyy'))
     }
     setOpen(false)
   }
@@ -59,8 +55,8 @@ export function DatePicker({
         <Button
           variant="ghost"
           className={cn(
-            "h-7 justify-start text-left font-normal px-2 py-0.5 border-0 border-b border-gray-300 rounded-none hover:bg-transparent focus:ring-0",
-            !value && "text-muted-foreground",
+            'h-7 justify-start rounded-none border-0 border-b border-gray-300 px-2 py-0.5 text-left font-normal hover:bg-transparent focus:ring-0',
+            !value && 'text-muted-foreground',
             className
           )}
           style={{ color: value ? '#374151' : '#9ca3af', backgroundColor: 'transparent' }}
@@ -70,12 +66,7 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={handleSelect}
-          initialFocus
-        />
+        <Calendar mode="single" selected={date} onSelect={handleSelect} initialFocus />
       </PopoverContent>
     </Popover>
   )

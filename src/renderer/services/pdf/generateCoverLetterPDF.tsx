@@ -1,19 +1,19 @@
-import { pdf } from '@react-pdf/renderer';
-import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
-import type { PersonalInfo } from '@schemas/resume.schema';
-import type { PDFTheme } from './theme';
-import CoverLetterPDFDocument from './CoverLetterPDFDocument';
+import { pdf } from '@react-pdf/renderer'
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema'
+import type { PersonalInfo } from '@schemas/resume.schema'
+import type { PDFTheme } from './theme'
+import CoverLetterPDFDocument from './CoverLetterPDFDocument'
 
 /**
  * Options for rendering a cover letter to PDF.
  */
 export interface RenderCoverLetterOptions {
   /** Optional custom theme for PDF styling */
-  theme?: PDFTheme;
+  theme?: PDFTheme
   /** Optional personal info for sender details in sidebar */
-  personalInfo?: PersonalInfo;
+  personalInfo?: PersonalInfo
   /** Optional target job title for header display */
-  targetJobTitle?: string;
+  targetJobTitle?: string
 }
 
 /**
@@ -34,8 +34,8 @@ export async function renderCoverLetterToPDFBlob(
       theme={options?.theme}
       {...(options?.targetJobTitle !== undefined && { targetJobTitle: options.targetJobTitle })}
     />
-  ).toBlob();
-  return blob;
+  ).toBlob()
+  return blob
 }
 
 /**
@@ -53,20 +53,20 @@ export async function saveCoverLetterPDF(
   // Check if Electron API is available
   if (typeof window.electronAPI?.generatePDF === 'function') {
     // Generate the PDF blob
-    const blob = await renderCoverLetterToPDFBlob(coverLetter, options);
+    const blob = await renderCoverLetterToPDFBlob(coverLetter, options)
 
     // Convert blob to ArrayBuffer then to Uint8Array for IPC transfer
-    const arrayBuffer = await blob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
+    const arrayBuffer = await blob.arrayBuffer()
+    const uint8Array = new Uint8Array(arrayBuffer)
 
     // Save via Electron IPC
-    const savedPath = await window.electronAPI.generatePDF(uint8Array);
+    const savedPath = await window.electronAPI.generatePDF(uint8Array)
 
-    return savedPath;
+    return savedPath
   } else {
     // Fall back to browser download
-    await downloadCoverLetterPDF(coverLetter, undefined, options);
-    return 'downloaded';
+    await downloadCoverLetterPDF(coverLetter, undefined, options)
+    return 'downloaded'
   }
 }
 
@@ -82,18 +82,18 @@ export async function downloadCoverLetterPDF(
   fileName?: string,
   options?: RenderCoverLetterOptions
 ): Promise<void> {
-  const blob = await renderCoverLetterToPDFBlob(coverLetter, options);
-  const url = URL.createObjectURL(blob);
+  const blob = await renderCoverLetterToPDFBlob(coverLetter, options)
+  const url = URL.createObjectURL(blob)
 
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName ?? `${coverLetter.companyName.replace(/\s+/g, '_')}_Cover_Letter.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName ?? `${coverLetter.companyName.replace(/\s+/g, '_')}_Cover_Letter.pdf`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 
   // Clean up the object URL
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url)
 }
 
-export default saveCoverLetterPDF;
+export default saveCoverLetterPDF

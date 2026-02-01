@@ -1,14 +1,14 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { useSettings } from '../../hooks/useSettings';
+import React, { useState, useCallback, useEffect } from 'react'
+import { useSettings } from '../../hooks/useSettings'
 import {
   DEFAULT_APP_SETTINGS,
   type ResumePromptTemplateSettings,
   type CoverLetterPromptTemplateSettings,
   type PDFThemeSettings as PDFThemeSettingsType,
-} from '@schemas/settings.schema';
-import OutputFolderSettings from './OutputFolderSettings';
-import PromptSettings from './PromptSettings';
-import PDFThemeSettingsComponent from './PDFThemeSettings';
+} from '@schemas/settings.schema'
+import OutputFolderSettings from './OutputFolderSettings'
+import PromptSettings from './PromptSettings'
+import PDFThemeSettingsComponent from './PDFThemeSettings'
 
 /**
  * Main Settings View component.
@@ -38,102 +38,118 @@ function SettingsView(): React.JSX.Element {
     discardChanges,
     // hasFieldError and getFieldError are available for per-field validation but
     // we use the errors summary view instead
-  } = useSettings();
+  } = useSettings()
 
-  const [defaultFolderPath, setDefaultFolderPath] = useState<string>('');
+  const [defaultFolderPath, setDefaultFolderPath] = useState<string>('')
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     output: true,
     resumePrompt: false,
     coverLetterPrompt: false,
     pdfTheme: false,
-  });
+  })
 
   // Load default folder path on mount
   useEffect(() => {
-    getDefaultOutputFolder().then(setDefaultFolderPath);
-  }, [getDefaultOutputFolder]);
+    getDefaultOutputFolder().then(setDefaultFolderPath)
+  }, [getDefaultOutputFolder])
 
   const toggleSection = useCallback((section: string) => {
-    setExpandedSections((prev) => ({
+    setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section],
-    }));
-  }, []);
+    }))
+  }, [])
 
   const handleSelectFolder = useCallback(async () => {
-    await selectOutputFolder();
-  }, [selectOutputFolder]);
+    await selectOutputFolder()
+  }, [selectOutputFolder])
 
   const handleSave = useCallback(async () => {
-    await saveSettings();
-  }, [saveSettings]);
+    await saveSettings()
+  }, [saveSettings])
 
   const handleReset = useCallback(async () => {
-    if (window.confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
-      await resetToDefaults();
+    if (
+      window.confirm(
+        'Are you sure you want to reset all settings to defaults? This cannot be undone.'
+      )
+    ) {
+      await resetToDefaults()
     }
-  }, [resetToDefaults]);
+  }, [resetToDefaults])
 
   const handleDiscard = useCallback(() => {
     if (window.confirm('Are you sure you want to discard your changes?')) {
-      discardChanges();
+      discardChanges()
     }
-  }, [discardChanges]);
+  }, [discardChanges])
 
   // Helper to update nested settings
   const updateResumePrompt = useCallback(
     (updates: Partial<ResumePromptTemplateSettings>) => {
-      if (!settings) return;
+      if (!settings) return
       updateSettings({
         resumePromptTemplate: {
           ...settings.resumePromptTemplate,
           ...updates,
         },
-      });
+      })
     },
     [settings, updateSettings]
-  );
+  )
 
   const updateCoverLetterPrompt = useCallback(
     (updates: Partial<CoverLetterPromptTemplateSettings>) => {
-      if (!settings) return;
+      if (!settings) return
       updateSettings({
         coverLetterPromptTemplate: {
           ...settings.coverLetterPromptTemplate,
           ...updates,
         },
-      });
+      })
     },
     [settings, updateSettings]
-  );
+  )
 
   const resetResumePrompt = useCallback(() => {
-    if (window.confirm('Reset resume refinement settings to defaults? Your custom instructions will be cleared.')) {
+    if (
+      window.confirm(
+        'Reset resume refinement settings to defaults? Your custom instructions will be cleared.'
+      )
+    ) {
       updateSettings({
         resumePromptTemplate: DEFAULT_APP_SETTINGS.resumePromptTemplate,
-      });
+      })
     }
-  }, [updateSettings]);
+  }, [updateSettings])
 
   const resetCoverLetterPrompt = useCallback(() => {
-    if (window.confirm('Reset cover letter settings to defaults? Your custom instructions will be cleared.')) {
+    if (
+      window.confirm(
+        'Reset cover letter settings to defaults? Your custom instructions will be cleared.'
+      )
+    ) {
       updateSettings({
         coverLetterPromptTemplate: DEFAULT_APP_SETTINGS.coverLetterPromptTemplate,
-      });
+      })
     }
-  }, [updateSettings]);
+  }, [updateSettings])
 
   const resetPDFTheme = useCallback(() => {
-    if (window.confirm('Reset PDF theme to defaults? All color, font, and spacing customizations will be cleared.')) {
+    if (
+      window.confirm(
+        'Reset PDF theme to defaults? All color, font, and spacing customizations will be cleared.'
+      )
+    ) {
       updateSettings({
         pdfTheme: DEFAULT_APP_SETTINGS.pdfTheme,
-      });
+      })
     }
-  }, [updateSettings]);
+  }, [updateSettings])
 
   const updatePDFThemeColors = useCallback(
     (colorUpdates: Partial<PDFThemeSettingsType['colors']>) => {
-      if (!settings) return;
+      if (!settings) return
       updateSettings({
         pdfTheme: {
           ...settings.pdfTheme,
@@ -142,14 +158,14 @@ function SettingsView(): React.JSX.Element {
             ...colorUpdates,
           },
         },
-      });
+      })
     },
     [settings, updateSettings]
-  );
+  )
 
   const updatePDFThemeFonts = useCallback(
     (fontUpdates: Partial<PDFThemeSettingsType['fonts']>) => {
-      if (!settings) return;
+      if (!settings) return
       updateSettings({
         pdfTheme: {
           ...settings.pdfTheme,
@@ -158,14 +174,14 @@ function SettingsView(): React.JSX.Element {
             ...fontUpdates,
           },
         },
-      });
+      })
     },
     [settings, updateSettings]
-  );
+  )
 
   const updatePDFThemeFontSizes = useCallback(
     (fontSizeUpdates: Partial<PDFThemeSettingsType['fontSizes']>) => {
-      if (!settings) return;
+      if (!settings) return
       updateSettings({
         pdfTheme: {
           ...settings.pdfTheme,
@@ -174,14 +190,14 @@ function SettingsView(): React.JSX.Element {
             ...fontSizeUpdates,
           },
         },
-      });
+      })
     },
     [settings, updateSettings]
-  );
+  )
 
   const updatePDFThemeSpacing = useCallback(
     (spacingUpdates: Partial<PDFThemeSettingsType['spacing']>) => {
-      if (!settings) return;
+      if (!settings) return
       updateSettings({
         pdfTheme: {
           ...settings.pdfTheme,
@@ -190,10 +206,10 @@ function SettingsView(): React.JSX.Element {
             ...spacingUpdates,
           },
         },
-      });
+      })
     },
     [settings, updateSettings]
-  );
+  )
 
   if (isLoading) {
     return (
@@ -201,7 +217,7 @@ function SettingsView(): React.JSX.Element {
         <div className="settings-view__loading-spinner"></div>
         <p>Loading settings...</p>
       </div>
-    );
+    )
   }
 
   if (!settings) {
@@ -209,7 +225,7 @@ function SettingsView(): React.JSX.Element {
       <div className="settings-view settings-view--error">
         <p>Failed to load settings. Please try refreshing the application.</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -221,11 +237,7 @@ function SettingsView(): React.JSX.Element {
             Configure output folders, customize AI prompts, and adjust PDF styling.
           </p>
         </div>
-        {isDirty && (
-          <div className="settings-view__unsaved-badge">
-            Unsaved changes
-          </div>
-        )}
+        {isDirty && <div className="settings-view__unsaved-badge">Unsaved changes</div>}
       </div>
 
       {/* Global error display */}
@@ -257,14 +269,18 @@ function SettingsView(): React.JSX.Element {
         <div className="settings-view__warnings" role="status">
           {validationWarnings.map((warning, index) => (
             <div key={`vw-${index}`} className="settings-view__warning">
-              <span className="settings-view__warning-icon" aria-hidden="true">⚠️</span>
+              <span className="settings-view__warning-icon" aria-hidden="true">
+                ⚠️
+              </span>
               <span className="settings-view__warning-field">{warning.field}:</span>{' '}
               {warning.message}
             </div>
           ))}
           {warnings.map((warning, index) => (
             <div key={`w-${index}`} className="settings-view__warning">
-              <span className="settings-view__warning-icon" aria-hidden="true">⚠️</span>
+              <span className="settings-view__warning-icon" aria-hidden="true">
+                ⚠️
+              </span>
               {warning}
             </div>
           ))}
@@ -274,7 +290,9 @@ function SettingsView(): React.JSX.Element {
       {/* Success message */}
       {saveSuccess && (
         <div className="settings-view__success" role="status">
-          <span className="settings-view__success-icon" aria-hidden="true">✓</span>
+          <span className="settings-view__success-icon" aria-hidden="true">
+            ✓
+          </span>
           Settings saved successfully!
         </div>
       )}
@@ -355,12 +373,15 @@ function SettingsView(): React.JSX.Element {
       {/* Validation status indicator */}
       {isDirty && !isValid && (
         <div className="settings-view__validation-status" role="status">
-          <span className="settings-view__validation-status-icon" aria-hidden="true">⚠</span>
-          {validationErrors.length} validation error{validationErrors.length !== 1 ? 's' : ''} must be fixed before saving
+          <span className="settings-view__validation-status-icon" aria-hidden="true">
+            ⚠
+          </span>
+          {validationErrors.length} validation error{validationErrors.length !== 1 ? 's' : ''} must
+          be fixed before saving
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default SettingsView;
+export default SettingsView

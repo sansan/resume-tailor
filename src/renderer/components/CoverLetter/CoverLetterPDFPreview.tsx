@@ -1,14 +1,14 @@
-import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react';
-import { BlobProvider } from '@react-pdf/renderer';
-import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
-import type { PersonalInfo } from '@schemas/resume.schema';
-import type { PDFTheme } from '@app-types/pdf-theme.types';
-import CoverLetterPDFDocument from '../../services/pdf/CoverLetterPDFDocument';
-import { cn } from '@/lib/utils';
-import { Skeleton } from '../ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { Button } from '../ui/button';
+import React, { useMemo, useState, useCallback, useRef, useEffect } from 'react'
+import { BlobProvider } from '@react-pdf/renderer'
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema'
+import type { PersonalInfo } from '@schemas/resume.schema'
+import type { PDFTheme } from '@app-types/pdf-theme.types'
+import CoverLetterPDFDocument from '../../services/pdf/CoverLetterPDFDocument'
+import { cn } from '@/lib/utils'
+import { Skeleton } from '../ui/skeleton'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
+import { AlertCircle, RefreshCw } from 'lucide-react'
+import { Button } from '../ui/button'
 
 // =============================================================================
 // TYPES
@@ -16,15 +16,15 @@ import { Button } from '../ui/button';
 
 export interface CoverLetterPDFPreviewProps {
   /** Cover letter data to render */
-  coverLetter: GeneratedCoverLetter;
+  coverLetter: GeneratedCoverLetter
   /** Personal info for header and signature */
-  personalInfo?: PersonalInfo | undefined;
+  personalInfo?: PersonalInfo | undefined
   /** Target job title for header */
-  targetJobTitle?: string | undefined;
+  targetJobTitle?: string | undefined
   /** Optional theme override */
-  theme?: PDFTheme | undefined;
+  theme?: PDFTheme | undefined
   /** Optional className for the container */
-  className?: string | undefined;
+  className?: string | undefined
 }
 
 // =============================================================================
@@ -39,14 +39,14 @@ function PDFLoadingState({ className }: { className?: string }) {
           <Skeleton className="h-full w-full rounded-lg" />
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          <div className="text-muted-foreground flex flex-col items-center gap-2">
+            <div className="border-muted-foreground h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
             <span className="text-sm">Generating preview...</span>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 // =============================================================================
@@ -54,9 +54,9 @@ function PDFLoadingState({ className }: { className?: string }) {
 // =============================================================================
 
 interface PDFErrorStateProps {
-  error: Error;
-  onRetry?: () => void;
-  className?: string;
+  error: Error
+  onRetry?: () => void
+  className?: string
 }
 
 function PDFErrorState({ error, onRetry, className }: PDFErrorStateProps) {
@@ -77,7 +77,7 @@ function PDFErrorState({ error, onRetry, className }: PDFErrorStateProps) {
         </Button>
       )}
     </div>
-  );
+  )
 }
 
 // =============================================================================
@@ -85,45 +85,45 @@ function PDFErrorState({ error, onRetry, className }: PDFErrorStateProps) {
 // =============================================================================
 
 interface PDFPreviewContentProps {
-  url: string;
-  className?: string;
+  url: string
+  className?: string
 }
 
 function PDFPreviewContent({ url, className }: PDFPreviewContentProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(1)
 
   // PDF viewer parameters: hide toolbar, fit to page width, show first page only
-  const pdfUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH,top&page=1`;
+  const pdfUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH,top&page=1`
 
   // A4 dimensions: 210mm x 297mm, we use a base width of 595px (72dpi)
-  const PDF_BASE_WIDTH = 595;
+  const PDF_BASE_WIDTH = 595
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const container = containerRef.current
+    if (!container) return
 
     const updateScale = () => {
-      const containerWidth = container.clientWidth;
+      const containerWidth = container.clientWidth
       // Calculate scale to fit the PDF within the container
-      const newScale = Math.min(1, containerWidth / PDF_BASE_WIDTH);
-      setScale(newScale);
-    };
+      const newScale = Math.min(1, containerWidth / PDF_BASE_WIDTH)
+      setScale(newScale)
+    }
 
     // Initial calculation
-    updateScale();
+    updateScale()
 
     // Watch for resize
-    const resizeObserver = new ResizeObserver(updateScale);
-    resizeObserver.observe(container);
+    const resizeObserver = new ResizeObserver(updateScale)
+    resizeObserver.observe(container)
 
-    return () => resizeObserver.disconnect();
-  }, []);
+    return () => resizeObserver.disconnect()
+  }, [])
 
   return (
     <div ref={containerRef} className={cn('relative w-full', className)}>
       <div
-        className="w-full rounded-lg bg-white shadow-lg border border-border"
+        className="border-border w-full rounded-lg border bg-white shadow-lg"
         style={{
           aspectRatio: '210 / 297',
           overflow: 'hidden',
@@ -132,7 +132,7 @@ function PDFPreviewContent({ url, className }: PDFPreviewContentProps) {
         <iframe
           src={pdfUrl}
           title="Cover Letter PDF Preview"
-          className="border-0 origin-top-left"
+          className="origin-top-left border-0"
           scrolling="no"
           style={{
             width: `${100 / scale}%`,
@@ -143,7 +143,7 @@ function PDFPreviewContent({ url, className }: PDFPreviewContentProps) {
         />
       </div>
     </div>
-  );
+  )
 }
 
 // =============================================================================
@@ -157,7 +157,7 @@ function CoverLetterPDFPreview({
   theme,
   className,
 }: CoverLetterPDFPreviewProps): React.JSX.Element {
-  const [retryKey, setRetryKey] = useState(0);
+  const [retryKey, setRetryKey] = useState(0)
 
   const document = useMemo(
     () => (
@@ -169,33 +169,33 @@ function CoverLetterPDFPreview({
       />
     ),
     [coverLetter, personalInfo, targetJobTitle, theme]
-  );
+  )
 
   const handleRetry = useCallback(() => {
-    setRetryKey((prev) => prev + 1);
-  }, []);
+    setRetryKey(prev => prev + 1)
+  }, [])
 
   return (
     <div className={cn('cover-letter-pdf-preview', className)}>
       <BlobProvider key={retryKey} document={document}>
         {({ blob, url, loading, error }) => {
           if (loading) {
-            return <PDFLoadingState className="min-h-[400px]" />;
+            return <PDFLoadingState className="min-h-[400px]" />
           }
 
           if (error) {
-            return <PDFErrorState error={error} onRetry={handleRetry} className="min-h-[400px]" />;
+            return <PDFErrorState error={error} onRetry={handleRetry} className="min-h-[400px]" />
           }
 
           if (url && blob) {
-            return <PDFPreviewContent url={url} />;
+            return <PDFPreviewContent url={url} />
           }
 
-          return <PDFLoadingState className="min-h-[400px]" />;
+          return <PDFLoadingState className="min-h-[400px]" />
         }}
       </BlobProvider>
     </div>
-  );
+  )
 }
 
-export default CoverLetterPDFPreview;
+export default CoverLetterPDFPreview

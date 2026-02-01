@@ -1,19 +1,19 @@
-import { pdf } from '@react-pdf/renderer';
-import type { Resume } from '@schemas/resume.schema';
-import type { PDFTheme } from './theme';
-import { defaultPDFTheme } from './theme';
-import { getTemplateComponent } from './templates';
+import { pdf } from '@react-pdf/renderer'
+import type { Resume } from '@schemas/resume.schema'
+import type { PDFTheme } from './theme'
+import { defaultPDFTheme } from './theme'
+import { getTemplateComponent } from './templates'
 
 /**
  * Options for rendering a resume to PDF.
  */
 export interface RenderResumeOptions {
   /** Optional custom theme for PDF styling */
-  theme?: PDFTheme;
+  theme?: PDFTheme
   /** Optional target job title for header display */
-  targetJobTitle?: string;
+  targetJobTitle?: string
   /** Template ID to use (defaults to 'classic') */
-  templateId?: string;
+  templateId?: string
 }
 
 /**
@@ -27,8 +27,8 @@ export async function renderResumeToPDFBlob(
   resume: Resume,
   options?: RenderResumeOptions
 ): Promise<Blob> {
-  const TemplateComponent = getTemplateComponent(options?.templateId ?? 'classic');
-  const theme = options?.theme ?? defaultPDFTheme;
+  const TemplateComponent = getTemplateComponent(options?.templateId ?? 'classic')
+  const theme = options?.theme ?? defaultPDFTheme
 
   const blob = await pdf(
     <TemplateComponent
@@ -36,8 +36,8 @@ export async function renderResumeToPDFBlob(
       theme={theme}
       {...(options?.targetJobTitle ? { targetJobTitle: options.targetJobTitle } : {})}
     />
-  ).toBlob();
-  return blob;
+  ).toBlob()
+  return blob
 }
 
 /**
@@ -55,20 +55,20 @@ export async function saveResumePDF(
   // Check if Electron API is available
   if (typeof window.electronAPI?.generatePDF === 'function') {
     // Generate the PDF blob
-    const blob = await renderResumeToPDFBlob(resume, options);
+    const blob = await renderResumeToPDFBlob(resume, options)
 
     // Convert blob to ArrayBuffer then to Uint8Array for IPC transfer
-    const arrayBuffer = await blob.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
+    const arrayBuffer = await blob.arrayBuffer()
+    const uint8Array = new Uint8Array(arrayBuffer)
 
     // Save via Electron IPC
-    const savedPath = await window.electronAPI.generatePDF(uint8Array);
+    const savedPath = await window.electronAPI.generatePDF(uint8Array)
 
-    return savedPath;
+    return savedPath
   } else {
     // Fall back to browser download
-    await downloadResumePDF(resume, undefined, options);
-    return 'downloaded';
+    await downloadResumePDF(resume, undefined, options)
+    return 'downloaded'
   }
 }
 
@@ -84,18 +84,18 @@ export async function downloadResumePDF(
   fileName?: string,
   options?: RenderResumeOptions
 ): Promise<void> {
-  const blob = await renderResumeToPDFBlob(resume, options);
-  const url = URL.createObjectURL(blob);
+  const blob = await renderResumeToPDFBlob(resume, options)
+  const url = URL.createObjectURL(blob)
 
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName ?? `${resume.personalInfo.name.replace(/\s+/g, '_')}_Resume.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName ?? `${resume.personalInfo.name.replace(/\s+/g, '_')}_Resume.pdf`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 
   // Clean up the object URL
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url)
 }
 
-export default saveResumePDF;
+export default saveResumePDF

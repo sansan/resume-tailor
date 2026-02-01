@@ -1,0 +1,8 @@
+dist
+dist-electron
+release
+node_modules
+*.min.js
+*.min.css
+pnpm-lock.yaml
+package-lock.json

@@ -19,10 +19,11 @@ const ZERO_WIDTH_CHARS = [
   '\u2062', // Invisible Times
   '\u2063', // Invisible Separator
   '\u2064', // Invisible Plus
-];
+]
 
 // Regex pattern for zero-width and invisible characters
-const ZERO_WIDTH_REGEX = new RegExp(`[${ZERO_WIDTH_CHARS.join('')}]`, 'g');
+// eslint-disable-next-line no-misleading-character-class
+const ZERO_WIDTH_REGEX = new RegExp(`[${ZERO_WIDTH_CHARS.join('')}]`, 'g')
 
 // Various space characters that should be normalized to regular spaces
 const UNUSUAL_SPACES = [
@@ -42,10 +43,10 @@ const UNUSUAL_SPACES = [
   '\u202F', // Narrow No-Break Space
   '\u205F', // Medium Mathematical Space
   '\u3000', // Ideographic Space
-];
+]
 
 // Regex pattern for unusual space characters
-const UNUSUAL_SPACE_REGEX = new RegExp(`[${UNUSUAL_SPACES.join('')}]`, 'g');
+const UNUSUAL_SPACE_REGEX = new RegExp(`[${UNUSUAL_SPACES.join('')}]`, 'g')
 
 // Other invisible or control characters to remove (excluding newlines, tabs, and standard spaces)
 const INVISIBLE_CONTROL_CHARS = [
@@ -114,26 +115,26 @@ const INVISIBLE_CONTROL_CHARS = [
   '\u009D', // Operating System Command
   '\u009E', // Privacy Message
   '\u009F', // Application Program Command
-];
+]
 
 // Regex pattern for invisible control characters
 const INVISIBLE_CONTROL_REGEX = new RegExp(
-  `[${INVISIBLE_CONTROL_CHARS.map((c) => c.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')).join('')}]`,
+  `[${INVISIBLE_CONTROL_CHARS.map(c => c.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')).join('')}]`,
   'g'
-);
+)
 
 /**
  * Removes zero-width and invisible Unicode characters from text
  */
 export function removeZeroWidthChars(text: string): string {
-  return text.replace(ZERO_WIDTH_REGEX, '');
+  return text.replace(ZERO_WIDTH_REGEX, '')
 }
 
 /**
  * Removes invisible control characters while preserving newlines and tabs
  */
 export function removeInvisibleChars(text: string): string {
-  return text.replace(INVISIBLE_CONTROL_REGEX, '');
+  return text.replace(INVISIBLE_CONTROL_REGEX, '')
 }
 
 /**
@@ -141,7 +142,7 @@ export function removeInvisibleChars(text: string): string {
  * Non-breaking spaces and other unusual space characters are converted to regular spaces
  */
 export function normalizeSpaces(text: string): string {
-  return text.replace(UNUSUAL_SPACE_REGEX, ' ');
+  return text.replace(UNUSUAL_SPACE_REGEX, ' ')
 }
 
 /**
@@ -149,7 +150,7 @@ export function normalizeSpaces(text: string): string {
  * Converts CRLF and standalone CR to LF
  */
 export function normalizeLineEndings(text: string): string {
-  return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
 }
 
 /**
@@ -158,7 +159,7 @@ export function normalizeLineEndings(text: string): string {
  */
 export function collapseMultipleSpaces(text: string): string {
   // Only collapse multiple spaces on the same line, preserving intentional spacing at line starts
-  return text.replace(/([^\n]) {2,}/g, '$1 ');
+  return text.replace(/([^\n]) {2,}/g, '$1 ')
 }
 
 /**
@@ -166,7 +167,7 @@ export function collapseMultipleSpaces(text: string): string {
  * Preserves single blank lines for paragraph separation
  */
 export function normalizeBlankLines(text: string): string {
-  return text.replace(/\n{3,}/g, '\n\n');
+  return text.replace(/\n{3,}/g, '\n\n')
 }
 
 /**
@@ -176,8 +177,8 @@ export function normalizeBlankLines(text: string): string {
 export function trimLines(text: string): string {
   return text
     .split('\n')
-    .map((line) => line.trim())
-    .join('\n');
+    .map(line => line.trim())
+    .join('\n')
 }
 
 /**
@@ -206,36 +207,36 @@ const MARKDOWN_PATTERNS = {
   codeBlocks: /```[\s\S]*?```/g,
   // Strikethrough: ~~text~~
   strikethrough: /~~(.+?)~~/g,
-};
+}
 
 /**
  * Strips markdown formatting from text, keeping the underlying content
  * Useful for cleaning up AI responses that accidentally include markdown in plain text fields
  */
 export function stripMarkdown(text: string): string {
-  let result = text;
+  let result = text
 
   // Remove code blocks first (they might contain other markdown-like syntax)
-  result = result.replace(MARKDOWN_PATTERNS.codeBlocks, (match) => {
+  result = result.replace(MARKDOWN_PATTERNS.codeBlocks, match => {
     // Extract content between ``` markers
-    const content = match.slice(3, -3).replace(/^[^\n]*\n/, ''); // Remove language identifier line
-    return content.trim();
-  });
+    const content = match.slice(3, -3).replace(/^[^\n]*\n/, '') // Remove language identifier line
+    return content.trim()
+  })
 
   // Remove other markdown formatting
-  result = result.replace(MARKDOWN_PATTERNS.bold, '$2');
-  result = result.replace(MARKDOWN_PATTERNS.italic, '$2');
-  result = result.replace(MARKDOWN_PATTERNS.inlineCode, '$1');
-  result = result.replace(MARKDOWN_PATTERNS.links, '$1');
-  result = result.replace(MARKDOWN_PATTERNS.headers, '');
-  result = result.replace(MARKDOWN_PATTERNS.strikethrough, '$1');
-  result = result.replace(MARKDOWN_PATTERNS.blockquotes, '');
-  result = result.replace(MARKDOWN_PATTERNS.horizontalRules, '');
+  result = result.replace(MARKDOWN_PATTERNS.bold, '$2')
+  result = result.replace(MARKDOWN_PATTERNS.italic, '$2')
+  result = result.replace(MARKDOWN_PATTERNS.inlineCode, '$1')
+  result = result.replace(MARKDOWN_PATTERNS.links, '$1')
+  result = result.replace(MARKDOWN_PATTERNS.headers, '')
+  result = result.replace(MARKDOWN_PATTERNS.strikethrough, '$1')
+  result = result.replace(MARKDOWN_PATTERNS.blockquotes, '')
+  result = result.replace(MARKDOWN_PATTERNS.horizontalRules, '')
 
   // Note: We don't remove bullets and numbered lists by default
   // as they might be intentional formatting in resume highlights
 
-  return result;
+  return result
 }
 
 /**
@@ -243,23 +244,23 @@ export function stripMarkdown(text: string): string {
  */
 export interface SanitizeOptions {
   /** Remove zero-width and invisible characters (default: true) */
-  removeZeroWidth?: boolean;
+  removeZeroWidth?: boolean
   /** Remove invisible control characters (default: true) */
-  removeInvisible?: boolean;
+  removeInvisible?: boolean
   /** Normalize unusual space characters to regular spaces (default: true) */
-  normalizeSpaces?: boolean;
+  normalizeSpaces?: boolean
   /** Normalize line endings to Unix-style LF (default: true) */
-  normalizeLineEndings?: boolean;
+  normalizeLineEndings?: boolean
   /** Collapse multiple consecutive spaces (default: true) */
-  collapseSpaces?: boolean;
+  collapseSpaces?: boolean
   /** Normalize excessive blank lines (default: true) */
-  normalizeBlankLines?: boolean;
+  normalizeBlankLines?: boolean
   /** Trim whitespace from start/end of each line (default: false) */
-  trimLines?: boolean;
+  trimLines?: boolean
   /** Strip markdown formatting (default: false) */
-  stripMarkdown?: boolean;
+  stripMarkdown?: boolean
   /** Trim the entire string (default: true) */
-  trim?: boolean;
+  trim?: boolean
 }
 
 const DEFAULT_SANITIZE_OPTIONS: Required<SanitizeOptions> = {
@@ -272,7 +273,7 @@ const DEFAULT_SANITIZE_OPTIONS: Required<SanitizeOptions> = {
   trimLines: false,
   stripMarkdown: false,
   trim: true,
-};
+}
 
 /**
  * Main sanitization function that applies all cleaning operations
@@ -283,48 +284,48 @@ const DEFAULT_SANITIZE_OPTIONS: Required<SanitizeOptions> = {
  * @returns The sanitized text
  */
 export function sanitize(text: string, options: SanitizeOptions = {}): string {
-  const opts = { ...DEFAULT_SANITIZE_OPTIONS, ...options };
+  const opts = { ...DEFAULT_SANITIZE_OPTIONS, ...options }
 
-  let result = text;
+  let result = text
 
   // Apply sanitization steps in a logical order
   if (opts.removeZeroWidth) {
-    result = removeZeroWidthChars(result);
+    result = removeZeroWidthChars(result)
   }
 
   if (opts.removeInvisible) {
-    result = removeInvisibleChars(result);
+    result = removeInvisibleChars(result)
   }
 
   if (opts.normalizeLineEndings) {
-    result = normalizeLineEndings(result);
+    result = normalizeLineEndings(result)
   }
 
   if (opts.normalizeSpaces) {
-    result = normalizeSpaces(result);
+    result = normalizeSpaces(result)
   }
 
   if (opts.stripMarkdown) {
-    result = stripMarkdown(result);
+    result = stripMarkdown(result)
   }
 
   if (opts.collapseSpaces) {
-    result = collapseMultipleSpaces(result);
+    result = collapseMultipleSpaces(result)
   }
 
   if (opts.normalizeBlankLines) {
-    result = normalizeBlankLines(result);
+    result = normalizeBlankLines(result)
   }
 
   if (opts.trimLines) {
-    result = trimLines(result);
+    result = trimLines(result)
   }
 
   if (opts.trim) {
-    result = result.trim();
+    result = result.trim()
   }
 
-  return result;
+  return result
 }
 
 /**
@@ -335,7 +336,7 @@ export function sanitizeAIOutput(text: string): string {
   return sanitize(text, {
     stripMarkdown: true,
     trimLines: true,
-  });
+  })
 }
 
 /**
@@ -348,27 +349,27 @@ export function sanitizeAIOutput(text: string): string {
  */
 export function sanitizeObject<T>(obj: T, options: SanitizeOptions = {}): T {
   if (obj === null || obj === undefined) {
-    return obj;
+    return obj
   }
 
   if (typeof obj === 'string') {
-    return sanitize(obj, options) as T;
+    return sanitize(obj, options) as T
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => sanitizeObject(item, options)) as T;
+    return obj.map(item => sanitizeObject(item, options)) as T
   }
 
   if (typeof obj === 'object') {
-    const result: Record<string, unknown> = {};
+    const result: Record<string, unknown> = {}
     for (const [key, value] of Object.entries(obj)) {
-      result[key] = sanitizeObject(value, options);
+      result[key] = sanitizeObject(value, options)
     }
-    return result as T;
+    return result as T
   }
 
   // For other types (numbers, booleans, etc.), return as-is
-  return obj;
+  return obj
 }
 
 /**
@@ -378,5 +379,5 @@ export function sanitizeAIResponse<T>(response: T): T {
   return sanitizeObject(response, {
     stripMarkdown: true,
     trimLines: true,
-  });
+  })
 }

@@ -4,5 +4,12 @@
     "rootDir": "../..",
     "baseUrl": "../.."
   },
-  "include": ["**/*", "../schemas/**/*", "../types/**/*", "../shared/**/*", "../config/**/*", "../prompts/**/*"]
+  "include": [
+    "**/*",
+    "../schemas/**/*",
+    "../types/**/*",
+    "../shared/**/*",
+    "../config/**/*",
+    "../prompts/**/*"
+  ]
 }

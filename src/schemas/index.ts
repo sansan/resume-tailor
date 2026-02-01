@@ -14,21 +14,13 @@ export {
   type Project,
   type Certification,
   type Resume,
-} from './resume.schema';
+} from './resume.schema'
 
 // Cover letter schemas and types
-export {
-  CoverLetterSchema,
-  type CoverLetter,
-} from './cover-letter.schema';
+export { CoverLetterSchema, type CoverLetter } from './cover-letter.schema'
 
 // Job posting schemas and types
-export {
-  SalarySchema,
-  JobPostingSchema,
-  type Salary,
-  type JobPosting,
-} from './job-posting.schema';
+export { SalarySchema, JobPostingSchema, type Salary, type JobPosting } from './job-posting.schema'
 
 // AI output schemas and types
 export {
@@ -54,7 +46,7 @@ export {
   type AIResponse,
   type RefinedResumeResponse,
   type GeneratedCoverLetterResponse,
-} from './ai-output.schema';
+} from './ai-output.schema'
 
 // Settings schemas and types
 export {
@@ -73,7 +65,7 @@ export {
   type CoverLetterPromptTemplateSettings,
   type AppSettings,
   type PartialAppSettings,
-} from './settings.schema';
+} from './settings.schema'
 
 // History schemas and types
 export {
@@ -84,4 +76,4 @@ export {
   generateHistoryEntryId,
   type HistoryEntry,
   type ExportHistory,
-} from './history.schema';
+} from './history.schema'

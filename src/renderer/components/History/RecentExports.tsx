@@ -1,77 +1,86 @@
-import React, { useCallback, useState } from 'react';
-import { useExportHistory } from '@/hooks/useExportHistory';
-import type { HistoryEntry } from '@schemas/history.schema';
+import React, { useCallback, useState } from 'react'
+import { useExportHistory } from '@/hooks/useExportHistory'
+import type { HistoryEntry } from '@schemas/history.schema'
 
 /**
  * Format a date string for display.
  */
 function formatDate(isoDate: string): string {
-  const date = new Date(isoDate);
+  const date = new Date(isoDate)
   return date.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  });
+  })
 }
 
 /**
  * Get relative time string (e.g., "2 hours ago").
  */
 function getRelativeTime(isoDate: string): string {
-  const date = new Date(isoDate);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
+  const date = new Date(isoDate)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-  return formatDate(isoDate);
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+  return formatDate(isoDate)
 }
 
 /**
  * Props for the HistoryItem component.
  */
 interface HistoryItemProps {
-  entry: HistoryEntry;
-  onOpenFolder: (folderPath: string) => void;
-  onOpenFile: (filePath: string) => void;
-  onDelete: (entryId: string) => void;
+  entry: HistoryEntry
+  onOpenFolder: (folderPath: string) => void
+  onOpenFile: (filePath: string) => void
+  onDelete: (entryId: string) => void
 }
 
 /**
  * Individual history entry item.
  */
-function HistoryItem({ entry, onOpenFolder, onOpenFile, onDelete }: HistoryItemProps): React.JSX.Element {
-  const [isDeleting, setIsDeleting] = useState(false);
+function HistoryItem({
+  entry,
+  onOpenFolder,
+  onOpenFile,
+  onDelete,
+}: HistoryItemProps): React.JSX.Element {
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = useCallback(() => {
-    if (window.confirm(`Remove this entry from history?\n\n${entry.companyName} - ${entry.jobTitle}\n\nNote: This will not delete the exported files.`)) {
-      setIsDeleting(true);
-      onDelete(entry.id);
+    if (
+      window.confirm(
+        `Remove this entry from history?\n\n${entry.companyName} - ${entry.jobTitle}\n\nNote: This will not delete the exported files.`
+      )
+    ) {
+      setIsDeleting(true)
+      onDelete(entry.id)
     }
-  }, [entry, onDelete]);
+  }, [entry, onDelete])
 
   const handleOpenFolder = useCallback(() => {
-    onOpenFolder(entry.folderPath);
-  }, [entry.folderPath, onOpenFolder]);
+    onOpenFolder(entry.folderPath)
+  }, [entry.folderPath, onOpenFolder])
 
   const handleOpenResume = useCallback(() => {
     if (entry.resumePath) {
-      onOpenFile(entry.resumePath);
+      onOpenFile(entry.resumePath)
     }
-  }, [entry.resumePath, onOpenFile]);
+  }, [entry.resumePath, onOpenFile])
 
   const handleOpenCoverLetter = useCallback(() => {
     if (entry.coverLetterPath) {
-      onOpenFile(entry.coverLetterPath);
+      onOpenFile(entry.coverLetterPath)
     }
-  }, [entry.coverLetterPath, onOpenFile]);
+  }, [entry.coverLetterPath, onOpenFile])
 
   return (
     <div className={`recent-exports__item ${isDeleting ? 'recent-exports__item--deleting' : ''}`}>
@@ -119,7 +128,7 @@ function HistoryItem({ entry, onOpenFolder, onOpenFile, onDelete }: HistoryItemP
         </button>
       </div>
     </div>
-  );
+  )
 }
 
 /**
@@ -127,11 +136,11 @@ function HistoryItem({ entry, onOpenFolder, onOpenFile, onDelete }: HistoryItemP
  */
 interface RecentExportsProps {
   /** Maximum number of entries to show (default: 5) */
-  maxEntries?: number;
+  maxEntries?: number
   /** Whether to show the header */
-  showHeader?: boolean;
+  showHeader?: boolean
   /** Custom class name */
-  className?: string;
+  className?: string
 }
 
 /**
@@ -148,40 +157,42 @@ export function RecentExports({
   showHeader = true,
   className = '',
 }: RecentExportsProps): React.JSX.Element {
-  const {
-    entries,
-    isLoading,
-    error,
-    deleteEntry,
-    clearHistory,
-    openFile,
-    openFolder,
-    refresh,
-  } = useExportHistory();
+  const { entries, isLoading, error, deleteEntry, clearHistory, openFile, openFolder, refresh } =
+    useExportHistory()
 
-  const [isClearing, setIsClearing] = useState(false);
+  const [isClearing, setIsClearing] = useState(false)
 
-  const displayedEntries = entries.slice(0, maxEntries);
+  const displayedEntries = entries.slice(0, maxEntries)
 
   const handleClearHistory = useCallback(async () => {
-    if (window.confirm('Clear all export history?\n\nThis will not delete the exported files, only the history.')) {
-      setIsClearing(true);
-      await clearHistory();
-      setIsClearing(false);
+    if (
+      window.confirm(
+        'Clear all export history?\n\nThis will not delete the exported files, only the history.'
+      )
+    ) {
+      setIsClearing(true)
+      await clearHistory()
+      setIsClearing(false)
     }
-  }, [clearHistory]);
+  }, [clearHistory])
 
-  const handleDeleteEntry = useCallback(async (entryId: string) => {
-    await deleteEntry(entryId);
-  }, [deleteEntry]);
+  const handleDeleteEntry = useCallback(
+    async (entryId: string) => {
+      await deleteEntry(entryId)
+    },
+    [deleteEntry]
+  )
 
-  const handleOpenFile = useCallback(async (filePath: string) => {
-    const success = await openFile(filePath);
-    if (!success) {
-      // File not found - refresh the list in case it was deleted
-      await refresh();
-    }
-  }, [openFile, refresh]);
+  const handleOpenFile = useCallback(
+    async (filePath: string) => {
+      const success = await openFile(filePath)
+      if (!success) {
+        // File not found - refresh the list in case it was deleted
+        await refresh()
+      }
+    },
+    [openFile, refresh]
+  )
 
   // Loading state
   if (isLoading) {
@@ -190,7 +201,7 @@ export function RecentExports({
         <div className="recent-exports__loading-spinner" />
         <span>Loading history...</span>
       </div>
-    );
+    )
   }
 
   // Error state
@@ -203,7 +214,7 @@ export function RecentExports({
           Retry
         </button>
       </div>
-    );
+    )
   }
 
   // Empty state
@@ -215,7 +226,7 @@ export function RecentExports({
           No exports yet. Export your first resume and cover letter to see them here.
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -235,7 +246,7 @@ export function RecentExports({
         </div>
       )}
       <div className="recent-exports__list">
-        {displayedEntries.map((entry) => (
+        {displayedEntries.map(entry => (
           <HistoryItem
             key={entry.id}
             entry={entry}
@@ -251,7 +262,7 @@ export function RecentExports({
         </p>
       )}
     </div>
-  );
+  )
 }
 
-export default RecentExports;
+export default RecentExports

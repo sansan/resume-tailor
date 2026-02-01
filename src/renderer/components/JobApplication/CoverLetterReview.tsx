@@ -1,14 +1,14 @@
-import React, { useState, useCallback } from 'react';
-import type { GeneratedCoverLetter } from '@schemas/ai-output.schema';
-import CoverLetterPreview from '../CoverLetter/CoverLetterPreview';
+import React, { useState, useCallback } from 'react'
+import type { GeneratedCoverLetter } from '@schemas/ai-output.schema'
+import CoverLetterPreview from '../CoverLetter/CoverLetterPreview'
 
-type ViewMode = 'edit' | 'preview';
+type ViewMode = 'edit' | 'preview'
 
 interface CoverLetterReviewProps {
-  coverLetter: GeneratedCoverLetter;
-  onAccept: () => void;
-  onRegenerate: () => void;
-  onUpdateCoverLetter: (coverLetter: GeneratedCoverLetter) => void;
+  coverLetter: GeneratedCoverLetter
+  onAccept: () => void
+  onRegenerate: () => void
+  onUpdateCoverLetter: (coverLetter: GeneratedCoverLetter) => void
 }
 
 /**
@@ -21,73 +21,71 @@ function CoverLetterReview({
   onRegenerate,
   onUpdateCoverLetter,
 }: CoverLetterReviewProps): React.JSX.Element {
-  const [viewMode, setViewMode] = useState<ViewMode>('edit');
+  const [viewMode, setViewMode] = useState<ViewMode>('edit')
 
   const handleOpeningChange = useCallback(
     (value: string) => {
       onUpdateCoverLetter({
         ...coverLetter,
         opening: value,
-      });
+      })
     },
     [coverLetter, onUpdateCoverLetter]
-  );
+  )
 
   const handleBodyParagraphChange = useCallback(
     (index: number, value: string) => {
-      const updatedBody = coverLetter.body.map((paragraph, i) =>
-        i === index ? value : paragraph
-      );
+      const updatedBody = coverLetter.body.map((paragraph, i) => (i === index ? value : paragraph))
       onUpdateCoverLetter({
         ...coverLetter,
         body: updatedBody,
-      });
+      })
     },
     [coverLetter, onUpdateCoverLetter]
-  );
+  )
 
   const handleClosingChange = useCallback(
     (value: string) => {
       onUpdateCoverLetter({
         ...coverLetter,
         closing: value,
-      });
+      })
     },
     [coverLetter, onUpdateCoverLetter]
-  );
+  )
 
   const handleSignatureChange = useCallback(
     (value: string) => {
       onUpdateCoverLetter({
         ...coverLetter,
         signature: value,
-      });
+      })
     },
     [coverLetter, onUpdateCoverLetter]
-  );
+  )
 
   const handleAddParagraph = useCallback(() => {
     onUpdateCoverLetter({
       ...coverLetter,
       body: [...coverLetter.body, ''],
-    });
-  }, [coverLetter, onUpdateCoverLetter]);
+    })
+  }, [coverLetter, onUpdateCoverLetter])
 
   const handleRemoveParagraph = useCallback(
     (index: number) => {
-      if (coverLetter.body.length <= 1) return;
-      const updatedBody = coverLetter.body.filter((_, i) => i !== index);
+      if (coverLetter.body.length <= 1) return
+      const updatedBody = coverLetter.body.filter((_, i) => i !== index)
       onUpdateCoverLetter({
         ...coverLetter,
         body: updatedBody,
-      });
+      })
     },
     [coverLetter, onUpdateCoverLetter]
-  );
+  )
 
   const renderMetadata = () => {
-    const metadata = coverLetter.metadata;
-    if (!metadata) return null;
+    const metadata = coverLetter.metadata
+    if (!metadata) return null
 
     return (
       <div className="cover-letter-review__metadata">
@@ -110,8 +108,8 @@ function CoverLetterReview({
           </div>
         )}
       </div>
-    );
-  };
+    )
+  }
 
   const renderEditMode = () => (
     <div className="cover-letter-review__edit-container">
@@ -128,7 +126,7 @@ function CoverLetterReview({
         <textarea
           className="cover-letter-review__textarea"
           value={coverLetter.opening}
-          onChange={(e) => handleOpeningChange(e.target.value)}
+          onChange={e => handleOpeningChange(e.target.value)}
           rows={3}
           placeholder="Opening paragraph..."
         />
@@ -152,7 +150,7 @@ function CoverLetterReview({
             <textarea
               className="cover-letter-review__textarea"
               value={paragraph}
-              onChange={(e) => handleBodyParagraphChange(index, e.target.value)}
+              onChange={e => handleBodyParagraphChange(index, e.target.value)}
               rows={4}
               placeholder={`Body paragraph ${index + 1}...`}
             />
@@ -176,7 +174,7 @@ function CoverLetterReview({
         <textarea
           className="cover-letter-review__textarea"
           value={coverLetter.closing}
-          onChange={(e) => handleClosingChange(e.target.value)}
+          onChange={e => handleClosingChange(e.target.value)}
           rows={2}
           placeholder="Closing paragraph..."
         />
@@ -189,18 +187,18 @@ function CoverLetterReview({
           type="text"
           className="cover-letter-review__input"
           value={coverLetter.signature}
-          onChange={(e) => handleSignatureChange(e.target.value)}
+          onChange={e => handleSignatureChange(e.target.value)}
           placeholder="Your name"
         />
       </div>
     </div>
-  );
+  )
 
   const renderPreviewMode = () => (
     <div className="cover-letter-review__preview-container">
       <CoverLetterPreview coverLetter={coverLetter} />
     </div>
-  );
+  )
 
   return (
     <div className="cover-letter-review">
@@ -249,7 +247,7 @@ function CoverLetterReview({
         </button>
       </div>
     </div>
-  );
+  )
 }
 
-export default CoverLetterReview;
+export default CoverLetterReview

@@ -1,5 +1,5 @@
-import type { Resume } from '@schemas/resume.schema';
-import { getCoverLetterSchemaInstructions } from './schema-instructions';
+import type { Resume } from '@schemas/resume.schema'
+import { getCoverLetterSchemaInstructions } from './schema-instructions'
 
 /**
  * Options for customizing the cover letter generation prompt.
@@ -7,21 +7,27 @@ import { getCoverLetterSchemaInstructions } from './schema-instructions';
  */
 export interface CoverLetterGenerationOptions {
   /** Maximum length for the opening paragraph in characters (default: 300) */
-  maxOpeningLength?: number;
+  maxOpeningLength?: number
   /** Maximum number of body paragraphs (default: 3) */
-  maxBodyParagraphs?: number;
+  maxBodyParagraphs?: number
   /** Tone for the cover letter (default: 'professional') */
-  tone?: 'formal' | 'conversational' | 'enthusiastic';
+  tone?: 'formal' | 'conversational' | 'enthusiastic'
   /** Whether to include metadata about the generation (default: true) */
-  includeMetadata?: boolean;
+  includeMetadata?: boolean
   /** Focus on specific aspects of the candidate's background */
-  focusAreas?: ('technical-skills' | 'leadership' | 'achievements' | 'culture-fit' | 'career-growth')[];
+  focusAreas?: (
+    | 'technical-skills'
+    | 'leadership'
+    | 'achievements'
+    | 'culture-fit'
+    | 'career-growth'
+  )[]
   /** Custom instructions to append to the prompt */
-  customInstructions?: string;
+  customInstructions?: string
   /** Writing style preference */
-  style?: 'concise' | 'detailed' | 'storytelling';
+  style?: 'concise' | 'detailed' | 'storytelling'
   /** Whether to emphasize company research/knowledge (default: true) */
-  emphasizeCompanyKnowledge?: boolean;
+  emphasizeCompanyKnowledge?: boolean
 }
 
 /**
@@ -29,19 +35,19 @@ export interface CoverLetterGenerationOptions {
  */
 export interface CompanyInfo {
   /** Company name (required) */
-  name: string;
+  name: string
   /** Industry or sector */
-  industry?: string;
+  industry?: string
   /** Company size (e.g., "startup", "mid-size", "enterprise") */
-  size?: string;
+  size?: string
   /** Company culture keywords or values */
-  cultureKeywords?: string[];
+  cultureKeywords?: string[]
   /** Recent news, achievements, or initiatives */
-  recentNews?: string;
+  recentNews?: string
   /** Products or services the company is known for */
-  productsOrServices?: string;
+  productsOrServices?: string
   /** Any specific information about the team or department */
-  teamInfo?: string;
+  teamInfo?: string
 }
 
 const DEFAULT_OPTIONS: Required<CoverLetterGenerationOptions> = {
@@ -50,10 +56,11 @@ const DEFAULT_OPTIONS: Required<CoverLetterGenerationOptions> = {
   tone: 'formal',
   includeMetadata: false,
   focusAreas: ['achievements'],
-  customInstructions: 'STRICT LIMIT: Total letter MUST be under 2000 characters (about 150-200 words). Be extremely brief.',
+  customInstructions:
+    'STRICT LIMIT: Total letter MUST be under 2000 characters (about 150-200 words). Be extremely brief.',
   style: 'concise',
   emphasizeCompanyKnowledge: false,
-};
+}
 
 /**
  * Generates the system prompt for cover letter generation.
@@ -62,19 +69,19 @@ const DEFAULT_OPTIONS: Required<CoverLetterGenerationOptions> = {
 export function generateCoverLetterSystemPrompt(
   options: CoverLetterGenerationOptions = {}
 ): string {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const opts = { ...DEFAULT_OPTIONS, ...options }
 
   const toneDescriptions = {
     formal: 'formal and professional, using traditional business letter conventions',
     conversational: 'warm and personable while maintaining professionalism',
     enthusiastic: 'energetic and passionate while remaining professional',
-  };
+  }
 
   const styleDescriptions = {
     concise: 'Keep the letter concise and to the point, focusing on key qualifications.',
     detailed: 'Provide comprehensive coverage of relevant experiences and qualifications.',
     storytelling: 'Use narrative techniques to make the letter engaging and memorable.',
-  };
+  }
 
   return `You are an expert cover letter writer with extensive experience in career coaching, HR, and recruitment. Your task is to generate a compelling, personalized cover letter that connects a candidate's qualifications to a specific job opportunity.
 
@@ -134,7 +141,7 @@ You must respond with ONLY a valid JSON object. This is absolutely critical:
 - Do NOT include any text, explanation, or commentary before or after the JSON
 - Do NOT wrap the JSON in markdown code blocks (\`\`\`)
 - Do NOT include phrases like "Here is the cover letter:" or similar
-- The ENTIRE response must be parseable as a single JSON object`;
+- The ENTIRE response must be parseable as a single JSON object`
 }
 
 /**
@@ -146,12 +153,13 @@ export function generateCoverLetterUserPrompt(
   companyInfo?: CompanyInfo,
   options: CoverLetterGenerationOptions = {}
 ): string {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-  const schemaInstructions = getCoverLetterSchemaInstructions();
+  const opts = { ...DEFAULT_OPTIONS, ...options }
+  const schemaInstructions = getCoverLetterSchemaInstructions()
 
-  const focusAreasSection = opts.focusAreas.length > 0
-    ? `\n## Focus Areas\nEmphasize these aspects of the candidate's background: ${opts.focusAreas.join(', ')}\n`
-    : '';
+  const focusAreasSection =
+    opts.focusAreas.length > 0
+      ? `\n## Focus Areas\nEmphasize these aspects of the candidate's background: ${opts.focusAreas.join(', ')}\n`
+      : ''
 
   const companySection = companyInfo
     ? `## Company Information
@@ -168,9 +176,9 @@ ${companyInfo.productsOrServices ? `Products/Services: ${companyInfo.productsOrS
 ${companyInfo.teamInfo ? `Team Information: ${companyInfo.teamInfo}` : ''}
 </company_info>
 `
-    : '';
+    : ''
 
-  const hasJobPosting = jobPosting && jobPosting.trim().length > 0;
+  const hasJobPosting = jobPosting && jobPosting.trim().length > 0
 
   const jobPostingSection = hasJobPosting
     ? `## Job Posting
@@ -192,7 +200,7 @@ No specific job posting was provided. Generate a GENERIC cover letter that:
 - Can be easily customized for any position
 - Uses placeholder "[Position Title]" for the job title
 - Uses placeholder "[Company Name]" for the company name
-- Focuses on transferable skills and achievements`;
+- Focuses on transferable skills and achievements`
 
   return `${jobPostingSection}
 
@@ -219,17 +227,21 @@ Generate a compelling cover letter. **STRICT LIMIT: Maximum 2000 characters, 150
 ${focusAreasSection}
 ${schemaInstructions}
 
-${opts.includeMetadata ? `
+${
+  opts.includeMetadata
+    ? `
 ### Generation Metadata
 
 Include the metadata object with:
 - highlightedExperiences: List the key experiences from the resume that you featured
 - tone: The tone used (${opts.tone})
-` : ''}
+`
+    : ''
+}
 
 ## Response - IMPORTANT
 
-Your response must be ONLY the JSON object. No text before or after. Start with { and end with }.`;
+Your response must be ONLY the JSON object. No text before or after. Start with { and end with }.`
 }
 
 /**
@@ -245,7 +257,7 @@ export function buildCoverLetterPrompt(
   return {
     systemPrompt: generateCoverLetterSystemPrompt(options),
     userPrompt: generateCoverLetterUserPrompt(resume, jobPosting, companyInfo, options),
-  };
+  }
 }
 
 /**
@@ -263,9 +275,9 @@ export function buildCombinedCoverLetterPrompt(
     jobPosting,
     companyInfo,
     options
-  );
+  )
 
-  return `${systemPrompt}\n\n---\n\n${userPrompt}`;
+  return `${systemPrompt}\n\n---\n\n${userPrompt}`
 }
 
 /**
@@ -274,22 +286,22 @@ export function buildCombinedCoverLetterPrompt(
  */
 export function buildShortenCoverLetterPrompt(
   coverLetter: {
-    opening: string;
-    body: string[];
-    closing: string;
-    recipientName?: string | null | undefined;
-    recipientTitle?: string | null | undefined;
-    companyName: string;
-    companyAddress?: string | null | undefined;
-    date?: string | null | undefined;
-    signature: string;
-    metadata?: unknown;
+    opening: string
+    body: string[]
+    closing: string
+    recipientName?: string | null | undefined
+    recipientTitle?: string | null | undefined
+    companyName: string
+    companyAddress?: string | null | undefined
+    date?: string | null | undefined
+    signature: string
+    metadata?: unknown
   },
   currentCharCount: number,
   targetCharCount: number
 ): string {
-  const overageChars = currentCharCount - targetCharCount;
-  const overagePercent = Math.round((overageChars / currentCharCount) * 100);
+  const overageChars = currentCharCount - targetCharCount
+  const overagePercent = Math.round((overageChars / currentCharCount) * 100)
 
   return `You are a professional editor. Your task is to shorten an existing cover letter while preserving its key message and professional tone.
 
@@ -341,7 +353,7 @@ Required JSON structure:
   "signature": ${JSON.stringify(coverLetter.signature)}
 }
 
-Remember: The combined length of opening + body paragraphs + closing MUST be under ${targetCharCount} characters.`;
+Remember: The combined length of opening + body paragraphs + closing MUST be under ${targetCharCount} characters.`
 }
 
 /**
@@ -349,12 +361,12 @@ Remember: The combined length of opening + body paragraphs + closing MUST be und
  * Can be used for storing customizable templates in settings.
  */
 export interface CoverLetterPromptTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  options: CoverLetterGenerationOptions;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  description?: string
+  options: CoverLetterGenerationOptions
+  createdAt: string
+  updatedAt: string
 }
 
 /**
@@ -391,7 +403,8 @@ export const DEFAULT_COVER_LETTER_TEMPLATES: CoverLetterPromptTemplate[] = [
       style: 'storytelling',
       focusAreas: ['technical-skills', 'achievements', 'culture-fit'],
       maxBodyParagraphs: 2,
-      customInstructions: 'Emphasize innovation, problem-solving abilities, and adaptability. Show passion for technology and willingness to take on diverse challenges.',
+      customInstructions:
+        'Emphasize innovation, problem-solving abilities, and adaptability. Show passion for technology and willingness to take on diverse challenges.',
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -405,7 +418,8 @@ export const DEFAULT_COVER_LETTER_TEMPLATES: CoverLetterPromptTemplate[] = [
       style: 'detailed',
       focusAreas: ['leadership', 'achievements', 'career-growth'],
       maxBodyParagraphs: 3,
-      customInstructions: 'Focus on strategic thinking, vision, team building, and measurable business impact. Emphasize leadership philosophy and transformation achievements.',
+      customInstructions:
+        'Focus on strategic thinking, vision, team building, and measurable business impact. Emphasize leadership philosophy and transformation achievements.',
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -419,7 +433,8 @@ export const DEFAULT_COVER_LETTER_TEMPLATES: CoverLetterPromptTemplate[] = [
       style: 'storytelling',
       focusAreas: ['achievements', 'career-growth', 'culture-fit'],
       maxBodyParagraphs: 3,
-      customInstructions: 'Focus on transferable skills and how past experiences apply to the new field. Address the career change directly with confidence, showing genuine passion for the new direction.',
+      customInstructions:
+        'Focus on transferable skills and how past experiences apply to the new field. Address the career change directly with confidence, showing genuine passion for the new direction.',
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -434,9 +449,10 @@ export const DEFAULT_COVER_LETTER_TEMPLATES: CoverLetterPromptTemplate[] = [
       maxOpeningLength: 200,
       maxBodyParagraphs: 2,
       focusAreas: ['achievements'],
-      customInstructions: 'Be extremely concise. Every sentence should deliver value. Cut all filler words and unnecessary qualifiers.',
+      customInstructions:
+        'Be extremely concise. Every sentence should deliver value. Cut all filler words and unnecessary qualifiers.',
     },
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
-];
+]

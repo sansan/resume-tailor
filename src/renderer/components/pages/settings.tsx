@@ -22,24 +22,13 @@ import {
   Moon,
   Monitor,
 } from 'lucide-react'
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Accordion,
   AccordionContent,
@@ -184,13 +173,11 @@ function ThemeCard() {
           <Sun className="size-5" />
           <CardTitle>Appearance</CardTitle>
         </div>
-        <CardDescription>
-          Choose how Resume Tailor looks on your device.
-        </CardDescription>
+        <CardDescription>Choose how Resume Tailor looks on your device.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3">
-          {themes.map((t) => {
+          {themes.map(t => {
             const isSelected = theme === t.id
             return (
               <button
@@ -208,8 +195,8 @@ function ThemeCard() {
                   {t.label}
                 </span>
                 {isSelected && (
-                  <div className="absolute -right-1 -top-1 rounded-full bg-primary p-0.5">
-                    <Check className="size-3 text-primary-foreground" />
+                  <div className="bg-primary absolute -top-1 -right-1 rounded-full p-0.5">
+                    <Check className="text-primary-foreground size-3" />
                   </div>
                 )}
               </button>
@@ -222,7 +209,15 @@ function ThemeCard() {
 }
 
 export function SettingsPage() {
-  const { settings, isLoading, updateSettings, saveSettings, isSaving, isDirty, selectOutputFolder } = useSettings()
+  const {
+    settings,
+    isLoading,
+    updateSettings,
+    saveSettings,
+    isSaving,
+    isDirty,
+    selectOutputFolder,
+  } = useSettings()
   const {
     templates,
     selectedTemplate,
@@ -243,14 +238,38 @@ export function SettingsPage() {
 
   // API provider states
   const [providerStates, setProviderStates] = useState<Record<AIProvider, ProviderCardState>>({
-    claude: { apiKey: '', showKey: false, isSaving: false, isDeleting: false, hasSavedKey: false, error: null },
-    openai: { apiKey: '', showKey: false, isSaving: false, isDeleting: false, hasSavedKey: false, error: null },
-    google: { apiKey: '', showKey: false, isSaving: false, isDeleting: false, hasSavedKey: false, error: null },
+    claude: {
+      apiKey: '',
+      showKey: false,
+      isSaving: false,
+      isDeleting: false,
+      hasSavedKey: false,
+      error: null,
+    },
+    openai: {
+      apiKey: '',
+      showKey: false,
+      isSaving: false,
+      isDeleting: false,
+      hasSavedKey: false,
+      error: null,
+    },
+    google: {
+      apiKey: '',
+      showKey: false,
+      isSaving: false,
+      isDeleting: false,
+      hasSavedKey: false,
+      error: null,
+    },
   })
 
   // Prompt settings state
-  const [resumePrompt, setResumePrompt] = useState<ResumePromptTemplateSettings>(DEFAULT_RESUME_PROMPT)
-  const [coverLetterPrompt, setCoverLetterPrompt] = useState<CoverLetterPromptTemplateSettings>(DEFAULT_COVER_LETTER_PROMPT)
+  const [resumePrompt, setResumePrompt] =
+    useState<ResumePromptTemplateSettings>(DEFAULT_RESUME_PROMPT)
+  const [coverLetterPrompt, setCoverLetterPrompt] = useState<CoverLetterPromptTemplateSettings>(
+    DEFAULT_COVER_LETTER_PROMPT
+  )
 
   // Detect CLIs on mount
   const detectCLIs = useCallback(async () => {
@@ -332,57 +351,63 @@ export function SettingsPage() {
   /**
    * Save an API key.
    */
-  const handleSaveKey = useCallback(async (provider: AIProvider) => {
-    const state = providerStates[provider]
-    if (!state.apiKey.trim()) {
-      updateProviderState(provider, { error: 'Please enter an API key' })
-      return
-    }
+  const handleSaveKey = useCallback(
+    async (provider: AIProvider) => {
+      const state = providerStates[provider]
+      if (!state.apiKey.trim()) {
+        updateProviderState(provider, { error: 'Please enter an API key' })
+        return
+      }
 
-    updateProviderState(provider, { isSaving: true, error: null })
+      updateProviderState(provider, { isSaving: true, error: null })
 
-    try {
-      await window.electronAPI.saveAPIKey(provider, state.apiKey.trim())
-      updateProviderState(provider, {
-        isSaving: false,
-        hasSavedKey: true,
-        apiKey: '',
-      })
-    } catch (error) {
-      console.error(`Failed to save ${provider} API key:`, error)
-      updateProviderState(provider, {
-        isSaving: false,
-        error: 'Failed to save API key',
-      })
-    }
-  }, [providerStates, updateProviderState])
+      try {
+        await window.electronAPI.saveAPIKey(provider, state.apiKey.trim())
+        updateProviderState(provider, {
+          isSaving: false,
+          hasSavedKey: true,
+          apiKey: '',
+        })
+      } catch (error) {
+        console.error(`Failed to save ${provider} API key:`, error)
+        updateProviderState(provider, {
+          isSaving: false,
+          error: 'Failed to save API key',
+        })
+      }
+    },
+    [providerStates, updateProviderState]
+  )
 
   /**
    * Delete an API key.
    */
-  const handleDeleteKey = useCallback(async (provider: AIProvider) => {
-    updateProviderState(provider, { isDeleting: true, error: null })
+  const handleDeleteKey = useCallback(
+    async (provider: AIProvider) => {
+      updateProviderState(provider, { isDeleting: true, error: null })
 
-    try {
-      await window.electronAPI.deleteAPIKey(provider)
-      updateProviderState(provider, {
-        isDeleting: false,
-        hasSavedKey: false,
-        apiKey: '',
-      })
+      try {
+        await window.electronAPI.deleteAPIKey(provider)
+        updateProviderState(provider, {
+          isDeleting: false,
+          hasSavedKey: false,
+          apiKey: '',
+        })
 
-      const apiConfig = API_PROVIDERS.find(p => p.id === provider)
-      if (apiConfig && selectedProvider === `api:${apiConfig.id}`) {
-        setSelectedProvider(null)
+        const apiConfig = API_PROVIDERS.find(p => p.id === provider)
+        if (apiConfig && selectedProvider === `api:${apiConfig.id}`) {
+          setSelectedProvider(null)
+        }
+      } catch (error) {
+        console.error(`Failed to delete ${provider} API key:`, error)
+        updateProviderState(provider, {
+          isDeleting: false,
+          error: 'Failed to delete API key',
+        })
       }
-    } catch (error) {
-      console.error(`Failed to delete ${provider} API key:`, error)
-      updateProviderState(provider, {
-        isDeleting: false,
-        error: 'Failed to delete API key',
-      })
-    }
-  }, [updateProviderState, selectedProvider])
+    },
+    [updateProviderState, selectedProvider]
+  )
 
   /**
    * Handle provider selection change.
@@ -467,7 +492,7 @@ export function SettingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground">Configure how Resume Tailor works.</p>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2">
           <Loader2 className="size-4 animate-spin" />
           Loading settings...
         </div>
@@ -486,9 +511,15 @@ export function SettingsPage() {
         {isDirty && (
           <Button onClick={saveSettings} disabled={isSaving}>
             {isSaving ? (
-              <><Loader2 className="mr-2 size-4 animate-spin" />Saving...</>
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Saving...
+              </>
             ) : (
-              <><Save className="mr-2 size-4" />Save Changes</>
+              <>
+                <Save className="mr-2 size-4" />
+                Save Changes
+              </>
             )}
           </Button>
         )}
@@ -582,21 +613,26 @@ export function SettingsPage() {
                         disabled={!isAvailable || isSavingProvider}
                         className={cn(
                           'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors',
-                          isAvailable ? 'cursor-pointer hover:bg-accent/50' : 'cursor-not-allowed opacity-50',
+                          isAvailable
+                            ? 'hover:bg-accent/50 cursor-pointer'
+                            : 'cursor-not-allowed opacity-50',
                           isSelected && 'border-primary bg-primary/5'
                         )}
                       >
                         {isSelected ? (
-                          <CheckCircle2 className="size-5 shrink-0 text-primary" />
+                          <CheckCircle2 className="text-primary size-5 shrink-0" />
                         ) : (
-                          <Circle className="size-5 shrink-0 text-muted-foreground" />
+                          <Circle className="text-muted-foreground size-5 shrink-0" />
                         )}
                         <div className="flex-1">
                           <span className="font-medium">{cli.name}</span>
                           <span className="text-muted-foreground"> — {cli.description}</span>
                         </div>
                         {isAvailable ? (
-                          <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400">
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-500/10 text-green-600 dark:text-green-400"
+                          >
                             Available
                           </Badge>
                         ) : (
@@ -616,11 +652,11 @@ export function SettingsPage() {
                   <Key className="size-4" />
                   <h3 className="text-sm font-medium">API Keys</h3>
                 </div>
-                <p className="mb-3 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mb-3 text-xs">
                   Keys are stored locally in your system's secure storage.
                 </p>
 
-                <div className="rounded-lg border bg-card">
+                <div className="bg-card rounded-lg border">
                   <Accordion type="single" collapsible>
                     {API_PROVIDERS.map(provider => {
                       const state = providerStates[provider.id]
@@ -631,7 +667,9 @@ export function SettingsPage() {
                           <div className="flex items-center">
                             <button
                               type="button"
-                              onClick={() => isAvailable && handleSelectProvider(`api:${provider.id}`)}
+                              onClick={() =>
+                                isAvailable && handleSelectProvider(`api:${provider.id}`)
+                              }
                               disabled={!isAvailable || isSavingProvider}
                               className={cn(
                                 'flex items-center pl-3',
@@ -639,18 +677,23 @@ export function SettingsPage() {
                               )}
                             >
                               {isSelected ? (
-                                <CheckCircle2 className="size-5 shrink-0 text-primary" />
+                                <CheckCircle2 className="text-primary size-5 shrink-0" />
                               ) : (
-                                <Circle className="size-5 shrink-0 text-muted-foreground" />
+                                <Circle className="text-muted-foreground size-5 shrink-0" />
                               )}
                             </button>
                             <AccordionTrigger className="flex-1 px-3 py-2.5 hover:no-underline [&>svg]:ml-auto">
                               <div className="flex items-center gap-3">
                                 <span className="font-medium">{provider.name}</span>
-                                <span className="text-muted-foreground">— {provider.description}</span>
+                                <span className="text-muted-foreground">
+                                  — {provider.description}
+                                </span>
                               </div>
                               {state.hasSavedKey && (
-                                <Badge variant="secondary" className="bg-green-500/10 text-green-600 dark:text-green-400">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-green-500/10 text-green-600 dark:text-green-400"
+                                >
                                   Configured
                                 </Badge>
                               )}
@@ -661,9 +704,18 @@ export function SettingsPage() {
                               <div className="relative flex-1">
                                 <Input
                                   type={state.showKey ? 'text' : 'password'}
-                                  placeholder={state.hasSavedKey ? 'Enter new key to replace...' : 'Enter API key...'}
+                                  placeholder={
+                                    state.hasSavedKey
+                                      ? 'Enter new key to replace...'
+                                      : 'Enter API key...'
+                                  }
                                   value={state.apiKey}
-                                  onChange={e => updateProviderState(provider.id, { apiKey: e.target.value, error: null })}
+                                  onChange={e =>
+                                    updateProviderState(provider.id, {
+                                      apiKey: e.target.value,
+                                      error: null,
+                                    })
+                                  }
                                   disabled={state.isSaving || state.isDeleting}
                                   className="h-9 pr-9 text-sm"
                                 />
@@ -671,11 +723,17 @@ export function SettingsPage() {
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
-                                  onClick={() => updateProviderState(provider.id, { showKey: !state.showKey })}
+                                  className="absolute top-1/2 right-1 size-7 -translate-y-1/2"
+                                  onClick={() =>
+                                    updateProviderState(provider.id, { showKey: !state.showKey })
+                                  }
                                   disabled={state.isSaving || state.isDeleting}
                                 >
-                                  {state.showKey ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                                  {state.showKey ? (
+                                    <EyeOff className="size-3.5" />
+                                  ) : (
+                                    <Eye className="size-3.5" />
+                                  )}
                                 </Button>
                               </div>
                               <Button
@@ -683,7 +741,11 @@ export function SettingsPage() {
                                 onClick={() => handleSaveKey(provider.id)}
                                 disabled={state.isSaving || !state.apiKey.trim()}
                               >
-                                {state.isSaving ? <Loader2 className="size-3.5 animate-spin" /> : 'Save'}
+                                {state.isSaving ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  'Save'
+                                )}
                               </Button>
                               {state.hasSavedKey && (
                                 <AlertDialog>
@@ -704,13 +766,16 @@ export function SettingsPage() {
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>Delete API Key?</AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        This will permanently delete your {provider.name} key from secure storage.
-                                        You'll need to enter it again to use this provider.
+                                        This will permanently delete your {provider.name} key from
+                                        secure storage. You'll need to enter it again to use this
+                                        provider.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeleteKey(provider.id)}>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteKey(provider.id)}
+                                      >
                                         Delete
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -719,7 +784,7 @@ export function SettingsPage() {
                               )}
                             </div>
                             {state.error && (
-                              <p className="mt-2 text-xs text-destructive">{state.error}</p>
+                              <p className="text-destructive mt-2 text-xs">{state.error}</p>
                             )}
                           </AccordionContent>
                         </AccordionItem>
@@ -741,9 +806,7 @@ export function SettingsPage() {
                 <Layout className="size-5" />
                 <CardTitle>Resume Template</CardTitle>
               </div>
-              <CardDescription>
-                Choose the layout style for your generated resumes.
-              </CardDescription>
+              <CardDescription>Choose the layout style for your generated resumes.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-3">
@@ -764,18 +827,15 @@ export function SettingsPage() {
                         isSelected ? 'border-primary bg-primary/5' : 'border-border'
                       )}
                     >
-                      <div className="mb-2 aspect-[8.5/11] w-full overflow-hidden rounded border bg-muted/30">
-                        <TemplateMiniPreview
-                          templateId={template.id}
-                          palette={previewPalette}
-                        />
+                      <div className="bg-muted/30 mb-2 aspect-[8.5/11] w-full overflow-hidden rounded border">
+                        <TemplateMiniPreview templateId={template.id} palette={previewPalette} />
                       </div>
                       <span className={cn('text-sm font-medium', isSelected && 'text-primary')}>
                         {template.name}
                       </span>
                       {isSelected && (
-                        <div className="absolute -right-1 -top-1 rounded-full bg-primary p-0.5">
-                          <Check className="size-3 text-primary-foreground" />
+                        <div className="bg-primary absolute -top-1 -right-1 rounded-full p-0.5">
+                          <Check className="text-primary-foreground size-3" />
                         </div>
                       )}
                     </button>
@@ -792,9 +852,7 @@ export function SettingsPage() {
                 <Palette className="size-5" />
                 <CardTitle>Color Palette</CardTitle>
               </div>
-              <CardDescription>
-                Choose the color scheme for your resumes.
-              </CardDescription>
+              <CardDescription>Choose the color scheme for your resumes.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-3">
@@ -828,10 +886,15 @@ export function SettingsPage() {
                           style={{ backgroundColor: palette.accent }}
                         />
                       </div>
-                      <span className={cn('flex-1 text-left text-sm', isSelected && 'font-medium text-primary')}>
+                      <span
+                        className={cn(
+                          'flex-1 text-left text-sm',
+                          isSelected && 'text-primary font-medium'
+                        )}
+                      >
                         {palette.name}
                       </span>
-                      {isSelected && <Check className="size-4 text-primary" />}
+                      {isSelected && <Check className="text-primary size-4" />}
                     </button>
                   )
                 })}
@@ -884,8 +947,11 @@ export function SettingsPage() {
                   <Label htmlFor="resume-max-highlights">Max Highlights per Experience</Label>
                   <Select
                     value={String(resumePrompt.maxHighlightsPerExperience)}
-                    onValueChange={(value) =>
-                      setResumePrompt(prev => ({ ...prev, maxHighlightsPerExperience: Number(value) }))
+                    onValueChange={value =>
+                      setResumePrompt(prev => ({
+                        ...prev,
+                        maxHighlightsPerExperience: Number(value),
+                      }))
                     }
                   >
                     <SelectTrigger id="resume-max-highlights">
@@ -893,7 +959,9 @@ export function SettingsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {[3, 4, 5, 6, 7, 8].map(n => (
-                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        <SelectItem key={n} value={String(n)}>
+                          {n}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -908,21 +976,25 @@ export function SettingsPage() {
                   min={100}
                   max={1000}
                   value={resumePrompt.maxSummaryLength}
-                  onChange={e => setResumePrompt(prev => ({ ...prev, maxSummaryLength: Number(e.target.value) }))}
+                  onChange={e =>
+                    setResumePrompt(prev => ({ ...prev, maxSummaryLength: Number(e.target.value) }))
+                  }
                 />
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="resume-preserve">Preserve All Content</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Keep all original content instead of allowing trimming
                   </p>
                 </div>
                 <Switch
                   id="resume-preserve"
                   checked={resumePrompt.preserveAllContent}
-                  onCheckedChange={checked => setResumePrompt(prev => ({ ...prev, preserveAllContent: checked }))}
+                  onCheckedChange={checked =>
+                    setResumePrompt(prev => ({ ...prev, preserveAllContent: checked }))
+                  }
                 />
               </div>
 
@@ -932,10 +1004,12 @@ export function SettingsPage() {
                   id="resume-instructions"
                   placeholder="Add any specific instructions for how the AI should refine your resume..."
                   value={resumePrompt.customInstructions}
-                  onChange={e => setResumePrompt(prev => ({ ...prev, customInstructions: e.target.value }))}
+                  onChange={e =>
+                    setResumePrompt(prev => ({ ...prev, customInstructions: e.target.value }))
+                  }
                   rows={4}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   These instructions will be appended to the AI prompt when refining resumes.
                 </p>
               </div>
@@ -955,9 +1029,7 @@ export function SettingsPage() {
                   Reset to Default
                 </Button>
               </div>
-              <CardDescription>
-                Customize how the AI generates cover letters.
-              </CardDescription>
+              <CardDescription>Customize how the AI generates cover letters.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -1005,7 +1077,7 @@ export function SettingsPage() {
                   <Label htmlFor="cover-paragraphs">Body Paragraphs</Label>
                   <Select
                     value={String(coverLetterPrompt.maxBodyParagraphs)}
-                    onValueChange={(value) =>
+                    onValueChange={value =>
                       setCoverLetterPrompt(prev => ({ ...prev, maxBodyParagraphs: Number(value) }))
                     }
                   >
@@ -1014,7 +1086,9 @@ export function SettingsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {[2, 3, 4, 5].map(n => (
-                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                        <SelectItem key={n} value={String(n)}>
+                          {n}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1028,7 +1102,12 @@ export function SettingsPage() {
                     min={100}
                     max={500}
                     value={coverLetterPrompt.maxOpeningLength}
-                    onChange={e => setCoverLetterPrompt(prev => ({ ...prev, maxOpeningLength: Number(e.target.value) }))}
+                    onChange={e =>
+                      setCoverLetterPrompt(prev => ({
+                        ...prev,
+                        maxOpeningLength: Number(e.target.value),
+                      }))
+                    }
                   />
                 </div>
               </div>
@@ -1036,14 +1115,16 @@ export function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label htmlFor="cover-company">Emphasize Company Knowledge</Label>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Include company-specific details when available
                   </p>
                 </div>
                 <Switch
                   id="cover-company"
                   checked={coverLetterPrompt.emphasizeCompanyKnowledge}
-                  onCheckedChange={checked => setCoverLetterPrompt(prev => ({ ...prev, emphasizeCompanyKnowledge: checked }))}
+                  onCheckedChange={checked =>
+                    setCoverLetterPrompt(prev => ({ ...prev, emphasizeCompanyKnowledge: checked }))
+                  }
                 />
               </div>
 
@@ -1053,11 +1134,14 @@ export function SettingsPage() {
                   id="cover-instructions"
                   placeholder="Add any specific instructions for how the AI should generate cover letters..."
                   value={coverLetterPrompt.customInstructions}
-                  onChange={e => setCoverLetterPrompt(prev => ({ ...prev, customInstructions: e.target.value }))}
+                  onChange={e =>
+                    setCoverLetterPrompt(prev => ({ ...prev, customInstructions: e.target.value }))
+                  }
                   rows={4}
                 />
-                <p className="text-xs text-muted-foreground">
-                  These instructions will be appended to the AI prompt when generating cover letters.
+                <p className="text-muted-foreground text-xs">
+                  These instructions will be appended to the AI prompt when generating cover
+                  letters.
                 </p>
               </div>
             </CardContent>
@@ -1067,9 +1151,15 @@ export function SettingsPage() {
           <div className="flex justify-end">
             <Button onClick={handleSavePromptSettings} disabled={isSaving}>
               {isSaving ? (
-                <><Loader2 className="mr-2 size-4 animate-spin" />Saving...</>
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Saving...
+                </>
               ) : (
-                <><Save className="mr-2 size-4" />Save Prompt Settings</>
+                <>
+                  <Save className="mr-2 size-4" />
+                  Save Prompt Settings
+                </>
               )}
             </Button>
           </div>

@@ -40,9 +40,9 @@ export function AIStatusProvider({ children }: { children: React.ReactNode }) {
       setIsAvailable(available)
       setVersion(null) // API only returns boolean
       setStatus(available ? 'idle' : 'unavailable')
-      addLog(available
-        ? 'AI available: Claude CLI detected'
-        : 'AI unavailable: Claude CLI not found')
+      addLog(
+        available ? 'AI available: Claude CLI detected' : 'AI unavailable: Claude CLI not found'
+      )
     } catch (err) {
       setIsAvailable(false)
       setStatus('unavailable')

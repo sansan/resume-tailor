@@ -36,9 +36,7 @@ export interface OnboardingFlowProps {
  * - State persistence between steps
  * - Resume data loading for template preview
  */
-export function OnboardingFlow({
-  onComplete,
-}: Readonly<OnboardingFlowProps>): React.JSX.Element {
+export function OnboardingFlow({ onComplete }: Readonly<OnboardingFlowProps>): React.JSX.Element {
   const {
     step,
     nextStep,
@@ -147,10 +145,8 @@ export function OnboardingFlow({
         if (isLoadingResume) {
           return (
             <div className="flex min-h-full flex-col items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">
-                Loading your profile...
-              </p>
+              <Loader2 className="text-muted-foreground size-8 animate-spin" />
+              <p className="text-muted-foreground mt-4">Loading your profile...</p>
             </div>
           )
         }
@@ -170,7 +166,7 @@ export function OnboardingFlow({
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="bg-background flex h-screen flex-col">
       {/* Step indicator - fixed at top */}
       <div className="shrink-0 border-b">
         <div className="mx-auto flex max-w-2xl items-center justify-center gap-2 px-4 py-4">
@@ -273,15 +269,9 @@ interface StepConnectorProps {
 /**
  * StepConnector - Visual connector line between steps.
  */
-function StepConnector({
-  isComplete,
-}: Readonly<StepConnectorProps>): React.JSX.Element {
+function StepConnector({ isComplete }: Readonly<StepConnectorProps>): React.JSX.Element {
   return (
-    <div
-      className={`h-0.5 w-12 transition-colors ${
-        isComplete ? 'bg-primary' : 'bg-muted'
-      }`}
-    />
+    <div className={`h-0.5 w-12 transition-colors ${isComplete ? 'bg-primary' : 'bg-muted'}`} />
   )
 }
 
